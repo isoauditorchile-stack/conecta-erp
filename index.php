@@ -7,6 +7,212 @@ require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/i18n.php';
 initSession();
 
+// Traducciones para la landing page
+$lang = currentLanguage();
+$t = [
+    'es' => [
+        'hero_title' => '🚀 CONECTA ERP',
+        'hero_subtitle' => 'Sistema ERP Empresarial Completo - Somos el Mejor ERP del Mundo',
+        'hero_description' => '14 Módulos • 106 Submódulos • Multi-país • Multi-moneda • Multi-idioma',
+        'view_plans' => 'Ver Planes',
+        'register_free' => 'Registrarse Gratis',
+        'register' => 'Registro',
+        'login' => 'Iniciar Sesión',
+        'plans_title' => 'Planes y Módulos',
+        'plans_subtitle' => 'Selecciona el plan que mejor se adapte a tu empresa. Todos los planes incluyen Multi-usuario, Multi-empresa, Multi-moneda y Multi-idioma.',
+        'per_month' => '/mes',
+        'starter' => 'Starter',
+        'professional' => 'Professional',
+        'enterprise' => 'Enterprise',
+        'custom' => 'Custom',
+        'most_popular' => 'Más Popular',
+        'ideal_for_small' => 'Ideal para pequeñas empresas',
+        'for_growing' => 'Para empresas en crecimiento',
+        'for_large' => 'Para grandes empresas',
+        'custom_needs' => 'Adaptado a tus necesidades',
+        'start_free' => 'Comenzar Gratis',
+        'start_now' => 'Comenzar Ahora',
+        'contact_sales' => 'Contactar Ventas',
+        'personalized' => 'Personalizado',
+    ],
+    'en' => [
+        'hero_title' => '🚀 CONECTA ERP',
+        'hero_subtitle' => 'Complete Enterprise ERP System - We Are the Best ERP in the World',
+        'hero_description' => '14 Modules • 106 Submodules • Multi-country • Multi-currency • Multi-language',
+        'view_plans' => 'View Plans',
+        'register_free' => 'Register Free',
+        'register' => 'Register',
+        'login' => 'Login',
+        'plans_title' => 'Plans and Modules',
+        'plans_subtitle' => 'Choose the plan that best fits your company. All plans include Multi-user, Multi-company, Multi-currency and Multi-language.',
+        'per_month' => '/month',
+        'starter' => 'Starter',
+        'professional' => 'Professional',
+        'enterprise' => 'Enterprise',
+        'custom' => 'Custom',
+        'most_popular' => 'Most Popular',
+        'ideal_for_small' => 'Ideal for small businesses',
+        'for_growing' => 'For growing companies',
+        'for_large' => 'For large enterprises',
+        'custom_needs' => 'Adapted to your needs',
+        'start_free' => 'Start Free',
+        'start_now' => 'Start Now',
+        'contact_sales' => 'Contact Sales',
+        'personalized' => 'Personalized',
+    ],
+    'pt' => [
+        'hero_title' => '🚀 CONECTA ERP',
+        'hero_subtitle' => 'Sistema ERP Empresarial Completo - Somos o Melhor ERP do Mundo',
+        'hero_description' => '14 Módulos • 106 Submódulos • Multi-país • Multi-moeda • Multi-idioma',
+        'view_plans' => 'Ver Planos',
+        'register_free' => 'Registrar Grátis',
+        'register' => 'Registro',
+        'login' => 'Entrar',
+        'plans_title' => 'Planos e Módulos',
+        'plans_subtitle' => 'Escolha o plano que melhor se adapta à sua empresa. Todos os planos incluem Multi-usuário, Multi-empresa, Multi-moeda e Multi-idioma.',
+        'per_month' => '/mês',
+        'starter' => 'Starter',
+        'professional' => 'Professional',
+        'enterprise' => 'Enterprise',
+        'custom' => 'Personalizado',
+        'most_popular' => 'Mais Popular',
+        'ideal_for_small' => 'Ideal para pequenas empresas',
+        'for_growing' => 'Para empresas em crescimento',
+        'for_large' => 'Para grandes empresas',
+        'custom_needs' => 'Adaptado às suas necessidades',
+        'start_free' => 'Começar Grátis',
+        'start_now' => 'Começar Agora',
+        'contact_sales' => 'Contatar Vendas',
+        'personalized' => 'Personalizado',
+    ],
+    'fr' => [
+        'hero_title' => '🚀 CONECTA ERP',
+        'hero_subtitle' => 'Système ERP d\'Entreprise Complet - Nous sommes le Meilleur ERP au Monde',
+        'hero_description' => '14 Modules • 106 Sous-modules • Multi-pays • Multi-devise • Multi-langue',
+        'view_plans' => 'Voir les Plans',
+        'register_free' => 'S\'inscrire Gratuitement',
+        'register' => 'Inscription',
+        'login' => 'Connexion',
+        'plans_title' => 'Plans et Modules',
+        'plans_subtitle' => 'Choisissez le plan qui convient le mieux à votre entreprise. Tous les plans incluent Multi-utilisateur, Multi-entreprise, Multi-devise et Multi-langue.',
+        'per_month' => '/mois',
+        'starter' => 'Starter',
+        'professional' => 'Professional',
+        'enterprise' => 'Enterprise',
+        'custom' => 'Personnalisé',
+        'most_popular' => 'Le Plus Populaire',
+        'ideal_for_small' => 'Idéal pour les petites entreprises',
+        'for_growing' => 'Pour les entreprises en croissance',
+        'for_large' => 'Pour les grandes entreprises',
+        'custom_needs' => 'Adapté à vos besoins',
+        'start_free' => 'Commencer Gratuitement',
+        'start_now' => 'Commencer Maintenant',
+        'contact_sales' => 'Contacter les Ventes',
+        'personalized' => 'Personnalisé',
+    ],
+    'de' => [
+        'hero_title' => '🚀 CONECTA ERP',
+        'hero_subtitle' => 'Vollständiges Unternehmens-ERP-System - Wir sind das Beste ERP der Welt',
+        'hero_description' => '14 Module • 106 Submodule • Multi-Land • Multi-Währung • Multi-Sprache',
+        'view_plans' => 'Pläne Ansehen',
+        'register_free' => 'Kostenlos Registrieren',
+        'register' => 'Registrieren',
+        'login' => 'Anmelden',
+        'plans_title' => 'Pläne und Module',
+        'plans_subtitle' => 'Wählen Sie den Plan, der am besten zu Ihrem Unternehmen passt. Alle Pläne beinhalten Multi-Benutzer, Multi-Unternehmen, Multi-Währung und Multi-Sprache.',
+        'per_month' => '/Monat',
+        'starter' => 'Starter',
+        'professional' => 'Professional',
+        'enterprise' => 'Enterprise',
+        'custom' => 'Individuell',
+        'most_popular' => 'Am Beliebtesten',
+        'ideal_for_small' => 'Ideal für kleine Unternehmen',
+        'for_growing' => 'Für wachsende Unternehmen',
+        'for_large' => 'Für große Unternehmen',
+        'custom_needs' => 'Angepasst an Ihre Bedürfnisse',
+        'start_free' => 'Kostenlos Starten',
+        'start_now' => 'Jetzt Starten',
+        'contact_sales' => 'Vertrieb Kontaktieren',
+        'personalized' => 'Individualisiert',
+    ],
+    'it' => [
+        'hero_title' => '🚀 CONECTA ERP',
+        'hero_subtitle' => 'Sistema ERP Aziendale Completo - Siamo il Miglior ERP al Mondo',
+        'hero_description' => '14 Moduli • 106 Sottomoduli • Multi-paese • Multi-valuta • Multi-lingua',
+        'view_plans' => 'Visualizza Piani',
+        'register_free' => 'Registrati Gratis',
+        'register' => 'Registrazione',
+        'login' => 'Accedi',
+        'plans_title' => 'Piani e Moduli',
+        'plans_subtitle' => 'Scegli il piano più adatto alla tua azienda. Tutti i piani includono Multi-utente, Multi-azienda, Multi-valuta e Multi-lingua.',
+        'per_month' => '/mese',
+        'starter' => 'Starter',
+        'professional' => 'Professional',
+        'enterprise' => 'Enterprise',
+        'custom' => 'Personalizzato',
+        'most_popular' => 'Più Popolare',
+        'ideal_for_small' => 'Ideale per piccole imprese',
+        'for_growing' => 'Per aziende in crescita',
+        'for_large' => 'Per grandi aziende',
+        'custom_needs' => 'Adattato alle tue esigenze',
+        'start_free' => 'Inizia Gratis',
+        'start_now' => 'Inizia Ora',
+        'contact_sales' => 'Contatta Vendite',
+        'personalized' => 'Personalizzato',
+    ],
+    'ru' => [
+        'hero_title' => '🚀 CONECTA ERP',
+        'hero_subtitle' => 'Полная корпоративная ERP-система - Мы лучшая ERP в мире',
+        'hero_description' => '14 модулей • 106 подмодулей • Мультистрана • Мультивалюта • Мультиязык',
+        'view_plans' => 'Посмотреть Планы',
+        'register_free' => 'Зарегистрироваться Бесплатно',
+        'register' => 'Регистрация',
+        'login' => 'Войти',
+        'plans_title' => 'Планы и Модули',
+        'plans_subtitle' => 'Выберите план, который лучше всего подходит вашей компании. Все планы включают Мультипользователь, Мультикомпания, Мультивалюта и Мультиязык.',
+        'per_month' => '/месяц',
+        'starter' => 'Starter',
+        'professional' => 'Professional',
+        'enterprise' => 'Enterprise',
+        'custom' => 'Индивидуальный',
+        'most_popular' => 'Самый Популярный',
+        'ideal_for_small' => 'Идеально для малого бизнеса',
+        'for_growing' => 'Для растущих компаний',
+        'for_large' => 'Для крупных предприятий',
+        'custom_needs' => 'Адаптировано под ваши нужды',
+        'start_free' => 'Начать Бесплатно',
+        'start_now' => 'Начать Сейчас',
+        'contact_sales' => 'Связаться с Отделом Продаж',
+        'personalized' => 'Персонализированный',
+    ],
+    'zh' => [
+        'hero_title' => '🚀 CONECTA ERP',
+        'hero_subtitle' => '完整的企业ERP系统 - 我们是世界上最好的ERP',
+        'hero_description' => '14个模块 • 106个子模块 • 多国家 • 多货币 • 多语言',
+        'view_plans' => '查看计划',
+        'register_free' => '免费注册',
+        'register' => '注册',
+        'login' => '登录',
+        'plans_title' => '计划和模块',
+        'plans_subtitle' => '选择最适合您公司的计划。所有计划包括多用户、多公司、多货币和多语言。',
+        'per_month' => '/月',
+        'starter' => 'Starter',
+        'professional' => 'Professional',
+        'enterprise' => 'Enterprise',
+        'custom' => '定制',
+        'most_popular' => '最受欢迎',
+        'ideal_for_small' => '适合小型企业',
+        'for_growing' => '适合成长型企业',
+        'for_large' => '适合大型企业',
+        'custom_needs' => '适应您的需求',
+        'start_free' => '免费开始',
+        'start_now' => '立即开始',
+        'contact_sales' => '联系销售',
+        'personalized' => '个性化',
+    ],
+];
+$tr = $t[$lang] ?? $t['es']; // Fallback to Spanish
+
 // Si ya tiene sesión, redirigir
 if (isset($_SESSION['user_id'])) {
     if ($_SESSION['email'] === 'auditorexchile@gmail.com') {
@@ -729,9 +935,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
                     <option value="ru" <?php echo currentLanguage() === 'ru' ? 'selected' : ''; ?>>🇷🇺 Русский</option>
                     <option value="zh" <?php echo currentLanguage() === 'zh' ? 'selected' : ''; ?>>🇨🇳 中文</option>
                 </select>
-                <a href="javascript:void(0)" onclick="openModal()">Registro</a>
-                <a href="login.php" class="nav-btn btn-login">Iniciar Sesión</a>
-                <a href="javascript:void(0)" onclick="openModal()" class="nav-btn btn-register">Registrarse</a>
+                <a href="javascript:void(0)" onclick="openModal()"><?php echo $tr['register']; ?></a>
+                <a href="login.php" class="nav-btn btn-login"><?php echo $tr['login']; ?></a>
+                <a href="javascript:void(0)" onclick="openModal()" class="nav-btn btn-register"><?php echo $tr['register']; ?></a>
             </div>
         </div>
     </nav>
@@ -739,15 +945,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
     <!-- Hero Section -->
     <section class="hero">
         <div class="hero-content">
-            <h1>🚀 CONECTA ERP</h1>
-            <p>Sistema ERP Empresarial Completo - Competimos con SAP y Softland</p>
-            <p style="font-size: 1.1rem; margin-bottom: 2rem;">14 Módulos • 106 Submódulos • Multi-país • Multi-moneda • Multi-idioma</p>
+            <h1><?php echo $tr['hero_title']; ?></h1>
+            <p><?php echo $tr['hero_subtitle']; ?></p>
+            <p style="font-size: 1.1rem; margin-bottom: 2rem;"><?php echo $tr['hero_description']; ?></p>
             <div class="hero-buttons">
                 <a href="#planes" class="btn btn-primary">
-                    Ver Planes <i class="fas fa-arrow-right"></i>
+                    <?php echo $tr['view_plans']; ?> <i class="fas fa-arrow-right"></i>
                 </a>
                 <a href="javascript:void(0)" onclick="openModal()" class="btn btn-secondary">
-                    <i class="fas fa-user-plus"></i> Registrarse Gratis
+                    <i class="fas fa-user-plus"></i> <?php echo $tr['register_free']; ?>
                 </a>
             </div>
         </div>
@@ -756,9 +962,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
     <!-- Pricing Plans Section -->
     <section id="planes" style="padding: 6rem 5%; background: #1e293b;">
         <div style="max-width: 1400px; margin: 0 auto;">
-            <div class="section-title" style="color: white;">Planes y Módulos</div>
+            <div class="section-title" style="color: white;"><?php echo $tr['plans_title']; ?></div>
             <div class="section-subtitle" style="color: #94a3b8; max-width: 800px; margin: 0 auto 4rem;">
-                Selecciona el plan que mejor se adapte a tu empresa. Todos los planes incluyen Multi-usuario, Multi-empresa, Multi-moneda y Multi-idioma.
+                <?php echo $tr['plans_subtitle']; ?>
             </div>
 
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
@@ -766,12 +972,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
                 <div class="pricing-card">
                     <div class="pricing-header">
                         <i class="fas fa-rocket" style="font-size: 2.5rem; color: var(--primary); margin-bottom: 1rem;"></i>
-                        <h3>Starter</h3>
+                        <h3><?php echo $tr['starter']; ?></h3>
                         <div class="pricing-price">
                             <span style="font-size: 3rem; font-weight: 800;">$299</span>
-                            <span style="font-size: 1.2rem; color: #94a3b8;">/mes</span>
+                            <span style="font-size: 1.2rem; color: #94a3b8;"><?php echo $tr['per_month']; ?></span>
                         </div>
-                        <p style="color: #94a3b8; margin-top: 1rem;">Ideal para pequeñas empresas</p>
+                        <p style="color: #94a3b8; margin-top: 1rem;"><?php echo $tr['ideal_for_small']; ?></p>
                     </div>
                     <ul class="pricing-features">
                         <li><i class="fas fa-check-circle"></i> <strong>Administración Central</strong></li>
@@ -784,21 +990,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
                         <li style="color: #64748b;"><i class="fas fa-times-circle"></i> RRHH avanzado</li>
                     </ul>
                     <a href="javascript:void(0)" onclick="openModal()" class="btn btn-secondary" style="width: 100%; justify-content: center; margin-top: 2rem;">
-                        Comenzar Gratis
+                        <?php echo $tr['start_free']; ?>
                     </a>
                 </div>
 
                 <!-- Plan Professional -->
                 <div class="pricing-card pricing-card-featured">
-                    <div class="pricing-badge">Más Popular</div>
+                    <div class="pricing-badge"><?php echo $tr['most_popular']; ?></div>
                     <div class="pricing-header">
                         <i class="fas fa-briefcase" style="font-size: 2.5rem; color: var(--primary); margin-bottom: 1rem;"></i>
-                        <h3>Professional</h3>
+                        <h3><?php echo $tr['professional']; ?></h3>
                         <div class="pricing-price">
                             <span style="font-size: 3rem; font-weight: 800;">$699</span>
-                            <span style="font-size: 1.2rem; color: #94a3b8;">/mes</span>
+                            <span style="font-size: 1.2rem; color: #94a3b8;"><?php echo $tr['per_month']; ?></span>
                         </div>
-                        <p style="color: #94a3b8; margin-top: 1rem;">Para empresas en crecimiento</p>
+                        <p style="color: #94a3b8; margin-top: 1rem;"><?php echo $tr['for_growing']; ?></p>
                     </div>
                     <ul class="pricing-features">
                         <li><i class="fas fa-check-circle"></i> <strong>Todo en Starter</strong></li>
@@ -811,7 +1017,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
                         <li style="color: #64748b;"><i class="fas fa-times-circle"></i> SCM</li>
                     </ul>
                     <a href="javascript:void(0)" onclick="openModal()" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 2rem;">
-                        Comenzar Ahora
+                        <?php echo $tr['start_now']; ?>
                     </a>
                 </div>
 
@@ -819,12 +1025,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
                 <div class="pricing-card">
                     <div class="pricing-header">
                         <i class="fas fa-building" style="font-size: 2.5rem; color: var(--primary); margin-bottom: 1rem;"></i>
-                        <h3>Enterprise</h3>
+                        <h3><?php echo $tr['enterprise']; ?></h3>
                         <div class="pricing-price">
                             <span style="font-size: 3rem; font-weight: 800;">$1,499</span>
-                            <span style="font-size: 1.2rem; color: #94a3b8;">/mes</span>
+                            <span style="font-size: 1.2rem; color: #94a3b8;"><?php echo $tr['per_month']; ?></span>
                         </div>
-                        <p style="color: #94a3b8; margin-top: 1rem;">Para grandes empresas</p>
+                        <p style="color: #94a3b8; margin-top: 1rem;"><?php echo $tr['for_large']; ?></p>
                     </div>
                     <ul class="pricing-features">
                         <li><i class="fas fa-check-circle"></i> <strong>Todo en Professional</strong></li>
@@ -837,7 +1043,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
                         <li><i class="fas fa-check-circle"></i> Usuarios ilimitados</li>
                     </ul>
                     <a href="javascript:void(0)" onclick="openModal()" class="btn btn-secondary" style="width: 100%; justify-content: center; margin-top: 2rem;">
-                        Comenzar Ahora
+                        <?php echo $tr['start_now']; ?>
                     </a>
                 </div>
 
@@ -845,11 +1051,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
                 <div class="pricing-card">
                     <div class="pricing-header">
                         <i class="fas fa-crown" style="font-size: 2.5rem; color: #f59e0b; margin-bottom: 1rem;"></i>
-                        <h3>Custom</h3>
+                        <h3><?php echo $tr['custom']; ?></h3>
                         <div class="pricing-price">
-                            <span style="font-size: 2rem; font-weight: 800;">Personalizado</span>
+                            <span style="font-size: 2rem; font-weight: 800;"><?php echo $tr['personalized']; ?></span>
                         </div>
-                        <p style="color: #94a3b8; margin-top: 1rem;">Adaptado a tus necesidades</p>
+                        <p style="color: #94a3b8; margin-top: 1rem;"><?php echo $tr['custom_needs']; ?></p>
                     </div>
                     <ul class="pricing-features">
                         <li><i class="fas fa-check-circle"></i> <strong>Todos los módulos</strong></li>
@@ -862,7 +1068,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
                         <li><i class="fas fa-check-circle"></i> Account Manager</li>
                     </ul>
                     <a href="javascript:void(0)" onclick="openModal()" class="btn btn-secondary" style="width: 100%; justify-content: center; margin-top: 2rem; background: #f59e0b; border-color: #f59e0b;">
-                        Contactar Ventas
+                        <?php echo $tr['contact_sales']; ?>
                     </a>
                 </div>
             </div>
