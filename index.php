@@ -599,6 +599,103 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
             font-size: 0.9rem;
         }
 
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: #1e293b;
+            margin: 3% auto;
+            padding: 0;
+            border-radius: 20px;
+            max-width: 600px;
+            width: 90%;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6);
+            animation: slideDown 0.4s ease;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 2rem;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .modal-header h2 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.8rem;
+            color: white;
+        }
+
+        .modal-header p {
+            margin: 0;
+            opacity: 0.95;
+            font-size: 0.95rem;
+        }
+
+        .modal-header a {
+            color: white;
+            text-decoration: underline;
+        }
+
+        .modal-close {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            color: white;
+            font-size: 35px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 1;
+            transition: all 0.3s;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: rotate(90deg);
+        }
+
+        .modal .registration-container {
+            padding: 2rem;
+            background: #1e293b;
+        }
+
         @media (max-width: 768px) {
             .hero h1 { font-size: 2.5rem; }
             .hero p { font-size: 1.2rem; }
@@ -632,9 +729,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
                     <option value="ru" <?php echo currentLanguage() === 'ru' ? 'selected' : ''; ?>>🇷🇺 Русский</option>
                     <option value="zh" <?php echo currentLanguage() === 'zh' ? 'selected' : ''; ?>>🇨🇳 中文</option>
                 </select>
-                <a href="#registro">Registro</a>
+                <a href="javascript:void(0)" onclick="openModal()">Registro</a>
                 <a href="login.php" class="nav-btn btn-login">Iniciar Sesión</a>
-                <a href="#registro" class="nav-btn btn-register">Registrarse</a>
+                <a href="javascript:void(0)" onclick="openModal()" class="nav-btn btn-register">Registrarse</a>
             </div>
         </div>
     </nav>
@@ -649,7 +746,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
                 <a href="#planes" class="btn btn-primary">
                     Ver Planes <i class="fas fa-arrow-right"></i>
                 </a>
-                <a href="#registro" class="btn btn-secondary">
+                <a href="javascript:void(0)" onclick="openModal()" class="btn btn-secondary">
                     <i class="fas fa-user-plus"></i> Registrarse Gratis
                 </a>
             </div>
@@ -686,7 +783,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
                         <li style="color: #64748b;"><i class="fas fa-times-circle"></i> Producción</li>
                         <li style="color: #64748b;"><i class="fas fa-times-circle"></i> RRHH avanzado</li>
                     </ul>
-                    <a href="#registro" class="btn btn-secondary" style="width: 100%; justify-content: center; margin-top: 2rem;">
+                    <a href="javascript:void(0)" onclick="openModal()" class="btn btn-secondary" style="width: 100%; justify-content: center; margin-top: 2rem;">
                         Comenzar Gratis
                     </a>
                 </div>
@@ -713,7 +810,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
                         <li style="color: #64748b;"><i class="fas fa-times-circle"></i> Producción</li>
                         <li style="color: #64748b;"><i class="fas fa-times-circle"></i> SCM</li>
                     </ul>
-                    <a href="#registro" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 2rem;">
+                    <a href="javascript:void(0)" onclick="openModal()" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 2rem;">
                         Comenzar Ahora
                     </a>
                 </div>
@@ -739,7 +836,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
                         <li><i class="fas fa-check-circle"></i> Soporte prioritario 24/7</li>
                         <li><i class="fas fa-check-circle"></i> Usuarios ilimitados</li>
                     </ul>
-                    <a href="#registro" class="btn btn-secondary" style="width: 100%; justify-content: center; margin-top: 2rem;">
+                    <a href="javascript:void(0)" onclick="openModal()" class="btn btn-secondary" style="width: 100%; justify-content: center; margin-top: 2rem;">
                         Comenzar Ahora
                     </a>
                 </div>
@@ -764,85 +861,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
                         <li><i class="fas fa-check-circle"></i> SLA garantizado</li>
                         <li><i class="fas fa-check-circle"></i> Account Manager</li>
                     </ul>
-                    <a href="#registro" class="btn btn-secondary" style="width: 100%; justify-content: center; margin-top: 2rem; background: #f59e0b; border-color: #f59e0b;">
+                    <a href="javascript:void(0)" onclick="openModal()" class="btn btn-secondary" style="width: 100%; justify-content: center; margin-top: 2rem; background: #f59e0b; border-color: #f59e0b;">
                         Contactar Ventas
                     </a>
-                </div>
-            </div>
-
-            <!-- Módulos detallados -->
-            <div style="margin-top: 6rem; padding: 3rem; background: rgba(0,0,0,0.3); border-radius: 20px;">
-                <h3 style="font-size: 2rem; margin-bottom: 2rem; text-align: center; color: white;">
-                    <i class="fas fa-layer-group"></i> 14 Módulos • 106 Submódulos
-                </h3>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
-                    <div class="module-card">
-                        <h4><i class="fas fa-cog"></i> Administración Central</h4>
-                        <p>3 submódulos</p>
-                    </div>
-                    <div class="module-card">
-                        <h4><i class="fas fa-users"></i> Gestión de Entidades</h4>
-                        <p>5 submódulos</p>
-                    </div>
-                    <div class="module-card">
-                        <h4><i class="fas fa-dollar-sign"></i> Finanzas</h4>
-                        <p>11 submódulos</p>
-                    </div>
-                    <div class="module-card">
-                        <h4><i class="fas fa-chart-line"></i> Controlling</h4>
-                        <p>8 submódulos</p>
-                    </div>
-                    <div class="module-card">
-                        <h4><i class="fas fa-shopping-cart"></i> Ventas</h4>
-                        <p>9 submódulos</p>
-                    </div>
-                    <div class="module-card">
-                        <h4><i class="fas fa-boxes"></i> Materiales</h4>
-                        <p>8 submódulos</p>
-                    </div>
-                    <div class="module-card">
-                        <h4><i class="fas fa-industry"></i> Producción</h4>
-                        <p>10 submódulos</p>
-                    </div>
-                    <div class="module-card">
-                        <h4><i class="fas fa-user-tie"></i> RRHH</h4>
-                        <p>11 submódulos</p>
-                    </div>
-                    <div class="module-card">
-                        <h4><i class="fas fa-truck"></i> SCM</h4>
-                        <p>10 submódulos</p>
-                    </div>
-                    <div class="module-card">
-                        <h4><i class="fas fa-handshake"></i> CRM</h4>
-                        <p>8 submódulos</p>
-                    </div>
-                    <div class="module-card">
-                        <h4><i class="fas fa-gift"></i> Fidelización</h4>
-                        <p>7 submódulos</p>
-                    </div>
-                    <div class="module-card">
-                        <h4><i class="fas fa-brain"></i> Business Intelligence</h4>
-                        <p>15 submódulos</p>
-                    </div>
-                    <div class="module-card">
-                        <h4><i class="fas fa-sliders-h"></i> Configuración</h4>
-                        <p>1 submódulo</p>
-                    </div>
-                    <div class="module-card">
-                        <h4><i class="fas fa-tachometer-alt"></i> Dashboard Principal</h4>
-                        <p>Panel de control</p>
-                    </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Registration Section -->
-    <section id="registro" class="registration-section">
-        <div class="section-title">Registro de Cuenta</div>
-        <div class="section-subtitle">Completa el formulario para crear tu cuenta. Si ya tienes una cuenta, <a href="login.php" style="color: var(--primary);">inicia sesión aquí</a>.</div>
+    <!-- Registration Modal (Hidden by default) -->
+    <div id="registroModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <div class="modal-header">
+                <h2>Registro de Cuenta</h2>
+                <p>Completa el formulario para crear tu cuenta. Si ya tienes una cuenta, <a href="login.php" style="color: var(--primary);">inicia sesión aquí</a>.</p>
+            </div>
 
-        <div class="registration-container">
+            <div class="registration-container">
             <?php if ($error): ?>
             <div class="alert alert-error">
                 <i class="fas fa-exclamation-circle"></i>
@@ -927,8 +963,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
                     Al registrarte, aceptas nuestros <a href="#" style="color: var(--primary);">Términos y Condiciones</a>
                 </p>
             </form>
+            </div>
         </div>
-    </section>
+    </div>
 
     <!-- Footer -->
     <footer class="footer">
@@ -985,6 +1022,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
     <script src="/assets/js/rut-validator.js"></script>
 
     <script>
+        // Modal Functions
+        function openModal() {
+            document.getElementById('registroModal').style.display = 'block';
+            document.body.style.overflow = 'hidden'; // Prevent scrolling
+        }
+
+        function closeModal() {
+            document.getElementById('registroModal').style.display = 'none';
+            document.body.style.overflow = 'auto'; // Restore scrolling
+        }
+
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            const modal = document.getElementById('registroModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+
+        // Close modal on ESC key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        // Auto-open modal if there's an error or success message
+        <?php if ($error || $success): ?>
+        window.addEventListener('DOMContentLoaded', function() {
+            openModal();
+        });
+        <?php endif; ?>
+
         // Language Selector
         function changeLanguage(lang) {
             // Redirect to same page with language parameter
