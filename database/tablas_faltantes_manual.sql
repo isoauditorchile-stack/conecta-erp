@@ -292,7 +292,4 @@ INSERT IGNORE INTO `email_templates` (`template_key`, `subject`, `body`, `langua
 -- FIN DEL SCRIPT
 -- =====================================================
 
-SELECT '✅ Tablas faltantes creadas exitosamente' as mensaje;
-SELECT CONCAT('📊 Total de tablas en la base de datos: ', COUNT(*)) as estadistica
-FROM information_schema.tables
-WHERE table_schema = 'conectae_conectaerpbd';
+SELECT '✅ Tablas faltantes creadas exitosamente - 10 tablas críticas instaladas' as mensaje;
