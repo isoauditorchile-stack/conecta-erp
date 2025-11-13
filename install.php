@@ -289,11 +289,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $pdo = $test['pdo'];
 
-                // Scripts SQL a ejecutar en orden
+                // Scripts SQL a ejecutar en orden (200+ tablas para ERP completo)
                 $sql_scripts = [
-                    'database/schema_completo_base.sql',
-                    'database/schema_improvements.sql',
-                    'database/schema_planes_pagos.sql'
+                    'database/schema_erp_completo.sql',
+                    'database/schema_erp_completo_parte2.sql',
+                    'database/schema_erp_completo_parte3.sql',
+                    'database/schema_erp_completo_parte4.sql',
+                    'database/schema_erp_completo_parte5_final.sql'
                 ];
 
                 $installation_log = [];
@@ -796,13 +798,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <span class="alert-icon">ℹ️</span>
                 <div>
                     <strong>Se instalará:</strong><br>
-                    ✓ 14 módulos principales (FI, CO, SD, MM, PP, HCM, SCM, CRM, LOY, BI, FE, PM, ADM, MOB)<br>
-                    ✓ 106 submódulos 100% en español<br>
-                    ✓ 8 países configurados con validación de RUT/Tax ID<br>
-                    ✓ 4 planes de suscripción (Básico, Profesional, Empresarial, Corporativo)<br>
-                    ✓ Sistema completo de usuarios, permisos y roles<br>
-                    ✓ Sistema de pagos y notificaciones<br>
-                    ✓ Traducciones en 8 idiomas
+                    ✓ <strong>200+ TABLAS SQL</strong> para ERP completo de nivel empresarial<br>
+                    ✓ 14 módulos principales (FI, CO, SD, MM, PP, HCM, SCM, CRM, LOY, BI, SII, ADM)<br>
+                    ✓ 106 submódulos 100% funcionales<br>
+                    ✓ Integración Previred (AFP, Isapre, nómina chilena)<br>
+                    ✓ Integración SII (DTEs, CAF, facturación electrónica)<br>
+                    ✓ Múltiples relojes control (biométrico, RFID, GPS)<br>
+                    ✓ Sistema POS con multi-moneda y multi-pago<br>
+                    ✓ 8 idiomas (ES, EN, PT, FR, DE, IT, RU, ZH)<br>
+                    ✓ Validación de RUT/Tax ID para 8 países
                 </div>
             </div>
 
