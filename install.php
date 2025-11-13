@@ -859,12 +859,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="link-grid">
                 <a href="index.php" class="link-card">
-                    <span class="link-card-icon">🏠</span>
-                    <span class="link-card-title">Ir a la Página Principal</span>
+                    <span class="link-card-icon">📝</span>
+                    <span class="link-card-title">Registrarse (Nuevo Usuario)</span>
                 </a>
-                <a href="admin/panel_super_admin.php" class="link-card">
-                    <span class="link-card-icon">👑</span>
-                    <span class="link-card-title">Panel Super Admin</span>
+                <a href="login.php" class="link-card">
+                    <span class="link-card-icon">🔐</span>
+                    <span class="link-card-title">Iniciar Sesión</span>
                 </a>
             </div>
 
