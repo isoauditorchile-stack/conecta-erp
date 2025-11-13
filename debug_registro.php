@@ -83,10 +83,10 @@ try {
     $db->getConnection()->beginTransaction();
     echo "   ✅ Transacción iniciada\n\n";
 
-    // Insertar empresa
+    // Insertar empresa (sin owner_user_id por ahora)
     echo "   🏢 Insertando empresa...\n";
     $company_id = $db->insert(
-        "INSERT INTO companies (company_name, legal_name, tax_id, country_id, created_at) VALUES (?, ?, ?, ?, NOW())",
+        "INSERT INTO companies (company_name, legal_name, tax_id, country_id, owner_user_id, created_at) VALUES (?, ?, ?, ?, NULL, NOW())",
         [$test_data['company_name'], $test_data['company_name'], $test_data['tax_id'], 1]
     );
     echo "   ✅ Empresa creada con ID: $company_id\n\n";
@@ -111,6 +111,14 @@ try {
         ]
     );
     echo "   ✅ Usuario creado con ID: $user_id\n\n";
+
+    // Actualizar empresa con owner_user_id
+    echo "   🔄 Actualizando empresa con owner_user_id...\n";
+    $db->update(
+        "UPDATE companies SET owner_user_id = ? WHERE id = ?",
+        [$user_id, $company_id]
+    );
+    echo "   ✅ Empresa actualizada\n\n";
 
     // Commit
     echo "   💾 Haciendo commit...\n";

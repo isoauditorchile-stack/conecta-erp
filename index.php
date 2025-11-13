@@ -250,9 +250,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
 
             $db->getConnection()->beginTransaction();
 
-            // Crear empresa
+            // Crear empresa (sin owner_user_id por ahora)
             $company_id = $db->insert(
-                "INSERT INTO companies (company_name, legal_name, tax_id, country_id, created_at) VALUES (?, ?, ?, ?, NOW())",
+                "INSERT INTO companies (company_name, legal_name, tax_id, country_id, owner_user_id, created_at) VALUES (?, ?, ?, ?, NULL, NOW())",
                 [$company_name, $company_name, $tax_id, 1]
             );
 
@@ -273,6 +273,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
                     $status,
                     $is_super_admin ? 1 : 0
                 ]
+            );
+
+            // Actualizar empresa con el owner_user_id
+            $db->update(
+                "UPDATE companies SET owner_user_id = ? WHERE id = ?",
+                [$user_id, $company_id]
             );
 
             $db->getConnection()->commit();
