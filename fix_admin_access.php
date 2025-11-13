@@ -89,9 +89,8 @@ try {
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
         if ($final_user['is_admin'] == 1 && $final_user['status'] == 'active') {
             echo "✅ SUPER ADMIN CONFIGURADO CORRECTAMENTE\n\n";
-            echo "Ahora puedes:\n";
-            echo "1. Ir al panel de super admin: <a href='/admin/panel_super_admin.php'>Panel Super Admin</a>\n";
-            echo "2. Ver todos los módulos: <a href='/user/dashboard_user.php'>Dashboard con Módulos</a>\n\n";
+            echo "Accede al panel de super admin:\n";
+            echo "<a href='/admin/panel_super_admin.php' style='padding:10px 20px;background:#667eea;color:white;text-decoration:none;border-radius:5px;'>Panel Super Admin</a>\n\n";
             echo "NOTA: Si ya tenías sesión abierta, cierra sesión y vuelve a iniciar sesión:\n";
             echo "<a href='/logout.php' style='padding:10px 20px;background:#ef4444;color:white;text-decoration:none;border-radius:5px;'>Cerrar Sesión</a>\n";
         } else {
