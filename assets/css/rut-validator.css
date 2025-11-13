@@ -1,0 +1,195 @@
+/**
+ * CONECTA ERP - RUT Validator Styles
+ * Version: 2.0.0
+ *
+ * Visual styles for RUT validation feedback
+ */
+
+/* Input field states */
+.rut-input {
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Valid RUT state (green border) */
+.rut-input.valid,
+input[data-rut-validator="true"].valid {
+    border-color: #10b981 !important;
+    border-width: 2px !important;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+/* Invalid RUT state (red border) */
+.rut-input.invalid,
+input[data-rut-validator="true"].invalid {
+    border-color: #ef4444 !important;
+    border-width: 2px !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* Error message styling */
+.rut-error-message {
+    color: #ef4444;
+    font-size: 0.85rem;
+    display: block;
+    margin-top: 0.25rem;
+    font-weight: 500;
+    animation: slideDown 0.3s ease;
+}
+
+/* Success message styling */
+.rut-success-message {
+    color: #10b981;
+    font-size: 0.85rem;
+    display: block;
+    margin-top: 0.25rem;
+    font-weight: 500;
+    animation: slideDown 0.3s ease;
+}
+
+/* Slide down animation for messages */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Tax ID hint styling */
+.tax-id-hint {
+    color: #6b7280;
+    font-size: 0.85rem;
+    display: block;
+    margin-top: 0.25rem;
+    font-style: italic;
+}
+
+/* Input wrapper for better spacing */
+.rut-input-wrapper {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+/* Label styling */
+.rut-input-wrapper label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.95rem;
+}
+
+/* Input field base styling */
+.rut-input-wrapper input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #d1d5db;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.rut-input-wrapper input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Loading state (optional) */
+.rut-input.validating {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24'%3E%3Cpath fill='%236b7280' d='M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z' opacity='.25'/%3E%3Cpath fill='%236b7280' d='M12,4a8,8,0,0,1,7.89,6.7A1.53,1.53,0,0,0,21.38,12h0a1.5,1.5,0,0,0,1.48-1.75,11,11,0,0,0-21.72,0A1.5,1.5,0,0,0,2.62,12h0a1.53,1.53,0,0,0,1.49-1.3A8,8,0,0,1,12,4Z'%3E%3CanimateTransform attributeName='transform' dur='0.75s' repeatCount='indefinite' type='rotate' values='0 12 12;360 12 12'/%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 20px 20px;
+}
+
+/* Required field indicator */
+.rut-input-wrapper label.required::after {
+    content: ' *';
+    color: #ef4444;
+}
+
+/* Disabled state */
+.rut-input-wrapper input:disabled {
+    background-color: #f3f4f6;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 640px) {
+    .rut-input-wrapper input {
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
+
+    .rut-error-message,
+    .rut-success-message,
+    .tax-id-hint {
+        font-size: 0.8rem;
+    }
+}
+
+/* Dark mode support (optional) */
+@media (prefers-color-scheme: dark) {
+    .rut-input-wrapper label {
+        color: #e5e7eb;
+    }
+
+    .rut-input-wrapper input {
+        background-color: #1f2937;
+        border-color: #4b5563;
+        color: #f9fafb;
+    }
+
+    .rut-input-wrapper input:focus {
+        border-color: #60a5fa;
+        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+    }
+
+    .tax-id-hint {
+        color: #9ca3af;
+    }
+
+    .rut-input-wrapper input:disabled {
+        background-color: #374151;
+    }
+}
+
+/* Accessibility improvements */
+.rut-input-wrapper input[aria-invalid="true"] {
+    border-color: #ef4444 !important;
+}
+
+.rut-input-wrapper input[aria-invalid="false"] {
+    border-color: #10b981 !important;
+}
+
+/* Focus visible for keyboard navigation */
+.rut-input-wrapper input:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+/* Icon indicators (optional) */
+.rut-input-wrapper.has-icon input {
+    padding-right: 3rem;
+}
+
+.rut-input-wrapper .validation-icon {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.rut-input-wrapper .validation-icon.valid {
+    color: #10b981;
+}
+
+.rut-input-wrapper .validation-icon.invalid {
+    color: #ef4444;
+}
