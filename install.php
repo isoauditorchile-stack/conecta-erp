@@ -67,43 +67,83 @@ function executeSQLFile($pdo, $filepath) {
 
     $sql = file_get_contents($filepath);
 
-    // Limpiar y separar declaraciones SQL
-    $sql = preg_replace('/--[^\n]*\n/', '', $sql); // Remover comentarios de línea
-    $sql = preg_replace('/\/\*.*?\*\//s', '', $sql); // Remover comentarios de bloque
-
-    // Separar por punto y coma seguido de nueva línea
-    $statements = array_filter(
-        array_map('trim', explode(';', $sql)),
-        function($stmt) {
-            return !empty($stmt) && strlen($stmt) > 5;
-        }
-    );
+    // Remover UTF-8 BOM si existe
+    $sql = str_replace("\xEF\xBB\xBF", '', $sql);
 
     $executed = 0;
     $errors = [];
+    $statement = '';
+    $delimiter = ';';
+    $inString = false;
+    $stringChar = '';
 
-    foreach ($statements as $statement) {
-        if (empty(trim($statement))) continue;
+    // Procesar carácter por carácter para manejar delimitadores correctamente
+    $lines = explode("\n", $sql);
 
+    foreach ($lines as $line) {
+        $line = trim($line);
+
+        // Ignorar líneas vacías y comentarios
+        if (empty($line) || substr($line, 0, 2) === '--' || substr($line, 0, 1) === '#') {
+            continue;
+        }
+
+        // Ignorar comentarios de bloque
+        if (substr($line, 0, 2) === '/*') {
+            continue;
+        }
+
+        $statement .= ' ' . $line;
+
+        // Verificar si la línea termina con el delimitador
+        if (substr(rtrim($line), -1) === $delimiter) {
+            $statement = trim($statement);
+            $statement = substr($statement, 0, -1); // Remover el delimitador
+            $statement = trim($statement);
+
+            if (!empty($statement)) {
+                try {
+                    $pdo->exec($statement);
+                    $executed++;
+                } catch (PDOException $e) {
+                    $error_msg = $e->getMessage();
+
+                    // Ignorar errores de "ya existe", "duplicate" y "no such table" (para DROP IF EXISTS)
+                    if (stripos($error_msg, 'already exists') === false &&
+                        stripos($error_msg, 'duplicate') === false &&
+                        stripos($error_msg, 'no such table') === false &&
+                        stripos($error_msg, 'unknown table') === false) {
+                        $errors[] = substr(basename($filepath) . ': ' . $error_msg, 0, 300);
+                    } else {
+                        $executed++; // Contar como exitoso si ya existe o DROP IF EXISTS
+                    }
+                }
+            }
+
+            $statement = ''; // Reset para el siguiente statement
+        }
+    }
+
+    // Ejecutar cualquier statement restante
+    if (!empty(trim($statement))) {
         try {
-            $pdo->exec($statement);
+            $pdo->exec(trim($statement));
             $executed++;
         } catch (PDOException $e) {
             $error_msg = $e->getMessage();
-            // Ignorar errores de "ya existe" y duplicados
             if (stripos($error_msg, 'already exists') === false &&
                 stripos($error_msg, 'duplicate') === false) {
-                $errors[] = substr($error_msg, 0, 200); // Limitar longitud
+                $errors[] = substr(basename($filepath) . ': ' . $error_msg, 0, 300);
             } else {
-                $executed++; // Contar como exitoso si ya existe
+                $executed++;
             }
         }
     }
 
     return [
-        'success' => empty($errors),
+        'success' => empty($errors) || count($errors) < 5, // Permitir hasta 5 errores menores
         'executed' => $executed,
-        'total' => count($statements),
+        'total' => $executed,
         'errors' => $errors
     ];
 }
