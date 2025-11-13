@@ -283,13 +283,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
 
             $db->getConnection()->commit();
 
+            // Mostrar mensaje de éxito (NO redireccionar automáticamente)
             if ($is_super_admin) {
-                $_SESSION['user_id'] = $user_id;
-                $_SESSION['email'] = $email;
-                $_SESSION['is_admin'] = 1;
-                $_SESSION['username'] = $email;
-                header('Location: /admin/panel_super_admin.php');
-                exit;
+                $success = '¡Registro exitoso! Tu cuenta de super administrador ha sido creada. Puedes <a href="/login.php">iniciar sesión aquí</a>.';
             } else {
                 $success = '¡Registro exitoso! Tu cuenta está pendiente de aprobación. Te notificaremos por email.';
             }
