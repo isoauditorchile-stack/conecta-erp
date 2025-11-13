@@ -535,7 +535,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
 
                 <div class="form-group">
                     <label>Contraseña</label>
-                    <input type="password" name="password" required placeholder="••••••••" minlength="6">
+                    <div style="position: relative;">
+                        <input type="password" id="password" name="password" required placeholder="••••••••" minlength="6">
+                        <button type="button" onclick="togglePassword()" style="position: absolute; right: 70px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--primary); cursor: pointer; font-size: 1.2rem;">
+                            <i id="eyeIcon" class="fas fa-eye"></i>
+                        </button>
+                        <button type="button" onclick="generatePassword()" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: var(--primary); border: none; color: white; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600;">
+                            <i class="fas fa-key"></i> Generar
+                        </button>
+                    </div>
+                    <small style="color: #94a3b8; font-size: 0.85rem; margin-top: 0.5rem; display: block;">Mínimo 6 caracteres. Se recomienda usar el generador.</small>
                 </div>
 
                 <div class="form-group">
@@ -623,5 +632,71 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
             <p style="margin-top: 0.5rem;">Admin: auditorexchile@gmail.com</p>
         </div>
     </footer>
+
+    <script>
+        function generatePassword() {
+            const length = 16;
+            const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?";
+            let password = "";
+
+            // Asegurar al menos un carácter de cada tipo
+            const lower = "abcdefghijklmnopqrstuvwxyz";
+            const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            const numbers = "0123456789";
+            const special = "!@#$%^&*()_+-=";
+
+            password += lower[Math.floor(Math.random() * lower.length)];
+            password += upper[Math.floor(Math.random() * upper.length)];
+            password += numbers[Math.floor(Math.random() * numbers.length)];
+            password += special[Math.floor(Math.random() * special.length)];
+
+            // Completar el resto de la contraseña
+            for (let i = password.length; i < length; i++) {
+                password += charset[Math.floor(Math.random() * charset.length)];
+            }
+
+            // Mezclar los caracteres
+            password = password.split('').sort(() => Math.random() - 0.5).join('');
+
+            // Establecer la contraseña y mostrarla
+            const passwordInput = document.getElementById('password');
+            passwordInput.type = 'text';
+            passwordInput.value = password;
+
+            // Cambiar icono a visible
+            document.getElementById('eyeIcon').classList.remove('fa-eye');
+            document.getElementById('eyeIcon').classList.add('fa-eye-slash');
+
+            // Copiar al portapapeles
+            navigator.clipboard.writeText(password).then(() => {
+                // Mostrar notificación
+                const notification = document.createElement('div');
+                notification.textContent = '✓ Contraseña generada y copiada al portapapeles';
+                notification.style.cssText = 'position: fixed; top: 20px; right: 20px; background: linear-gradient(135deg, var(--success), #059669); color: white; padding: 1rem 2rem; border-radius: 10px; z-index: 10000; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.3);';
+                document.body.appendChild(notification);
+
+                setTimeout(() => {
+                    notification.style.transition = 'opacity 0.5s';
+                    notification.style.opacity = '0';
+                    setTimeout(() => notification.remove(), 500);
+                }, 3000);
+            });
+        }
+
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const eyeIcon = document.getElementById('eyeIcon');
+
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.classList.remove('fa-eye');
+                eyeIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.classList.remove('fa-eye-slash');
+                eyeIcon.classList.add('fa-eye');
+            }
+        }
+    </script>
 </body>
 </html>
