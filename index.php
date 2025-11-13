@@ -28,6 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
     $company_name = trim($_POST['company_name']);
     $phone = trim($_POST['phone']);
     $country = $_POST['country'];
+    $tax_id = trim($_POST['tax_id']);
 
     try {
         $db = Database::getInstance();
@@ -44,14 +45,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
 
             // Crear empresa
             $company_id = $db->insert(
-                "INSERT INTO companies (company_name, legal_name, country_id, created_at) VALUES (?, ?, ?, NOW())",
-                [$company_name, $company_name, 1]
+                "INSERT INTO companies (company_name, legal_name, tax_id, country_id, created_at) VALUES (?, ?, ?, ?, NOW())",
+                [$company_name, $company_name, $tax_id, 1]
             );
 
             // Crear usuario
             $user_id = $db->insert(
-                "INSERT INTO users (firstname, lastname, email, username, password, company_id, phone, country, status, is_admin, created_at)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())",
+                "INSERT INTO users (firstname, lastname, email, username, password, company_id, phone, country, tax_id, status, is_admin, created_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())",
                 [
                     $firstname,
                     $lastname,
@@ -61,6 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
                     $company_id,
                     $phone,
                     $country,
+                    $tax_id,
                     $status,
                     $is_super_admin ? 1 : 0
                 ]
@@ -553,13 +555,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
                 </div>
 
                 <div class="form-group">
-                    <label>Teléfono</label>
-                    <input type="tel" name="phone" required placeholder="+56 9 1234 5678">
-                </div>
-
-                <div class="form-group">
                     <label>País</label>
-                    <select name="country" required>
+                    <select name="country" id="country" required onchange="updateTaxIdPlaceholder()">
                         <option value="CL">🇨🇱 Chile</option>
                         <option value="AR">🇦🇷 Argentina</option>
                         <option value="PE">🇵🇪 Perú</option>
@@ -569,6 +566,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
                         <option value="US">🇺🇸 Estados Unidos</option>
                         <option value="ES">🇪🇸 España</option>
                     </select>
+                </div>
+
+                <div class="form-group">
+                    <label id="taxIdLabel">RUT Empresa</label>
+                    <input type="text" id="tax_id" name="tax_id" required placeholder="15.895.771-k" maxlength="20">
+                    <small id="taxIdHint" style="color: #94a3b8; font-size: 0.85rem; margin-top: 0.5rem; display: block;">
+                        Formato: XX.XXX.XXX-X (ej: 15.895.771-k)
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label>Teléfono</label>
+                    <input type="tel" name="phone" required placeholder="+56 9 1234 5678">
                 </div>
 
                 <button type="submit" name="register" class="btn btn-primary" style="width: 100%; justify-content: center;">
@@ -697,6 +707,137 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
                 eyeIcon.classList.add('fa-eye');
             }
         }
+
+        // Validador y formateador de RUT Chileno
+        function formatChileanRUT(rut) {
+            // Remover todo excepto números y k
+            rut = rut.replace(/[^0-9kK]/g, '').toUpperCase();
+
+            if (rut.length < 2) return rut;
+
+            // Separar cuerpo y dígito verificador
+            const body = rut.slice(0, -1);
+            const dv = rut.slice(-1);
+
+            // Formatear el cuerpo con puntos
+            let formattedBody = body.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+            return formattedBody + '-' + dv;
+        }
+
+        function validateChileanRUT(rut) {
+            // Limpiar RUT
+            rut = rut.replace(/\./g, '').replace(/-/g, '').toUpperCase();
+
+            if (rut.length < 2) return false;
+
+            const body = rut.slice(0, -1);
+            const dv = rut.slice(-1);
+
+            // Calcular dígito verificador
+            let suma = 0;
+            let multiplo = 2;
+
+            for (let i = body.length - 1; i >= 0; i--) {
+                suma += parseInt(body.charAt(i)) * multiplo;
+                multiplo = multiplo < 7 ? multiplo + 1 : 2;
+            }
+
+            const dvEsperado = 11 - (suma % 11);
+            const dvCalculado = dvEsperado === 11 ? '0' : dvEsperado === 10 ? 'K' : dvEsperado.toString();
+
+            return dv === dvCalculado;
+        }
+
+        // Configuración de formatos por país
+        const taxIdConfig = {
+            'CL': { label: 'RUT Empresa', placeholder: '15.895.771-k', hint: 'Formato: XX.XXX.XXX-X (ej: 15.895.771-k o 77.866.873-4)' },
+            'AR': { label: 'CUIT', placeholder: '20-12345678-3', hint: 'Formato: XX-XXXXXXXX-X' },
+            'PE': { label: 'RUC', placeholder: '12345678901', hint: 'Formato: 11 dígitos' },
+            'CO': { label: 'NIT', placeholder: '900.123.456-7', hint: 'Formato: XXX.XXX.XXX-X' },
+            'MX': { label: 'RFC', placeholder: 'ABC123456XXX', hint: 'Formato: XXXX-XXXXXX-XXX' },
+            'BR': { label: 'CNPJ', placeholder: '12.345.678/0001-90', hint: 'Formato: XX.XXX.XXX/XXXX-XX' },
+            'US': { label: 'EIN', placeholder: '12-3456789', hint: 'Formato: XX-XXXXXXX' },
+            'ES': { label: 'CIF/NIF', placeholder: 'A-12345678', hint: 'Formato: X-XXXXXXXX' }
+        };
+
+        function updateTaxIdPlaceholder() {
+            const country = document.getElementById('country').value;
+            const config = taxIdConfig[country];
+
+            if (config) {
+                document.getElementById('taxIdLabel').textContent = config.label;
+                document.getElementById('tax_id').placeholder = config.placeholder;
+                document.getElementById('taxIdHint').textContent = config.hint;
+            }
+        }
+
+        // Auto-formato mientras se escribe
+        document.addEventListener('DOMContentLoaded', function() {
+            const taxIdInput = document.getElementById('tax_id');
+            const countrySelect = document.getElementById('country');
+
+            taxIdInput.addEventListener('input', function(e) {
+                const country = countrySelect.value;
+                let value = e.target.value;
+
+                if (country === 'CL') {
+                    // Solo permitir números y K
+                    value = value.replace(/[^0-9kK]/g, '');
+
+                    // Auto-formatear si tiene suficientes caracteres
+                    if (value.length >= 2) {
+                        e.target.value = formatChileanRUT(value);
+                    } else {
+                        e.target.value = value;
+                    }
+                }
+            });
+
+            taxIdInput.addEventListener('blur', function(e) {
+                const country = countrySelect.value;
+
+                if (country === 'CL' && e.target.value.length > 0) {
+                    const cleanRUT = e.target.value.replace(/\./g, '').replace(/-/g, '');
+
+                    if (!validateChileanRUT(cleanRUT)) {
+                        e.target.style.borderColor = '#ef4444';
+
+                        // Mostrar mensaje de error
+                        let errorMsg = document.getElementById('rutError');
+                        if (!errorMsg) {
+                            errorMsg = document.createElement('small');
+                            errorMsg.id = 'rutError';
+                            errorMsg.style.cssText = 'color: #ef4444; font-size: 0.85rem; display: block; margin-top: 0.25rem;';
+                            errorMsg.textContent = '❌ RUT inválido. Verifica el dígito verificador.';
+                            e.target.parentElement.appendChild(errorMsg);
+                        }
+                    } else {
+                        e.target.style.borderColor = '#10b981';
+                        const errorMsg = document.getElementById('rutError');
+                        if (errorMsg) errorMsg.remove();
+                    }
+                }
+            });
+
+            // Validar antes de enviar el formulario
+            const form = taxIdInput.closest('form');
+            form.addEventListener('submit', function(e) {
+                const country = countrySelect.value;
+                const taxId = taxIdInput.value;
+
+                if (country === 'CL') {
+                    const cleanRUT = taxId.replace(/\./g, '').replace(/-/g, '');
+                    if (!validateChileanRUT(cleanRUT)) {
+                        e.preventDefault();
+                        taxIdInput.focus();
+                        taxIdInput.style.borderColor = '#ef4444';
+                        alert('Por favor, ingresa un RUT válido. Ejemplo: 15.895.771-k o 77.866.873-4');
+                        return false;
+                    }
+                }
+            });
+        });
     </script>
 </body>
 </html>
