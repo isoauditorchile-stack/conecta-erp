@@ -474,12 +474,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
             </a>
             <div class="nav-links">
                 <a href="#registro">Registro</a>
-                <select class="lang-selector" onchange="window.location.href='?lang='+this.value">
-                    <option value="es">🇪🇸 ES</option>
-                    <option value="en">🇺🇸 EN</option>
-                    <option value="pt">🇧🇷 PT</option>
-                    <option value="fr">🇫🇷 FR</option>
-                </select>
                 <a href="login.php" class="nav-btn btn-login">Iniciar Sesión</a>
                 <a href="#registro" class="nav-btn btn-register">Registrarse</a>
             </div>
