@@ -602,7 +602,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 Ingresa las credenciales de tu base de datos MySQL. Si la base de datos no existe, se creará automáticamente.
             </div>
 
-            <form method="POST">
+            <form method="POST" action="?step=2">
                 <input type="hidden" name="db_config" value="1">
 
                 <div class="form-group">
@@ -649,7 +649,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </div>
 
-            <form method="POST">
+            <form method="POST" action="?step=3">
                 <input type="hidden" name="install_database" value="1">
                 <button type="submit" class="btn">Instalar Ahora →</button>
             </form>
