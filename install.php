@@ -16,7 +16,21 @@ session_start();
 set_time_limit(300);
 ini_set('max_execution_time', 300);
 
-$step = isset($_GET['step']) ? (int)$_GET['step'] : 1;
+// Detectar el paso actual
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Si es POST, detectar el paso desde los datos enviados
+    if (isset($_POST['db_config'])) {
+        $step = 2;
+    } elseif (isset($_POST['install_database'])) {
+        $step = 3;
+    } else {
+        $step = 1;
+    }
+} else {
+    // Si es GET, usar el parámetro step de la URL
+    $step = isset($_GET['step']) ? (int)$_GET['step'] : 1;
+}
+
 $error = '';
 $success = '';
 
