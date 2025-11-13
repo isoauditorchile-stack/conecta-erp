@@ -41,7 +41,7 @@ try {
     // 3. Instalar sistema completo de administración
     echo "3️⃣ Instalando sistema de administración completo...\n";
 
-    $sql_file = file_get_contents('database/SISTEMA_COMPLETO_ADMIN.sql');
+    $sql_file = file_get_contents(__DIR__ . '/database/SISTEMA_COMPLETO_ADMIN.sql');
 
     // Procesar línea por línea
     $statements = [];
