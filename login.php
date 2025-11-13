@@ -10,11 +10,11 @@ $error = '';
 
 // Si ya tiene sesión activa, redirigir al dashboard correspondiente
 if (isset($_SESSION['user_id'])) {
+    // SOLO auditorexchile@gmail.com tiene acceso al panel admin
     if ($_SESSION['email'] === 'auditorexchile@gmail.com') {
         header('Location: /admin/panel_super_admin.php');
-    } else if ($_SESSION['is_admin']) {
-        header('Location: /admin/dashboard_admin.php');
     } else {
+        // Todos los demás usuarios van al dashboard de usuario
         header('Location: /user/dashboard_user.php');
     }
     exit;
@@ -58,11 +58,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     logActivity($user['id'], 'login', 'Inicio de sesión exitoso', 'auth');
 
                     // Redirigir según tipo de usuario
+                    // SOLO auditorexchile@gmail.com puede acceder al panel admin
                     if ($user['email'] === 'auditorexchile@gmail.com') {
                         header('Location: /admin/panel_super_admin.php');
-                    } else if ($user['is_admin']) {
-                        header('Location: /admin/dashboard_admin.php');
                     } else {
+                        // Todos los demás usuarios van al dashboard de usuario
                         header('Location: /user/dashboard_user.php');
                     }
                     exit;
