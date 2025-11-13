@@ -257,6 +257,9 @@ $alert = getAlert();
                 <a href="/admin/dashboard_admin.php" class="menu-item">
                     <i class="fas fa-tachometer-alt"></i> Dashboard Admin
                 </a>
+                <a href="/user/dashboard_user.php" class="menu-item">
+                    <i class="fas fa-th"></i> Dashboard Usuarios
+                </a>
                 <a href="/logout.php" class="menu-item">
                     <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
                 </a>
