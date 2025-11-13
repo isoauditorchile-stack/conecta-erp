@@ -4,6 +4,7 @@
  */
 
 require_once __DIR__ . '/includes/config.php';
+require_once __DIR__ . '/includes/i18n.php';
 initSession();
 
 // Si ya tiene sesión, redirigir
@@ -208,6 +209,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
             border-radius: 8px;
             cursor: pointer;
             font-weight: 500;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .lang-selector:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--primary);
+        }
+
+        .lang-selector:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
+        .lang-selector option {
+            background: #1e293b;
+            color: white;
+            padding: 0.5rem;
         }
 
         /* Hero Section */
@@ -461,10 +481,130 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
             transform: translateY(-3px);
         }
 
+        /* Pricing Cards */
+        .pricing-card {
+            background: rgba(30, 41, 59, 0.8);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2.5rem;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--primary);
+            box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);
+        }
+
+        .pricing-card-featured {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15));
+            border: 2px solid var(--primary);
+            transform: scale(1.05);
+        }
+
+        .pricing-card-featured:hover {
+            transform: scale(1.08) translateY(-10px);
+        }
+
+        .pricing-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .pricing-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .pricing-header h3 {
+            font-size: 1.8rem;
+            margin: 1rem 0;
+            color: white;
+        }
+
+        .pricing-price {
+            margin: 1rem 0;
+        }
+
+        .pricing-features {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .pricing-features li {
+            padding: 0.75rem 0;
+            color: #cbd5e1;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.95rem;
+        }
+
+        .pricing-features li i {
+            font-size: 1.2rem;
+            color: var(--success);
+        }
+
+        .pricing-features li i.fa-times-circle {
+            color: #64748b;
+        }
+
+        /* Module Cards */
+        .module-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .module-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--primary);
+            transform: translateY(-5px);
+        }
+
+        .module-card h4 {
+            color: white;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .module-card h4 i {
+            color: var(--primary);
+            margin-right: 0.5rem;
+        }
+
+        .module-card p {
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
         @media (max-width: 768px) {
             .hero h1 { font-size: 2.5rem; }
             .hero p { font-size: 1.2rem; }
             .nav-links { display: none; }
+            .pricing-card-featured {
+                transform: scale(1);
+            }
+            .pricing-card-featured:hover {
+                transform: translateY(-10px);
+            }
         }
     </style>
 </head>
@@ -477,6 +617,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
                 <span>CONECTA ERP</span>
             </a>
             <div class="nav-links">
+                <!-- Language Selector -->
+                <select class="lang-selector" onchange="changeLanguage(this.value)">
+                    <option value="es" <?php echo currentLanguage() === 'es' ? 'selected' : ''; ?>>🇪🇸 Español</option>
+                    <option value="en" <?php echo currentLanguage() === 'en' ? 'selected' : ''; ?>>🇬🇧 English</option>
+                    <option value="pt" <?php echo currentLanguage() === 'pt' ? 'selected' : ''; ?>>🇵🇹 Português</option>
+                    <option value="fr" <?php echo currentLanguage() === 'fr' ? 'selected' : ''; ?>>🇫🇷 Français</option>
+                    <option value="de" <?php echo currentLanguage() === 'de' ? 'selected' : ''; ?>>🇩🇪 Deutsch</option>
+                    <option value="it" <?php echo currentLanguage() === 'it' ? 'selected' : ''; ?>>🇮🇹 Italiano</option>
+                    <option value="ru" <?php echo currentLanguage() === 'ru' ? 'selected' : ''; ?>>🇷🇺 Русский</option>
+                    <option value="zh" <?php echo currentLanguage() === 'zh' ? 'selected' : ''; ?>>🇨🇳 中文</option>
+                </select>
                 <a href="#registro">Registro</a>
                 <a href="login.php" class="nav-btn btn-login">Iniciar Sesión</a>
                 <a href="#registro" class="nav-btn btn-register">Registrarse</a>
@@ -491,12 +642,193 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
             <p>Sistema ERP Empresarial Completo - Competimos con SAP y Softland</p>
             <p style="font-size: 1.1rem; margin-bottom: 2rem;">14 Módulos • 106 Submódulos • Multi-país • Multi-moneda • Multi-idioma</p>
             <div class="hero-buttons">
-                <a href="#registro" class="btn btn-primary">
-                    Empezar Ahora <i class="fas fa-arrow-right"></i>
+                <a href="#planes" class="btn btn-primary">
+                    Ver Planes <i class="fas fa-arrow-right"></i>
                 </a>
-                <a href="login.php" class="btn btn-secondary">
-                    <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+                <a href="#registro" class="btn btn-secondary">
+                    <i class="fas fa-user-plus"></i> Registrarse Gratis
                 </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Plans Section -->
+    <section id="planes" style="padding: 6rem 5%; background: #1e293b;">
+        <div style="max-width: 1400px; margin: 0 auto;">
+            <div class="section-title" style="color: white;">Planes y Módulos</div>
+            <div class="section-subtitle" style="color: #94a3b8; max-width: 800px; margin: 0 auto 4rem;">
+                Selecciona el plan que mejor se adapte a tu empresa. Todos los planes incluyen Multi-usuario, Multi-empresa, Multi-moneda y Multi-idioma.
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+                <!-- Plan Starter -->
+                <div class="pricing-card">
+                    <div class="pricing-header">
+                        <i class="fas fa-rocket" style="font-size: 2.5rem; color: var(--primary); margin-bottom: 1rem;"></i>
+                        <h3>Starter</h3>
+                        <div class="pricing-price">
+                            <span style="font-size: 3rem; font-weight: 800;">$299</span>
+                            <span style="font-size: 1.2rem; color: #94a3b8;">/mes</span>
+                        </div>
+                        <p style="color: #94a3b8; margin-top: 1rem;">Ideal para pequeñas empresas</p>
+                    </div>
+                    <ul class="pricing-features">
+                        <li><i class="fas fa-check-circle"></i> <strong>Administración Central</strong></li>
+                        <li><i class="fas fa-check-circle"></i> <strong>Gestión de Entidades</strong> (Clientes, Proveedores)</li>
+                        <li><i class="fas fa-check-circle"></i> <strong>Finanzas Básicas</strong> (Contabilidad, Bancos)</li>
+                        <li><i class="fas fa-check-circle"></i> <strong>Ventas</strong> (CRM, Cotizaciones, POS)</li>
+                        <li><i class="fas fa-check-circle"></i> Dashboard principal</li>
+                        <li style="color: #64748b;"><i class="fas fa-times-circle"></i> Materiales e Inventario</li>
+                        <li style="color: #64748b;"><i class="fas fa-times-circle"></i> Producción</li>
+                        <li style="color: #64748b;"><i class="fas fa-times-circle"></i> RRHH avanzado</li>
+                    </ul>
+                    <a href="#registro" class="btn btn-secondary" style="width: 100%; justify-content: center; margin-top: 2rem;">
+                        Comenzar Gratis
+                    </a>
+                </div>
+
+                <!-- Plan Professional -->
+                <div class="pricing-card pricing-card-featured">
+                    <div class="pricing-badge">Más Popular</div>
+                    <div class="pricing-header">
+                        <i class="fas fa-briefcase" style="font-size: 2.5rem; color: var(--primary); margin-bottom: 1rem;"></i>
+                        <h3>Professional</h3>
+                        <div class="pricing-price">
+                            <span style="font-size: 3rem; font-weight: 800;">$699</span>
+                            <span style="font-size: 1.2rem; color: #94a3b8;">/mes</span>
+                        </div>
+                        <p style="color: #94a3b8; margin-top: 1rem;">Para empresas en crecimiento</p>
+                    </div>
+                    <ul class="pricing-features">
+                        <li><i class="fas fa-check-circle"></i> <strong>Todo en Starter</strong></li>
+                        <li><i class="fas fa-check-circle"></i> <strong>Materiales</strong> (Inventario, Compras, Warehouses)</li>
+                        <li><i class="fas fa-check-circle"></i> <strong>RRHH Completo</strong> (Nómina, Previred, Relojes)</li>
+                        <li><i class="fas fa-check-circle"></i> <strong>Controlling</strong> (Costos, Presupuestos)</li>
+                        <li><i class="fas fa-check-circle"></i> <strong>CRM Avanzado</strong></li>
+                        <li><i class="fas fa-check-circle"></i> <strong>Integración SII</strong> (DTEs, Facturación electrónica)</li>
+                        <li style="color: #64748b;"><i class="fas fa-times-circle"></i> Producción</li>
+                        <li style="color: #64748b;"><i class="fas fa-times-circle"></i> SCM</li>
+                    </ul>
+                    <a href="#registro" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 2rem;">
+                        Comenzar Ahora
+                    </a>
+                </div>
+
+                <!-- Plan Enterprise -->
+                <div class="pricing-card">
+                    <div class="pricing-header">
+                        <i class="fas fa-building" style="font-size: 2.5rem; color: var(--primary); margin-bottom: 1rem;"></i>
+                        <h3>Enterprise</h3>
+                        <div class="pricing-price">
+                            <span style="font-size: 3rem; font-weight: 800;">$1,499</span>
+                            <span style="font-size: 1.2rem; color: #94a3b8;">/mes</span>
+                        </div>
+                        <p style="color: #94a3b8; margin-top: 1rem;">Para grandes empresas</p>
+                    </div>
+                    <ul class="pricing-features">
+                        <li><i class="fas fa-check-circle"></i> <strong>Todo en Professional</strong></li>
+                        <li><i class="fas fa-check-circle"></i> <strong>Producción</strong> (MRP, BOM, Ruteo, QA)</li>
+                        <li><i class="fas fa-check-circle"></i> <strong>SCM</strong> (Supply Chain Management)</li>
+                        <li><i class="fas fa-check-circle"></i> <strong>Fidelización</strong> (Loyalty, Promociones)</li>
+                        <li><i class="fas fa-check-circle"></i> <strong>Business Intelligence</strong> (15 submódulos)</li>
+                        <li><i class="fas fa-check-circle"></i> API y Webhooks</li>
+                        <li><i class="fas fa-check-circle"></i> Soporte prioritario 24/7</li>
+                        <li><i class="fas fa-check-circle"></i> Usuarios ilimitados</li>
+                    </ul>
+                    <a href="#registro" class="btn btn-secondary" style="width: 100%; justify-content: center; margin-top: 2rem;">
+                        Comenzar Ahora
+                    </a>
+                </div>
+
+                <!-- Plan Custom -->
+                <div class="pricing-card">
+                    <div class="pricing-header">
+                        <i class="fas fa-crown" style="font-size: 2.5rem; color: #f59e0b; margin-bottom: 1rem;"></i>
+                        <h3>Custom</h3>
+                        <div class="pricing-price">
+                            <span style="font-size: 2rem; font-weight: 800;">Personalizado</span>
+                        </div>
+                        <p style="color: #94a3b8; margin-top: 1rem;">Adaptado a tus necesidades</p>
+                    </div>
+                    <ul class="pricing-features">
+                        <li><i class="fas fa-check-circle"></i> <strong>Todos los módulos</strong></li>
+                        <li><i class="fas fa-check-circle"></i> Módulos personalizados</li>
+                        <li><i class="fas fa-check-circle"></i> Integraciones a medida</li>
+                        <li><i class="fas fa-check-circle"></i> Instalación on-premise</li>
+                        <li><i class="fas fa-check-circle"></i> Capacitación personalizada</li>
+                        <li><i class="fas fa-check-circle"></i> Soporte dedicado</li>
+                        <li><i class="fas fa-check-circle"></i> SLA garantizado</li>
+                        <li><i class="fas fa-check-circle"></i> Account Manager</li>
+                    </ul>
+                    <a href="#registro" class="btn btn-secondary" style="width: 100%; justify-content: center; margin-top: 2rem; background: #f59e0b; border-color: #f59e0b;">
+                        Contactar Ventas
+                    </a>
+                </div>
+            </div>
+
+            <!-- Módulos detallados -->
+            <div style="margin-top: 6rem; padding: 3rem; background: rgba(0,0,0,0.3); border-radius: 20px;">
+                <h3 style="font-size: 2rem; margin-bottom: 2rem; text-align: center; color: white;">
+                    <i class="fas fa-layer-group"></i> 14 Módulos • 106 Submódulos
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
+                    <div class="module-card">
+                        <h4><i class="fas fa-cog"></i> Administración Central</h4>
+                        <p>3 submódulos</p>
+                    </div>
+                    <div class="module-card">
+                        <h4><i class="fas fa-users"></i> Gestión de Entidades</h4>
+                        <p>5 submódulos</p>
+                    </div>
+                    <div class="module-card">
+                        <h4><i class="fas fa-dollar-sign"></i> Finanzas</h4>
+                        <p>11 submódulos</p>
+                    </div>
+                    <div class="module-card">
+                        <h4><i class="fas fa-chart-line"></i> Controlling</h4>
+                        <p>8 submódulos</p>
+                    </div>
+                    <div class="module-card">
+                        <h4><i class="fas fa-shopping-cart"></i> Ventas</h4>
+                        <p>9 submódulos</p>
+                    </div>
+                    <div class="module-card">
+                        <h4><i class="fas fa-boxes"></i> Materiales</h4>
+                        <p>8 submódulos</p>
+                    </div>
+                    <div class="module-card">
+                        <h4><i class="fas fa-industry"></i> Producción</h4>
+                        <p>10 submódulos</p>
+                    </div>
+                    <div class="module-card">
+                        <h4><i class="fas fa-user-tie"></i> RRHH</h4>
+                        <p>11 submódulos</p>
+                    </div>
+                    <div class="module-card">
+                        <h4><i class="fas fa-truck"></i> SCM</h4>
+                        <p>10 submódulos</p>
+                    </div>
+                    <div class="module-card">
+                        <h4><i class="fas fa-handshake"></i> CRM</h4>
+                        <p>8 submódulos</p>
+                    </div>
+                    <div class="module-card">
+                        <h4><i class="fas fa-gift"></i> Fidelización</h4>
+                        <p>7 submódulos</p>
+                    </div>
+                    <div class="module-card">
+                        <h4><i class="fas fa-brain"></i> Business Intelligence</h4>
+                        <p>15 submódulos</p>
+                    </div>
+                    <div class="module-card">
+                        <h4><i class="fas fa-sliders-h"></i> Configuración</h4>
+                        <p>1 submódulo</p>
+                    </div>
+                    <div class="module-card">
+                        <h4><i class="fas fa-tachometer-alt"></i> Dashboard Principal</h4>
+                        <p>Panel de control</p>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -649,6 +981,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
     <script src="/assets/js/rut-validator.js"></script>
 
     <script>
+        // Language Selector
+        function changeLanguage(lang) {
+            // Redirect to same page with language parameter
+            window.location.href = '?lang=' + lang;
+        }
+
         function generatePassword() {
             const length = 16;
             const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?";
