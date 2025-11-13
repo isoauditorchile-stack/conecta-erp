@@ -295,6 +295,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
             }
         }
     } catch (Exception $e) {
+        if ($db && $db->getConnection()->inTransaction()) {
+            $db->getConnection()->rollBack();
+        }
         $error = 'Error al registrar. Por favor, intenta nuevamente.';
         error_log("Registration error: " . $e->getMessage());
     }
