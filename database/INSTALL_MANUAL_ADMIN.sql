@@ -4,12 +4,19 @@
 -- Ejecutar en phpMyAdmin o cliente MySQL
 -- =====================================================
 
+-- Deshabilitar verificaciones de foreign keys temporalmente
+SET FOREIGN_KEY_CHECKS = 0;
+
 -- Eliminar tablas antiguas (en orden correcto por foreign keys)
+DROP TABLE IF EXISTS `notificaciones_trial`;
 DROP TABLE IF EXISTS `historial_suscripciones`;
 DROP TABLE IF EXISTS `pagos`;
 DROP TABLE IF EXISTS `suscripciones`;
 DROP TABLE IF EXISTS `aprobaciones_usuario`;
 DROP TABLE IF EXISTS `planes`;
+
+-- Reactivar verificaciones de foreign keys
+SET FOREIGN_KEY_CHECKS = 1;
 
 -- =====================================================
 -- TABLA: planes
