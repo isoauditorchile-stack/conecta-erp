@@ -5,7 +5,6 @@
 
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/i18n.php';
-require_once __DIR__ . '/includes/seed_nueva_empresa.php';
 initSession();
 
 // Traducciones para la landing page
@@ -281,18 +280,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
                 "UPDATE companies SET owner_user_id = ? WHERE id = ?",
                 [$user_id, $company_id]
             );
-
-            // MULTIEMPRESA: Crear datos en blanco para la nueva empresa
-            if (!$is_super_admin) {
-                error_log("Ejecutando seed para nueva empresa $company_id, usuario $user_id");
-                $seed_result = seedNuevaEmpresa($company_id, $user_id);
-
-                // Asignar módulos según plan TRIAL por defecto
-                $modulos_result = asignarModulosSegunPlan($user_id, $company_id, 'TRIAL');
-
-                error_log("Seed resultado: " . json_encode($seed_result));
-                error_log("Módulos asignados: " . json_encode($modulos_result));
-            }
 
             $db->getConnection()->commit();
 

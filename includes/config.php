@@ -331,11 +331,24 @@ function sendEmail($to, $subject, $body, $from = null) {
 
 /**
  * Obtener módulos del usuario
- * MULTIEMPRESA: Filtrado por company_id y plan activo
  */
 function getUserModules($user_id) {
-    // Usar la función de módulos según plan (incluye filtro multiempresa)
-    return getModulosSegunPlan($user_id);
+    $db = Database::getInstance();
+
+    if (isAdmin()) {
+        // Admin tiene acceso a todos los módulos
+        return $db->fetchAll("SELECT * FROM modules WHERE is_active = 1 ORDER BY sort_order");
+    }
+
+    // Usuarios regulares tienen módulos según permisos
+    return $db->fetchAll("
+        SELECT DISTINCT m.*
+        FROM modules m
+        INNER JOIN submodules sm ON m.id = sm.module_id
+        INNER JOIN user_permissions up ON sm.id = up.submodule_id
+        WHERE up.user_id = ? AND m.is_active = 1
+        ORDER BY m.sort_order
+    ", [$user_id]);
 }
 
 /**
