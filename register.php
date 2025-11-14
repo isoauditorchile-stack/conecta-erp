@@ -1,3 +1,87 @@
+<?php
+// =========================
+// PROCESAMIENTO DEL FORMULARIO
+// =========================
+session_start();
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    require_once __DIR__ . '/includes/config.php';
+    require_once __DIR__ . '/includes/rut_validator.php';
+
+    $db = Database::getInstance();
+
+    try {
+        // Sanitizar datos
+        $full_name = sanitize($_POST['full_name']);
+        $email = sanitize($_POST['email']);
+        $username = sanitize($_POST['username']);
+        $password = $_POST['password'];
+        $password_confirm = $_POST['password_confirm'];
+        $country_id = (int) $_POST['country_id'];
+        $language_code = sanitize($_POST['language_code']);
+        $tax_id = trim($_POST['tax_id']);
+        $phone = sanitize($_POST['phone'] ?? '');
+        $plan_id = (int) $_POST['plan_id'];
+
+        // Validaciones
+        if ($password !== $password_confirm) {
+            throw new Exception('Las contraseñas no coinciden');
+        }
+
+        if (strlen($password) < 8) {
+            throw new Exception('La contraseña debe tener al menos 8 caracteres');
+        }
+
+        if (!isValidEmail($email)) {
+            throw new Exception('Email inválido');
+        }
+
+        // Validar RUT si es Chile
+        if ($country_id === 1) {
+            if (!validateChileanRUT($tax_id)) {
+                throw new Exception('RUT chileno inválido');
+            }
+            $tax_id = cleanRUT($tax_id);
+        }
+
+        // Verificar si el email ya existe
+        $existingUser = $db->fetchOne("SELECT id FROM users WHERE email = ?", [$email]);
+        if ($existingUser) {
+            throw new Exception('El email ya está registrado');
+        }
+
+        // Verificar si el username ya existe
+        $existingUsername = $db->fetchOne("SELECT id FROM users WHERE username = ?", [$username]);
+        if ($existingUsername) {
+            throw new Exception('El nombre de usuario ya está en uso');
+        }
+
+        // Hash de la contraseña
+        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+
+        // Calcular fecha de fin de trial (14 días)
+        $trialEndsAt = date('Y-m-d H:i:s', strtotime('+14 days'));
+
+        // Insertar usuario
+        $userId = $db->insert(
+            "INSERT INTO users (username, email, password, full_name, tax_id, country_id, language_code, phone, status, trial_ends_at, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'trial', ?, NOW())",
+            [$username, $email, $hashedPassword, $full_name, $tax_id, $country_id, $language_code, $phone, $trialEndsAt]
+        );
+
+        // Log de actividad
+        logActivity($userId, 'user_registered', 'Usuario registrado en el sistema', 'AUTH');
+
+        // Mensaje de éxito
+        $_SESSION['success'] = '¡Cuenta creada exitosamente! Ya puedes iniciar sesión.';
+        header('Location: login.php');
+        exit;
+
+    } catch (Exception $e) {
+        $_SESSION['error'] = $e->getMessage();
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -318,14 +402,14 @@
                 <?php if (isset($_SESSION['error'])): ?>
                     <div class="alert alert-danger">
                         <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                        <?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
+                        <?php echo htmlspecialchars($_SESSION['error']); unset($_SESSION['error']); ?>
                     </div>
                 <?php endif; ?>
 
                 <?php if (isset($_SESSION['success'])): ?>
                     <div class="alert alert-success">
                         <i class="bi bi-check-circle-fill me-2"></i>
-                        <?php echo $_SESSION['success']; unset($_SESSION['success']); ?>
+                        <?php echo htmlspecialchars($_SESSION['success']); unset($_SESSION['success']); ?>
                     </div>
                 <?php endif; ?>
 
@@ -729,88 +813,3 @@
     </script>
 </body>
 </html>
-
-<?php
-// =========================
-// PROCESAMIENTO DEL FORMULARIO
-// =========================
-session_start();
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    require_once __DIR__ . '/includes/config.php';
-    require_once __DIR__ . '/includes/rut_validator.php';
-
-    $db = Database::getInstance();
-
-    try {
-        // Sanitizar datos
-        $full_name = sanitize($_POST['full_name']);
-        $email = sanitize($_POST['email']);
-        $username = sanitize($_POST['username']);
-        $password = $_POST['password'];
-        $password_confirm = $_POST['password_confirm'];
-        $country_id = (int) $_POST['country_id'];
-        $language_code = sanitize($_POST['language_code']);
-        $tax_id = trim($_POST['tax_id']);
-        $phone = sanitize($_POST['phone'] ?? '');
-        $plan_id = (int) $_POST['plan_id'];
-
-        // Validaciones
-        if ($password !== $password_confirm) {
-            throw new Exception('Las contraseñas no coinciden');
-        }
-
-        if (strlen($password) < 8) {
-            throw new Exception('La contraseña debe tener al menos 8 caracteres');
-        }
-
-        if (!isValidEmail($email)) {
-            throw new Exception('Email inválido');
-        }
-
-        // Validar RUT si es Chile
-        if ($country_id === 1) {
-            if (!validateChileanRUT($tax_id)) {
-                throw new Exception('RUT chileno inválido');
-            }
-            $tax_id = cleanRUT($tax_id);
-        }
-
-        // Verificar si el email ya existe
-        $existingUser = $db->fetchOne("SELECT id FROM users WHERE email = ?", [$email]);
-        if ($existingUser) {
-            throw new Exception('El email ya está registrado');
-        }
-
-        // Verificar si el username ya existe
-        $existingUsername = $db->fetchOne("SELECT id FROM users WHERE username = ?", [$username]);
-        if ($existingUsername) {
-            throw new Exception('El nombre de usuario ya está en uso');
-        }
-
-        // Hash de la contraseña
-        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-
-        // Calcular fecha de fin de trial (14 días)
-        $trialEndsAt = date('Y-m-d H:i:s', strtotime('+14 days'));
-
-        // Insertar usuario
-        $userId = $db->insert(
-            "INSERT INTO users (username, email, password, full_name, tax_id, country_id, language_code, phone, status, trial_ends_at, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'trial', ?, NOW())",
-            [$username, $email, $hashedPassword, $full_name, $tax_id, $country_id, $language_code, $phone, $trialEndsAt]
-        );
-
-        // Log de actividad
-        logActivity($userId, 'user_registered', 'Usuario registrado en el sistema', 'AUTH');
-
-        // Mensaje de éxito
-        $_SESSION['success'] = '¡Cuenta creada exitosamente! Ya puedes iniciar sesión.';
-        header('Location: login.php');
-        exit;
-
-    } catch (Exception $e) {
-        $_SESSION['error'] = $e->getMessage();
-    }
-}
-?>
