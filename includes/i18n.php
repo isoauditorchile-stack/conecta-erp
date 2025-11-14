@@ -522,24 +522,10 @@ function currentLanguage() {
 }
 
 /**
- * Helper function - Formatear fecha
- */
-function formatDate($date, $format = 'medium') {
-    return I18n::getInstance()->formatDate($date, $format);
-}
-
-/**
  * Helper function - Formatear número
  */
 function formatNumber($number, $decimals = 2) {
     return I18n::getInstance()->formatNumber($number, $decimals);
-}
-
-/**
- * Helper function - Formatear moneda
- */
-function formatCurrency($amount, $currency = 'CLP') {
-    return I18n::getInstance()->formatCurrency($amount, $currency);
 }
 
 /**
