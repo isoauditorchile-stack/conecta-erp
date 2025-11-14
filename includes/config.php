@@ -331,24 +331,11 @@ function sendEmail($to, $subject, $body, $from = null) {
 
 /**
  * Obtener módulos del usuario
+ * MULTIEMPRESA: Filtrado por company_id y plan activo
  */
 function getUserModules($user_id) {
-    $db = Database::getInstance();
-
-    if (isAdmin()) {
-        // Admin tiene acceso a todos los módulos
-        return $db->fetchAll("SELECT * FROM modules WHERE is_active = 1 ORDER BY sort_order");
-    }
-
-    // Usuarios regulares tienen módulos según permisos
-    return $db->fetchAll("
-        SELECT DISTINCT m.*
-        FROM modules m
-        INNER JOIN submodules sm ON m.id = sm.module_id
-        INNER JOIN user_permissions up ON sm.id = up.submodule_id
-        WHERE up.user_id = ? AND m.is_active = 1
-        ORDER BY m.sort_order
-    ", [$user_id]);
+    // Usar la función de módulos según plan (incluye filtro multiempresa)
+    return getModulosSegunPlan($user_id);
 }
 
 /**
@@ -376,6 +363,166 @@ function getModuleSubmodules($module_id, $user_id = null) {
         WHERE sm.module_id = ? AND up.user_id = ? AND sm.is_active = 1 AND up.can_view = 1
         ORDER BY sm.sort_order
     ", [$module_id, $user_id]);
+}
+
+/**
+ * ================================================================
+ * FUNCIONES DE AISLAMIENTO MULTI-EMPRESA
+ * ================================================================
+ * CRÍTICO: Estas funciones aseguran que el Usuario 1 NUNCA vea
+ * datos del Usuario 2. Aislamiento total por company_id.
+ * ================================================================
+ */
+
+/**
+ * Obtener company_id del usuario actual
+ */
+function getCurrentCompanyId() {
+    if (!isset($_SESSION['user_id'])) {
+        return null;
+    }
+
+    // Si ya está en sesión, retornar
+    if (isset($_SESSION['company_id'])) {
+        return $_SESSION['company_id'];
+    }
+
+    // Cargar de la base de datos
+    $db = Database::getInstance();
+    $user = $db->fetchOne("SELECT company_id FROM users WHERE id = ?", [$_SESSION['user_id']]);
+
+    if ($user && $user['company_id']) {
+        $_SESSION['company_id'] = $user['company_id'];
+        return $user['company_id'];
+    }
+
+    return null;
+}
+
+/**
+ * Verificar que el usuario tiene acceso a un registro específico
+ * MULTIEMPRESA: Solo puede acceder a registros de su propia empresa
+ */
+function verificarAccesoEmpresa($table, $record_id) {
+    $company_id = getCurrentCompanyId();
+
+    if (!$company_id) {
+        return false;
+    }
+
+    // Super admin puede acceder a todo
+    if (isAdmin()) {
+        return true;
+    }
+
+    $db = Database::getInstance();
+
+    // Verificar que el registro pertenece a la empresa del usuario
+    $record = $db->fetchOne(
+        "SELECT company_id FROM `$table` WHERE id = ?",
+        [$record_id]
+    );
+
+    return $record && $record['company_id'] == $company_id;
+}
+
+/**
+ * Agregar filtro WHERE company_id automáticamente a queries
+ * USO: addCompanyFilter($sql, $params)
+ */
+function addCompanyFilter($sql, &$params) {
+    // Super admin no necesita filtro
+    if (isAdmin()) {
+        return $sql;
+    }
+
+    $company_id = getCurrentCompanyId();
+
+    if (!$company_id) {
+        return $sql;
+    }
+
+    // Detectar si ya tiene WHERE
+    if (stripos($sql, 'WHERE') !== false) {
+        $sql .= " AND company_id = ?";
+    } else {
+        $sql .= " WHERE company_id = ?";
+    }
+
+    $params[] = $company_id;
+
+    return $sql;
+}
+
+/**
+ * Wrapper seguro para fetchAll con filtro de empresa
+ */
+function fetchAllSecure($sql, $params = []) {
+    $sql = addCompanyFilter($sql, $params);
+    $db = Database::getInstance();
+    return $db->fetchAll($sql, $params);
+}
+
+/**
+ * Wrapper seguro para fetchOne con filtro de empresa
+ */
+function fetchOneSecure($sql, $params = []) {
+    $sql = addCompanyFilter($sql, $params);
+    $db = Database::getInstance();
+    return $db->fetchOne($sql, $params);
+}
+
+/**
+ * Obtener módulos según plan activo
+ */
+function getModulosSegunPlan($user_id) {
+    $db = Database::getInstance();
+
+    // Admin siempre ve todos
+    if (isAdmin()) {
+        return $db->fetchAll("SELECT * FROM modules WHERE is_active = 1 ORDER BY sort_order");
+    }
+
+    // Obtener suscripción activa del usuario
+    $company_id = getCurrentCompanyId();
+
+    $suscripcion = $db->fetchOne("
+        SELECT s.*, p.plan_code, p.modulos_incluidos
+        FROM suscripciones s
+        INNER JOIN planes p ON s.plan_id = p.id
+        WHERE s.company_id = ? AND s.estado IN ('trial', 'activa')
+        ORDER BY s.id DESC
+        LIMIT 1
+    ", [$company_id]);
+
+    if (!$suscripcion) {
+        // Sin suscripción = sin módulos
+        return [];
+    }
+
+    // Si es trial o tiene módulos ilimitados
+    if ($suscripcion['modulos_incluidos'] == 14 || $suscripcion['modulos_incluidos'] == 0) {
+        // Obtener módulos según permisos del usuario
+        return $db->fetchAll("
+            SELECT DISTINCT m.*
+            FROM modules m
+            INNER JOIN submodules sm ON m.id = sm.module_id
+            INNER JOIN user_permissions up ON sm.id = up.submodule_id
+            WHERE up.user_id = ? AND m.is_active = 1
+            ORDER BY m.sort_order
+        ", [$user_id]);
+    }
+
+    // Módulos limitados según plan
+    // TODO: Implementar lógica de selección de módulos específicos
+    return $db->fetchAll("
+        SELECT DISTINCT m.*
+        FROM modules m
+        INNER JOIN submodules sm ON m.id = sm.module_id
+        INNER JOIN user_permissions up ON sm.id = up.submodule_id
+        WHERE up.user_id = ? AND m.is_active = 1
+        ORDER BY m.sort_order
+    ", [$user_id]);
 }
 
 // Iniciar sesión automáticamente
