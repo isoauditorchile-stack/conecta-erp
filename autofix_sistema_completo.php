@@ -16,7 +16,6 @@ echo "<pre>";
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $user, $pass);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $pdo->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, true); // FIX: Buffered queries
 
     echo "✅ Conectado a la base de datos\n\n";
 
@@ -39,22 +38,8 @@ try {
         echo "   ✅ Columna company_id ya existe\n\n";
     }
 
-    // 3. Eliminar tablas antiguas si existen (para reinstalación limpia)
-    echo "3️⃣ Eliminando tablas antiguas si existen...\n";
-    $tables_to_drop = ['historial_suscripciones', 'pagos', 'suscripciones', 'aprobaciones_usuario', 'planes'];
-
-    foreach ($tables_to_drop as $table) {
-        try {
-            $pdo->exec("DROP TABLE IF EXISTS `$table`");
-            echo "   🗑️  Tabla eliminada: $table\n";
-        } catch (PDOException $e) {
-            // Ignorar errores
-        }
-    }
-    echo "\n";
-
-    // 4. Instalar sistema completo de administración
-    echo "4️⃣ Instalando sistema de administración completo...\n";
+    // 3. Instalar sistema completo de administración
+    echo "3️⃣ Instalando sistema de administración completo...\n";
 
     $sql_file = file_get_contents(__DIR__ . '/database/SISTEMA_COMPLETO_ADMIN.sql');
 
@@ -115,25 +100,18 @@ try {
     }
     echo "\n";
 
-    // 5. Verificar tablas creadas
-    echo "5️⃣ Verificando tablas creadas...\n";
+    // 4. Verificar tablas creadas
+    echo "4️⃣ Verificando tablas creadas...\n";
     $required_tables = ['planes', 'suscripciones', 'pagos', 'aprobaciones_usuario', 'historial_suscripciones'];
 
     foreach ($required_tables as $table) {
-        $stmt = $pdo->prepare("SHOW TABLES LIKE ?");
-        $stmt->execute([$table]);
-        $result = $stmt->fetchAll();
-
-        if (count($result) > 0) {
-            $stmt2 = $pdo->prepare("SELECT COUNT(*) as c FROM `$table`");
-            $stmt2->execute();
-            $count = $stmt2->fetch(PDO::FETCH_ASSOC)['c'];
-            $stmt2->closeCursor();
+        $stmt = $pdo->query("SHOW TABLES LIKE '$table'");
+        if ($stmt->fetch()) {
+            $count = $pdo->query("SELECT COUNT(*) as c FROM `$table`")->fetch()['c'];
             echo "   ✅ $table ($count registros)\n";
         } else {
             echo "   ❌ $table NO EXISTE\n";
         }
-        $stmt->closeCursor();
     }
 
     echo "\n";
