@@ -1,1349 +1,1302 @@
-<?php
-/**
- * CONECTA ERP - Página Principal Profesional
- */
-
-require_once __DIR__ . '/includes/config.php';
-require_once __DIR__ . '/includes/i18n.php';
-initSession();
-
-// Traducciones para la landing page
-$lang = currentLanguage();
-$t = [
-    'es' => [
-        'hero_title' => '🚀 CONECTA ERP',
-        'hero_subtitle' => 'Sistema ERP Empresarial Completo - Somos el Mejor ERP del Mundo',
-        'hero_description' => '14 Módulos • 106 Submódulos • Multi-país • Multi-moneda • Multi-idioma',
-        'view_plans' => 'Ver Planes',
-        'register_free' => 'Registrarse Gratis',
-        'register' => 'Registro',
-        'login' => 'Iniciar Sesión',
-        'plans_title' => 'Planes y Módulos',
-        'plans_subtitle' => 'Selecciona el plan que mejor se adapte a tu empresa. Todos los planes incluyen Multi-usuario, Multi-empresa, Multi-moneda y Multi-idioma.',
-        'per_month' => '/mes',
-        'starter' => 'Starter',
-        'professional' => 'Professional',
-        'enterprise' => 'Enterprise',
-        'custom' => 'Custom',
-        'most_popular' => 'Más Popular',
-        'ideal_for_small' => 'Ideal para pequeñas empresas',
-        'for_growing' => 'Para empresas en crecimiento',
-        'for_large' => 'Para grandes empresas',
-        'custom_needs' => 'Adaptado a tus necesidades',
-        'start_free' => 'Comenzar Gratis',
-        'start_now' => 'Comenzar Ahora',
-        'contact_sales' => 'Contactar Ventas',
-        'personalized' => 'Personalizado',
-    ],
-    'en' => [
-        'hero_title' => '🚀 CONECTA ERP',
-        'hero_subtitle' => 'Complete Enterprise ERP System - We Are the Best ERP in the World',
-        'hero_description' => '14 Modules • 106 Submodules • Multi-country • Multi-currency • Multi-language',
-        'view_plans' => 'View Plans',
-        'register_free' => 'Register Free',
-        'register' => 'Register',
-        'login' => 'Login',
-        'plans_title' => 'Plans and Modules',
-        'plans_subtitle' => 'Choose the plan that best fits your company. All plans include Multi-user, Multi-company, Multi-currency and Multi-language.',
-        'per_month' => '/month',
-        'starter' => 'Starter',
-        'professional' => 'Professional',
-        'enterprise' => 'Enterprise',
-        'custom' => 'Custom',
-        'most_popular' => 'Most Popular',
-        'ideal_for_small' => 'Ideal for small businesses',
-        'for_growing' => 'For growing companies',
-        'for_large' => 'For large enterprises',
-        'custom_needs' => 'Adapted to your needs',
-        'start_free' => 'Start Free',
-        'start_now' => 'Start Now',
-        'contact_sales' => 'Contact Sales',
-        'personalized' => 'Personalized',
-    ],
-    'pt' => [
-        'hero_title' => '🚀 CONECTA ERP',
-        'hero_subtitle' => 'Sistema ERP Empresarial Completo - Somos o Melhor ERP do Mundo',
-        'hero_description' => '14 Módulos • 106 Submódulos • Multi-país • Multi-moeda • Multi-idioma',
-        'view_plans' => 'Ver Planos',
-        'register_free' => 'Registrar Grátis',
-        'register' => 'Registro',
-        'login' => 'Entrar',
-        'plans_title' => 'Planos e Módulos',
-        'plans_subtitle' => 'Escolha o plano que melhor se adapta à sua empresa. Todos os planos incluem Multi-usuário, Multi-empresa, Multi-moeda e Multi-idioma.',
-        'per_month' => '/mês',
-        'starter' => 'Starter',
-        'professional' => 'Professional',
-        'enterprise' => 'Enterprise',
-        'custom' => 'Personalizado',
-        'most_popular' => 'Mais Popular',
-        'ideal_for_small' => 'Ideal para pequenas empresas',
-        'for_growing' => 'Para empresas em crescimento',
-        'for_large' => 'Para grandes empresas',
-        'custom_needs' => 'Adaptado às suas necessidades',
-        'start_free' => 'Começar Grátis',
-        'start_now' => 'Começar Agora',
-        'contact_sales' => 'Contatar Vendas',
-        'personalized' => 'Personalizado',
-    ],
-    'fr' => [
-        'hero_title' => '🚀 CONECTA ERP',
-        'hero_subtitle' => 'Système ERP d\'Entreprise Complet - Nous sommes le Meilleur ERP au Monde',
-        'hero_description' => '14 Modules • 106 Sous-modules • Multi-pays • Multi-devise • Multi-langue',
-        'view_plans' => 'Voir les Plans',
-        'register_free' => 'S\'inscrire Gratuitement',
-        'register' => 'Inscription',
-        'login' => 'Connexion',
-        'plans_title' => 'Plans et Modules',
-        'plans_subtitle' => 'Choisissez le plan qui convient le mieux à votre entreprise. Tous les plans incluent Multi-utilisateur, Multi-entreprise, Multi-devise et Multi-langue.',
-        'per_month' => '/mois',
-        'starter' => 'Starter',
-        'professional' => 'Professional',
-        'enterprise' => 'Enterprise',
-        'custom' => 'Personnalisé',
-        'most_popular' => 'Le Plus Populaire',
-        'ideal_for_small' => 'Idéal pour les petites entreprises',
-        'for_growing' => 'Pour les entreprises en croissance',
-        'for_large' => 'Pour les grandes entreprises',
-        'custom_needs' => 'Adapté à vos besoins',
-        'start_free' => 'Commencer Gratuitement',
-        'start_now' => 'Commencer Maintenant',
-        'contact_sales' => 'Contacter les Ventes',
-        'personalized' => 'Personnalisé',
-    ],
-    'de' => [
-        'hero_title' => '🚀 CONECTA ERP',
-        'hero_subtitle' => 'Vollständiges Unternehmens-ERP-System - Wir sind das Beste ERP der Welt',
-        'hero_description' => '14 Module • 106 Submodule • Multi-Land • Multi-Währung • Multi-Sprache',
-        'view_plans' => 'Pläne Ansehen',
-        'register_free' => 'Kostenlos Registrieren',
-        'register' => 'Registrieren',
-        'login' => 'Anmelden',
-        'plans_title' => 'Pläne und Module',
-        'plans_subtitle' => 'Wählen Sie den Plan, der am besten zu Ihrem Unternehmen passt. Alle Pläne beinhalten Multi-Benutzer, Multi-Unternehmen, Multi-Währung und Multi-Sprache.',
-        'per_month' => '/Monat',
-        'starter' => 'Starter',
-        'professional' => 'Professional',
-        'enterprise' => 'Enterprise',
-        'custom' => 'Individuell',
-        'most_popular' => 'Am Beliebtesten',
-        'ideal_for_small' => 'Ideal für kleine Unternehmen',
-        'for_growing' => 'Für wachsende Unternehmen',
-        'for_large' => 'Für große Unternehmen',
-        'custom_needs' => 'Angepasst an Ihre Bedürfnisse',
-        'start_free' => 'Kostenlos Starten',
-        'start_now' => 'Jetzt Starten',
-        'contact_sales' => 'Vertrieb Kontaktieren',
-        'personalized' => 'Individualisiert',
-    ],
-    'it' => [
-        'hero_title' => '🚀 CONECTA ERP',
-        'hero_subtitle' => 'Sistema ERP Aziendale Completo - Siamo il Miglior ERP al Mondo',
-        'hero_description' => '14 Moduli • 106 Sottomoduli • Multi-paese • Multi-valuta • Multi-lingua',
-        'view_plans' => 'Visualizza Piani',
-        'register_free' => 'Registrati Gratis',
-        'register' => 'Registrazione',
-        'login' => 'Accedi',
-        'plans_title' => 'Piani e Moduli',
-        'plans_subtitle' => 'Scegli il piano più adatto alla tua azienda. Tutti i piani includono Multi-utente, Multi-azienda, Multi-valuta e Multi-lingua.',
-        'per_month' => '/mese',
-        'starter' => 'Starter',
-        'professional' => 'Professional',
-        'enterprise' => 'Enterprise',
-        'custom' => 'Personalizzato',
-        'most_popular' => 'Più Popolare',
-        'ideal_for_small' => 'Ideale per piccole imprese',
-        'for_growing' => 'Per aziende in crescita',
-        'for_large' => 'Per grandi aziende',
-        'custom_needs' => 'Adattato alle tue esigenze',
-        'start_free' => 'Inizia Gratis',
-        'start_now' => 'Inizia Ora',
-        'contact_sales' => 'Contatta Vendite',
-        'personalized' => 'Personalizzato',
-    ],
-    'ru' => [
-        'hero_title' => '🚀 CONECTA ERP',
-        'hero_subtitle' => 'Полная корпоративная ERP-система - Мы лучшая ERP в мире',
-        'hero_description' => '14 модулей • 106 подмодулей • Мультистрана • Мультивалюта • Мультиязык',
-        'view_plans' => 'Посмотреть Планы',
-        'register_free' => 'Зарегистрироваться Бесплатно',
-        'register' => 'Регистрация',
-        'login' => 'Войти',
-        'plans_title' => 'Планы и Модули',
-        'plans_subtitle' => 'Выберите план, который лучше всего подходит вашей компании. Все планы включают Мультипользователь, Мультикомпания, Мультивалюта и Мультиязык.',
-        'per_month' => '/месяц',
-        'starter' => 'Starter',
-        'professional' => 'Professional',
-        'enterprise' => 'Enterprise',
-        'custom' => 'Индивидуальный',
-        'most_popular' => 'Самый Популярный',
-        'ideal_for_small' => 'Идеально для малого бизнеса',
-        'for_growing' => 'Для растущих компаний',
-        'for_large' => 'Для крупных предприятий',
-        'custom_needs' => 'Адаптировано под ваши нужды',
-        'start_free' => 'Начать Бесплатно',
-        'start_now' => 'Начать Сейчас',
-        'contact_sales' => 'Связаться с Отделом Продаж',
-        'personalized' => 'Персонализированный',
-    ],
-    'zh' => [
-        'hero_title' => '🚀 CONECTA ERP',
-        'hero_subtitle' => '完整的企业ERP系统 - 我们是世界上最好的ERP',
-        'hero_description' => '14个模块 • 106个子模块 • 多国家 • 多货币 • 多语言',
-        'view_plans' => '查看计划',
-        'register_free' => '免费注册',
-        'register' => '注册',
-        'login' => '登录',
-        'plans_title' => '计划和模块',
-        'plans_subtitle' => '选择最适合您公司的计划。所有计划包括多用户、多公司、多货币和多语言。',
-        'per_month' => '/月',
-        'starter' => 'Starter',
-        'professional' => 'Professional',
-        'enterprise' => 'Enterprise',
-        'custom' => '定制',
-        'most_popular' => '最受欢迎',
-        'ideal_for_small' => '适合小型企业',
-        'for_growing' => '适合成长型企业',
-        'for_large' => '适合大型企业',
-        'custom_needs' => '适应您的需求',
-        'start_free' => '免费开始',
-        'start_now' => '立即开始',
-        'contact_sales' => '联系销售',
-        'personalized' => '个性化',
-    ],
-];
-$tr = $t[$lang] ?? $t['es']; // Fallback to Spanish
-
-// Si ya tiene sesión, redirigir
-if (isset($_SESSION['user_id'])) {
-    if ($_SESSION['email'] === 'auditorexchile@gmail.com') {
-        header('Location: /admin/panel_super_admin.php');
-    } else {
-        header('Location: /user/dashboard_user.php');
-    }
-    exit;
-}
-
-$error = '';
-$success = '';
-
-// Procesar registro
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
-    $firstname = trim($_POST['firstname']);
-    $lastname = trim($_POST['lastname']);
-    $email = strtolower(trim($_POST['email']));
-    $password = $_POST['password'];
-    $company_name = trim($_POST['company_name']);
-    $phone = trim($_POST['phone']);
-    $country = $_POST['country'];
-    $tax_id = trim($_POST['tax_id']);
-
-    try {
-        $db = Database::getInstance();
-
-        // Verificar si el email ya existe
-        $existing = $db->fetchOne("SELECT id FROM users WHERE email = ?", [$email]);
-        if ($existing) {
-            $error = 'Este email ya está registrado';
-        } else {
-            $is_super_admin = ($email === 'auditorexchile@gmail.com');
-            $status = $is_super_admin ? 'active' : 'pending_approval';
-
-            $db->getConnection()->beginTransaction();
-
-            // Crear empresa (sin owner_user_id por ahora)
-            $company_id = $db->insert(
-                "INSERT INTO companies (company_name, legal_name, tax_id, country_id, owner_user_id, created_at) VALUES (?, ?, ?, ?, NULL, NOW())",
-                [$company_name, $company_name, $tax_id, 1]
-            );
-
-            // Crear usuario
-            $user_id = $db->insert(
-                "INSERT INTO users (firstname, lastname, email, username, password, company_id, phone, country, tax_id, status, is_admin, created_at)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())",
-                [
-                    $firstname,
-                    $lastname,
-                    $email,
-                    $email,
-                    password_hash($password, PASSWORD_BCRYPT),
-                    $company_id,
-                    $phone,
-                    $country,
-                    $tax_id,
-                    $status,
-                    $is_super_admin ? 1 : 0
-                ]
-            );
-
-            // Actualizar empresa con el owner_user_id
-            $db->update(
-                "UPDATE companies SET owner_user_id = ? WHERE id = ?",
-                [$user_id, $company_id]
-            );
-
-            $db->getConnection()->commit();
-
-            if ($is_super_admin) {
-                $_SESSION['user_id'] = $user_id;
-                $_SESSION['email'] = $email;
-                $_SESSION['is_admin'] = 1;
-                $_SESSION['username'] = $email;
-                header('Location: /admin/panel_super_admin.php');
-                exit;
-            } else {
-                $success = '¡Registro exitoso! Tu cuenta está pendiente de aprobación. Te notificaremos por email.';
-            }
-        }
-    } catch (Exception $e) {
-        if ($db && $db->getConnection()->inTransaction()) {
-            $db->getConnection()->rollBack();
-        }
-        $error = 'Error al registrar. Por favor, intenta nuevamente.';
-        error_log("Registration error: " . $e->getMessage());
-    }
-}
-?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CONECTA ERP - Sistema ERP Profesional | Competimos con SAP y Softland</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- RUT Validator CSS -->
-    <link rel="stylesheet" href="/assets/css/rut-validator.css">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+    <title>CONECTA ERP - Sistema ERP Empresarial Completo</title>
 
-        html {
-            scroll-behavior: smooth;
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            /* Colores principales */
+            --primary-color: #2563eb;
+            --primary-dark: #1e40af;
+            --primary-light: #3b82f6;
+            --secondary-color: #7c3aed;
+            --secondary-dark: #6d28d9;
+            --accent-color: #f59e0b;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --info-color: #06b6d4;
+
+            /* Colores de fondo */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-dark: #0f172a;
+            --bg-gradient-start: #667eea;
+            --bg-gradient-end: #764ba2;
+
+            /* Colores de texto */
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --text-light: #94a3b8;
+            --text-white: #ffffff;
+
+            /* Sombras */
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+
+            /* Bordes */
+            --border-radius-sm: 0.375rem;
+            --border-radius-md: 0.5rem;
+            --border-radius-lg: 0.75rem;
+            --border-radius-xl: 1rem;
+            --border-radius-2xl: 1.5rem;
+
+            /* Transiciones */
+            --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-base: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        :root {
-            --primary: #667eea;
-            --primary-dark: #5568d3;
-            --secondary: #764ba2;
-            --accent: #f093fb;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --error: #ef4444;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background: #0f172a;
-            color: #f1f5f9;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
             line-height: 1.6;
+            overflow-x: hidden;
         }
 
-        /* Navbar */
-        .navbar {
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        /* =========================
+           NAVEGACIÓN
+        ========================= */
+        .navbar-custom {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 1rem 0;
             position: fixed;
             top: 0;
             width: 100%;
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 1rem 5%;
             z-index: 1000;
-            transition: all 0.3s;
+            transition: all var(--transition-base);
         }
 
-        .navbar-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .navbar-custom.scrolled {
+            box-shadow: var(--shadow-lg);
+            padding: 0.5rem 0;
         }
 
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            font-size: 1.5rem;
+        .navbar-brand {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.75rem;
             font-weight: 800;
-            color: white;
-            text-decoration: none;
-        }
-
-        .logo i {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            padding: 0.5rem;
-            border-radius: 10px;
-        }
-
-        .nav-links {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             display: flex;
             align-items: center;
-            gap: 2rem;
+            gap: 0.5rem;
         }
 
-        .nav-links a {
-            color: #cbd5e1;
-            text-decoration: none;
+        .navbar-brand i {
+            font-size: 2rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-link {
+            color: var(--text-primary);
             font-weight: 500;
-            transition: color 0.3s;
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius-md);
+            transition: all var(--transition-fast);
         }
 
-        .nav-links a:hover {
-            color: white;
-        }
-
-        .nav-btn {
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.3s;
+        .nav-link:hover {
+            color: var(--primary-color);
+            background-color: rgba(37, 99, 235, 0.1);
         }
 
         .btn-login {
-            color: white;
-            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: transparent;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 0.5rem 1.5rem;
+            border-radius: var(--border-radius-lg);
+            font-weight: 600;
+            transition: all var(--transition-base);
         }
 
         .btn-login:hover {
-            border-color: var(--primary);
-            background: rgba(102, 126, 234, 0.1);
+            background: var(--primary-color);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
         }
 
         .btn-register {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
             color: white;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            padding: 0.5rem 1.5rem;
+            border-radius: var(--border-radius-lg);
+            font-weight: 600;
+            box-shadow: var(--shadow-md);
+            transition: all var(--transition-base);
         }
 
         .btn-register:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+            box-shadow: var(--shadow-lg);
         }
 
-        .lang-selector {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 500;
-            font-size: 0.95rem;
-            transition: all 0.3s ease;
-            outline: none;
-        }
-
-        .lang-selector:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: var(--primary);
-        }
-
-        .lang-selector:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
-        }
-
-        .lang-selector option {
-            background: #1e293b;
-            color: white;
-            padding: 0.5rem;
-        }
-
-        /* Hero Section */
-        .hero {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 8rem 5% 4rem;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+        /* =========================
+           HERO SECTION
+        ========================= */
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 180px 0 100px;
             position: relative;
             overflow: hidden;
         }
 
-        .hero::before {
+        .hero-section::before {
             content: '';
             position: absolute;
-            width: 600px;
-            height: 600px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(102, 126, 234, 0.2), transparent);
-            top: -200px;
-            right: -200px;
-            animation: pulse 8s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.5; }
-            50% { transform: scale(1.1); opacity: 0.7; }
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse"><path d="M 100 0 L 0 0 0 100" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
         }
 
         .hero-content {
-            max-width: 1200px;
-            text-align: center;
+            position: relative;
             z-index: 1;
         }
 
-        .hero h1 {
+        .hero-title {
             font-size: 4rem;
-            font-weight: 900;
+            font-weight: 800;
+            color: white;
             margin-bottom: 1.5rem;
-            background: linear-gradient(135deg, white, #cbd5e1);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            line-height: 1.1;
         }
 
-        .hero p {
+        .hero-subtitle {
             font-size: 1.5rem;
-            color: #cbd5e1;
-            margin-bottom: 3rem;
-            max-width: 800px;
+            color: rgba(255, 255, 255, 0.95);
+            margin-bottom: 2rem;
+            font-weight: 400;
+        }
+
+        .hero-description {
+            font-size: 1.125rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 2.5rem;
+            max-width: 700px;
             margin-left: auto;
             margin-right: auto;
         }
 
-        .hero-buttons {
-            display: flex;
-            gap: 1.5rem;
-            justify-content: center;
-            flex-wrap: wrap;
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            max-width: 1000px;
+            margin: 3rem auto 0;
         }
 
-        .btn {
-            padding: 1rem 2.5rem;
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: 1.1rem;
-            text-decoration: none;
-            transition: all 0.3s;
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--border-radius-xl);
+            padding: 2rem;
+            text-align: center;
+            transition: all var(--transition-base);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 800;
+            color: white;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .btn-hero {
+            padding: 1rem 3rem;
+            border-radius: var(--border-radius-xl);
+            font-size: 1.125rem;
+            font-weight: 600;
+            transition: all var(--transition-base);
+            border: none;
+            cursor: pointer;
             display: inline-flex;
             align-items: center;
             gap: 0.75rem;
         }
 
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        .btn-hero-primary {
+            background: white;
+            color: var(--primary-color);
+            box-shadow: var(--shadow-xl);
         }
 
-        .btn-primary:hover {
+        .btn-hero-primary:hover {
             transform: translateY(-3px);
-            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.6);
+            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.35);
         }
 
-        .btn-secondary {
+        .btn-hero-secondary {
             background: rgba(255, 255, 255, 0.1);
             color: white;
-            border: 2px solid rgba(255, 255, 255, 0.2);
+            border: 2px solid white;
+            backdrop-filter: blur(10px);
         }
 
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: var(--primary);
+        .btn-hero-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px);
         }
 
-        /* Sections */
+        /* =========================
+           SECCIONES
+        ========================= */
         .section {
-            padding: 6rem 5%;
-            max-width: 1400px;
-            margin: 0 auto;
+            padding: 80px 0;
         }
 
         .section-title {
-            text-align: center;
-            font-size: 3rem;
+            font-size: 2.5rem;
             font-weight: 800;
+            text-align: center;
             margin-bottom: 1rem;
+            color: var(--text-primary);
         }
 
         .section-subtitle {
+            font-size: 1.25rem;
             text-align: center;
-            color: #cbd5e1;
-            font-size: 1.2rem;
-            max-width: 700px;
-            margin: 0 auto 4rem;
-        }
-
-        /* Registration Section */
-        .registration-section {
-            background: rgba(30, 41, 59, 0.5);
-            padding: 6rem 5%;
-        }
-
-        .registration-container {
-            max-width: 600px;
-            margin: 0 auto;
-            background: rgba(15, 23, 42, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 3rem;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-            color: #f1f5f9;
-        }
-
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 1rem;
-            background: rgba(30, 41, 59, 0.8);
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            color: white;
-            font-size: 1rem;
-            transition: all 0.3s;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .alert {
-            padding: 1rem;
-            border-radius: 10px;
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .alert-error {
-            background: rgba(239, 68, 68, 0.1);
-            border: 2px solid var(--error);
-            color: #fecaca;
-        }
-
-        .alert-success {
-            background: rgba(16, 185, 129, 0.1);
-            border: 2px solid var(--success);
-            color: #a7f3d0;
-        }
-
-        /* Footer */
-        .footer {
-            background: rgba(15, 23, 42, 0.95);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 4rem 5% 2rem;
-        }
-
-        .footer-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 3rem;
+            color: var(--text-secondary);
             margin-bottom: 3rem;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
         }
 
-        .footer-section h3 {
-            margin-bottom: 1.5rem;
-            font-size: 1.2rem;
+        /* =========================
+           CARDS DE CARACTERÍSTICAS
+        ========================= */
+        .feature-card {
+            background: white;
+            border-radius: var(--border-radius-2xl);
+            padding: 2.5rem;
+            box-shadow: var(--shadow-md);
+            transition: all var(--transition-base);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            height: 100%;
         }
 
-        .footer-section ul {
-            list-style: none;
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-2xl);
         }
 
-        .footer-section li {
-            margin-bottom: 0.75rem;
-        }
-
-        .footer-section a {
-            color: #cbd5e1;
-            text-decoration: none;
-            transition: color 0.3s;
-        }
-
-        .footer-section a:hover {
-            color: var(--primary);
-        }
-
-        .footer-bottom {
-            text-align: center;
-            padding-top: 2rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            color: #94a3b8;
-        }
-
-        .social-links {
-            display: flex;
-            gap: 1rem;
-        }
-
-        .social-links a {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.05);
+        .feature-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: var(--border-radius-xl);
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.3s;
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
         }
 
-        .social-links a:hover {
-            background: var(--primary);
-            transform: translateY(-3px);
+        .feature-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
         }
 
-        /* Pricing Cards */
-        .pricing-card {
-            background: rgba(30, 41, 59, 0.8);
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
+        .feature-description {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            line-height: 1.7;
+        }
+
+        /* =========================
+           PLANES
+        ========================= */
+        .plans-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .plan-card {
+            background: white;
+            border-radius: var(--border-radius-2xl);
             padding: 2.5rem;
-            transition: all 0.4s ease;
+            box-shadow: var(--shadow-md);
+            transition: all var(--transition-base);
+            border: 2px solid transparent;
             position: relative;
             overflow: hidden;
         }
 
-        .pricing-card:hover {
+        .plan-card:hover {
             transform: translateY(-10px);
-            border-color: var(--primary);
-            box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);
+            box-shadow: var(--shadow-2xl);
+            border-color: var(--primary-color);
         }
 
-        .pricing-card-featured {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15));
-            border: 2px solid var(--primary);
-            transform: scale(1.05);
+        .plan-card.featured {
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-xl);
         }
 
-        .pricing-card-featured:hover {
-            transform: scale(1.08) translateY(-10px);
-        }
-
-        .pricing-badge {
+        .plan-badge {
             position: absolute;
             top: 20px;
             right: 20px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            background: linear-gradient(135deg, var(--accent-color), #dc2626);
             color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 700;
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--border-radius-md);
+            font-size: 0.75rem;
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
-        .pricing-header {
-            text-align: center;
-            margin-bottom: 2rem;
-            padding-bottom: 2rem;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        .plan-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
         }
 
-        .pricing-header h3 {
-            font-size: 1.8rem;
-            margin: 1rem 0;
-            color: white;
-        }
-
-        .pricing-price {
-            margin: 1rem 0;
-        }
-
-        .pricing-features {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .pricing-features li {
-            padding: 0.75rem 0;
-            color: #cbd5e1;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
+        .plan-description {
+            color: var(--text-secondary);
             font-size: 0.95rem;
+            margin-bottom: 1.5rem;
         }
 
-        .pricing-features li i {
-            font-size: 1.2rem;
-            color: var(--success);
-        }
-
-        .pricing-features li i.fa-times-circle {
-            color: #64748b;
-        }
-
-        /* Module Cards */
-        .module-card {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            padding: 2rem;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-
-        .module-card:hover {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: var(--primary);
-            transform: translateY(-5px);
-        }
-
-        .module-card h4 {
-            color: white;
-            font-size: 1.1rem;
+        .plan-price {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--primary-color);
             margin-bottom: 0.5rem;
         }
 
-        .module-card h4 i {
-            color: var(--primary);
-            margin-right: 0.5rem;
+        .plan-price small {
+            font-size: 1.25rem;
+            font-weight: 400;
+            color: var(--text-secondary);
         }
 
-        .module-card p {
-            color: #94a3b8;
-            font-size: 0.9rem;
-        }
-
-        /* Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 10000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(10px);
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .modal-content {
-            background: #1e293b;
-            margin: 3% auto;
-            padding: 0;
-            border-radius: 20px;
-            max-width: 600px;
-            width: 90%;
-            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6);
-            animation: slideDown 0.4s ease;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        @keyframes slideDown {
-            from {
-                transform: translateY(-50px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        .modal-header {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            padding: 2rem;
-            border-radius: 20px 20px 0 0;
-        }
-
-        .modal-header h2 {
-            margin: 0 0 0.5rem 0;
-            font-size: 1.8rem;
-            color: white;
-        }
-
-        .modal-header p {
-            margin: 0;
-            opacity: 0.95;
+        .plan-period {
+            color: var(--text-secondary);
             font-size: 0.95rem;
+            margin-bottom: 2rem;
         }
 
-        .modal-header a {
-            color: white;
-            text-decoration: underline;
+        .plan-features {
+            list-style: none;
+            margin-bottom: 2rem;
         }
 
-        .modal-close {
-            position: absolute;
-            right: 20px;
-            top: 20px;
-            color: white;
-            font-size: 35px;
-            font-weight: bold;
+        .plan-features li {
+            padding: 0.75rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--text-secondary);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .plan-features li:last-child {
+            border-bottom: none;
+        }
+
+        .plan-features li i {
+            color: var(--success-color);
+            font-size: 1.25rem;
+        }
+
+        .btn-plan {
+            width: 100%;
+            padding: 1rem;
+            border-radius: var(--border-radius-lg);
+            font-weight: 600;
+            border: none;
             cursor: pointer;
-            z-index: 1;
-            transition: all 0.3s;
-            width: 40px;
-            height: 40px;
+            transition: all var(--transition-base);
+        }
+
+        .btn-plan-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .btn-plan-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-plan-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 2px solid var(--primary-color);
+        }
+
+        .btn-plan-secondary:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* =========================
+           MÓDULOS
+        ========================= */
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .module-card {
+            background: white;
+            border-radius: var(--border-radius-xl);
+            padding: 2rem;
+            box-shadow: var(--shadow-md);
+            transition: all var(--transition-base);
+            cursor: pointer;
+        }
+
+        .module-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .module-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .module-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: var(--border-radius-lg);
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
+            font-size: 1.5rem;
+            color: white;
         }
 
-        .modal-close:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: rotate(90deg);
+        .module-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
         }
 
-        .modal .registration-container {
-            padding: 2rem;
-            background: #1e293b;
+        .module-description {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+        }
+
+        .module-count {
+            background: var(--bg-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius-md);
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        /* =========================
+           FOOTER
+        ========================= */
+        .footer {
+            background: var(--bg-dark);
+            color: rgba(255, 255, 255, 0.7);
+            padding: 60px 0 30px;
+        }
+
+        .footer-title {
+            color: white;
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 0.75rem;
+        }
+
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: color var(--transition-fast);
+        }
+
+        .footer-links a:hover {
+            color: white;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 3rem;
+            padding-top: 2rem;
+            text-align: center;
+        }
+
+        /* =========================
+           RESPONSIVE
+        ========================= */
+        @media (max-width: 992px) {
+            .hero-title {
+                font-size: 3rem;
+            }
+
+            .stats-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .plans-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
 
         @media (max-width: 768px) {
-            .hero h1 { font-size: 2.5rem; }
-            .hero p { font-size: 1.2rem; }
-            .nav-links { display: none; }
-            .pricing-card-featured {
-                transform: scale(1);
+            .hero-title {
+                font-size: 2.5rem;
             }
-            .pricing-card-featured:hover {
+
+            .hero-subtitle {
+                font-size: 1.25rem;
+            }
+
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+
+            .plans-container {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+            }
+
+            .btn-hero {
+                width: 100%;
+            }
+        }
+
+        /* =========================
+           ANIMACIONES
+        ========================= */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in-up {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
                 transform: translateY(-10px);
             }
+        }
+
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
         }
     </style>
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar">
-        <div class="navbar-container">
-            <a href="/" class="logo">
-                <i class="fas fa-network-wired"></i>
-                <span>CONECTA ERP</span>
+    <!-- NAVEGACIÓN -->
+    <nav class="navbar navbar-expand-lg navbar-custom">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-box-seam-fill"></i>
+                CONECTA ERP
             </a>
-            <div class="nav-links">
-                <!-- Language Selector -->
-                <select class="lang-selector" onchange="changeLanguage(this.value)">
-                    <option value="es" <?php echo currentLanguage() === 'es' ? 'selected' : ''; ?>>🇪🇸 Español</option>
-                    <option value="en" <?php echo currentLanguage() === 'en' ? 'selected' : ''; ?>>🇬🇧 English</option>
-                    <option value="pt" <?php echo currentLanguage() === 'pt' ? 'selected' : ''; ?>>🇵🇹 Português</option>
-                    <option value="fr" <?php echo currentLanguage() === 'fr' ? 'selected' : ''; ?>>🇫🇷 Français</option>
-                    <option value="de" <?php echo currentLanguage() === 'de' ? 'selected' : ''; ?>>🇩🇪 Deutsch</option>
-                    <option value="it" <?php echo currentLanguage() === 'it' ? 'selected' : ''; ?>>🇮🇹 Italiano</option>
-                    <option value="ru" <?php echo currentLanguage() === 'ru' ? 'selected' : ''; ?>>🇷🇺 Русский</option>
-                    <option value="zh" <?php echo currentLanguage() === 'zh' ? 'selected' : ''; ?>>🇨🇳 中文</option>
-                </select>
-                <a href="javascript:void(0)" onclick="openModal()"><?php echo $tr['register']; ?></a>
-                <a href="login.php" class="nav-btn btn-login"><?php echo $tr['login']; ?></a>
-                <a href="javascript:void(0)" onclick="openModal()" class="nav-btn btn-register"><?php echo $tr['register']; ?></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center gap-2">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#inicio">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#caracteristicas">Características</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#planes">Planes</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#modulos">Módulos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-login" href="login.php">
+                            <i class="bi bi-box-arrow-in-right me-1"></i> Iniciar Sesión
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-register" href="register.php">
+                            <i class="bi bi-person-plus me-1"></i> Registrarse
+                        </a>
+                    </li>
+                </ul>
             </div>
         </div>
     </nav>
 
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="hero-content">
-            <h1><?php echo $tr['hero_title']; ?></h1>
-            <p><?php echo $tr['hero_subtitle']; ?></p>
-            <p style="font-size: 1.1rem; margin-bottom: 2rem;"><?php echo $tr['hero_description']; ?></p>
-            <div class="hero-buttons">
-                <a href="#planes" class="btn btn-primary">
-                    <?php echo $tr['view_plans']; ?> <i class="fas fa-arrow-right"></i>
-                </a>
-                <a href="javascript:void(0)" onclick="openModal()" class="btn btn-secondary">
-                    <i class="fas fa-user-plus"></i> <?php echo $tr['register_free']; ?>
-                </a>
-            </div>
-        </div>
-    </section>
-
-    <!-- Pricing Plans Section -->
-    <section id="planes" style="padding: 6rem 5%; background: #1e293b;">
-        <div style="max-width: 1400px; margin: 0 auto;">
-            <div class="section-title" style="color: white;"><?php echo $tr['plans_title']; ?></div>
-            <div class="section-subtitle" style="color: #94a3b8; max-width: 800px; margin: 0 auto 4rem;">
-                <?php echo $tr['plans_subtitle']; ?>
-            </div>
-
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
-                <!-- Plan Starter -->
-                <div class="pricing-card">
-                    <div class="pricing-header">
-                        <i class="fas fa-rocket" style="font-size: 2.5rem; color: var(--primary); margin-bottom: 1rem;"></i>
-                        <h3><?php echo $tr['starter']; ?></h3>
-                        <div class="pricing-price">
-                            <span style="font-size: 3rem; font-weight: 800;">$299</span>
-                            <span style="font-size: 1.2rem; color: #94a3b8;"><?php echo $tr['per_month']; ?></span>
-                        </div>
-                        <p style="color: #94a3b8; margin-top: 1rem;"><?php echo $tr['ideal_for_small']; ?></p>
-                    </div>
-                    <ul class="pricing-features">
-                        <li><i class="fas fa-check-circle"></i> <strong>Administración Central</strong></li>
-                        <li><i class="fas fa-check-circle"></i> <strong>Gestión de Entidades</strong> (Clientes, Proveedores)</li>
-                        <li><i class="fas fa-check-circle"></i> <strong>Finanzas Básicas</strong> (Contabilidad, Bancos)</li>
-                        <li><i class="fas fa-check-circle"></i> <strong>Ventas</strong> (CRM, Cotizaciones, POS)</li>
-                        <li><i class="fas fa-check-circle"></i> Dashboard principal</li>
-                        <li style="color: #64748b;"><i class="fas fa-times-circle"></i> Materiales e Inventario</li>
-                        <li style="color: #64748b;"><i class="fas fa-times-circle"></i> Producción</li>
-                        <li style="color: #64748b;"><i class="fas fa-times-circle"></i> RRHH avanzado</li>
-                    </ul>
-                    <a href="javascript:void(0)" onclick="openModal()" class="btn btn-secondary" style="width: 100%; justify-content: center; margin-top: 2rem;">
-                        <?php echo $tr['start_free']; ?>
-                    </a>
-                </div>
-
-                <!-- Plan Professional -->
-                <div class="pricing-card pricing-card-featured">
-                    <div class="pricing-badge"><?php echo $tr['most_popular']; ?></div>
-                    <div class="pricing-header">
-                        <i class="fas fa-briefcase" style="font-size: 2.5rem; color: var(--primary); margin-bottom: 1rem;"></i>
-                        <h3><?php echo $tr['professional']; ?></h3>
-                        <div class="pricing-price">
-                            <span style="font-size: 3rem; font-weight: 800;">$699</span>
-                            <span style="font-size: 1.2rem; color: #94a3b8;"><?php echo $tr['per_month']; ?></span>
-                        </div>
-                        <p style="color: #94a3b8; margin-top: 1rem;"><?php echo $tr['for_growing']; ?></p>
-                    </div>
-                    <ul class="pricing-features">
-                        <li><i class="fas fa-check-circle"></i> <strong>Todo en Starter</strong></li>
-                        <li><i class="fas fa-check-circle"></i> <strong>Materiales</strong> (Inventario, Compras, Warehouses)</li>
-                        <li><i class="fas fa-check-circle"></i> <strong>RRHH Completo</strong> (Nómina, Previred, Relojes)</li>
-                        <li><i class="fas fa-check-circle"></i> <strong>Controlling</strong> (Costos, Presupuestos)</li>
-                        <li><i class="fas fa-check-circle"></i> <strong>CRM Avanzado</strong></li>
-                        <li><i class="fas fa-check-circle"></i> <strong>Integración SII</strong> (DTEs, Facturación electrónica)</li>
-                        <li style="color: #64748b;"><i class="fas fa-times-circle"></i> Producción</li>
-                        <li style="color: #64748b;"><i class="fas fa-times-circle"></i> SCM</li>
-                    </ul>
-                    <a href="javascript:void(0)" onclick="openModal()" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 2rem;">
-                        <?php echo $tr['start_now']; ?>
-                    </a>
-                </div>
-
-                <!-- Plan Enterprise -->
-                <div class="pricing-card">
-                    <div class="pricing-header">
-                        <i class="fas fa-building" style="font-size: 2.5rem; color: var(--primary); margin-bottom: 1rem;"></i>
-                        <h3><?php echo $tr['enterprise']; ?></h3>
-                        <div class="pricing-price">
-                            <span style="font-size: 3rem; font-weight: 800;">$1,499</span>
-                            <span style="font-size: 1.2rem; color: #94a3b8;"><?php echo $tr['per_month']; ?></span>
-                        </div>
-                        <p style="color: #94a3b8; margin-top: 1rem;"><?php echo $tr['for_large']; ?></p>
-                    </div>
-                    <ul class="pricing-features">
-                        <li><i class="fas fa-check-circle"></i> <strong>Todo en Professional</strong></li>
-                        <li><i class="fas fa-check-circle"></i> <strong>Producción</strong> (MRP, BOM, Ruteo, QA)</li>
-                        <li><i class="fas fa-check-circle"></i> <strong>SCM</strong> (Supply Chain Management)</li>
-                        <li><i class="fas fa-check-circle"></i> <strong>Fidelización</strong> (Loyalty, Promociones)</li>
-                        <li><i class="fas fa-check-circle"></i> <strong>Business Intelligence</strong> (15 submódulos)</li>
-                        <li><i class="fas fa-check-circle"></i> API y Webhooks</li>
-                        <li><i class="fas fa-check-circle"></i> Soporte prioritario 24/7</li>
-                        <li><i class="fas fa-check-circle"></i> Usuarios ilimitados</li>
-                    </ul>
-                    <a href="javascript:void(0)" onclick="openModal()" class="btn btn-secondary" style="width: 100%; justify-content: center; margin-top: 2rem;">
-                        <?php echo $tr['start_now']; ?>
-                    </a>
-                </div>
-
-                <!-- Plan Custom -->
-                <div class="pricing-card">
-                    <div class="pricing-header">
-                        <i class="fas fa-crown" style="font-size: 2.5rem; color: #f59e0b; margin-bottom: 1rem;"></i>
-                        <h3><?php echo $tr['custom']; ?></h3>
-                        <div class="pricing-price">
-                            <span style="font-size: 2rem; font-weight: 800;"><?php echo $tr['personalized']; ?></span>
-                        </div>
-                        <p style="color: #94a3b8; margin-top: 1rem;"><?php echo $tr['custom_needs']; ?></p>
-                    </div>
-                    <ul class="pricing-features">
-                        <li><i class="fas fa-check-circle"></i> <strong>Todos los módulos</strong></li>
-                        <li><i class="fas fa-check-circle"></i> Módulos personalizados</li>
-                        <li><i class="fas fa-check-circle"></i> Integraciones a medida</li>
-                        <li><i class="fas fa-check-circle"></i> Instalación on-premise</li>
-                        <li><i class="fas fa-check-circle"></i> Capacitación personalizada</li>
-                        <li><i class="fas fa-check-circle"></i> Soporte dedicado</li>
-                        <li><i class="fas fa-check-circle"></i> SLA garantizado</li>
-                        <li><i class="fas fa-check-circle"></i> Account Manager</li>
-                    </ul>
-                    <a href="javascript:void(0)" onclick="openModal()" class="btn btn-secondary" style="width: 100%; justify-content: center; margin-top: 2rem; background: #f59e0b; border-color: #f59e0b;">
-                        <?php echo $tr['contact_sales']; ?>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Registration Modal (Hidden by default) -->
-    <div id="registroModal" class="modal">
-        <div class="modal-content">
-            <span class="modal-close" onclick="closeModal()">&times;</span>
-            <div class="modal-header">
-                <h2>Registro de Cuenta</h2>
-                <p>Completa el formulario para crear tu cuenta. Si ya tienes una cuenta, <a href="login.php" style="color: var(--primary);">inicia sesión aquí</a>.</p>
-            </div>
-
-            <div class="registration-container">
-            <?php if ($error): ?>
-            <div class="alert alert-error">
-                <i class="fas fa-exclamation-circle"></i>
-                <?php echo htmlspecialchars($error); ?>
-            </div>
-            <?php endif; ?>
-
-            <?php if ($success): ?>
-            <div class="alert alert-success">
-                <i class="fas fa-check-circle"></i>
-                <?php echo htmlspecialchars($success); ?>
-            </div>
-            <?php endif; ?>
-
-            <form method="POST">
-                <div class="form-group">
-                    <label>Nombre</label>
-                    <input type="text" name="firstname" required placeholder="Juan">
-                </div>
-
-                <div class="form-group">
-                    <label>Apellido</label>
-                    <input type="text" name="lastname" required placeholder="Pérez">
-                </div>
-
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" name="email" required placeholder="juan@empresa.com">
-                </div>
-
-                <div class="form-group">
-                    <label>Contraseña</label>
-                    <div style="position: relative;">
-                        <input type="password" id="password" name="password" required placeholder="••••••••" minlength="6">
-                        <button type="button" onclick="togglePassword()" style="position: absolute; right: 70px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--primary); cursor: pointer; font-size: 1.2rem;">
-                            <i id="eyeIcon" class="fas fa-eye"></i>
-                        </button>
-                        <button type="button" onclick="generatePassword()" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: var(--primary); border: none; color: white; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600;">
-                            <i class="fas fa-key"></i> Generar
-                        </button>
-                    </div>
-                    <small style="color: #94a3b8; font-size: 0.85rem; margin-top: 0.5rem; display: block;">Mínimo 6 caracteres. Se recomienda usar el generador.</small>
-                </div>
-
-                <div class="form-group">
-                    <label>Nombre de la Empresa</label>
-                    <input type="text" name="company_name" required placeholder="Mi Empresa S.A.">
-                </div>
-
-                <div class="form-group">
-                    <label>País</label>
-                    <select name="country" id="country" required onchange="updateTaxIdPlaceholder()">
-                        <option value="CL">🇨🇱 Chile</option>
-                        <option value="AR">🇦🇷 Argentina</option>
-                        <option value="PE">🇵🇪 Perú</option>
-                        <option value="CO">🇨🇴 Colombia</option>
-                        <option value="MX">🇲🇽 México</option>
-                        <option value="BR">🇧🇷 Brasil</option>
-                        <option value="US">🇺🇸 Estados Unidos</option>
-                        <option value="ES">🇪🇸 España</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label id="taxIdLabel">RUT Empresa</label>
-                    <input type="text" id="tax_id" name="tax_id" required placeholder="15.895.771-k" maxlength="20">
-                    <small id="taxIdHint" style="color: #94a3b8; font-size: 0.85rem; margin-top: 0.5rem; display: block;">
-                        Formato: XX.XXX.XXX-X (ej: 15.895.771-k)
-                    </small>
-                </div>
-
-                <div class="form-group">
-                    <label>Teléfono</label>
-                    <input type="tel" name="phone" required placeholder="+56 9 1234 5678">
-                </div>
-
-                <button type="submit" name="register" class="btn btn-primary" style="width: 100%; justify-content: center;">
-                    Crear Cuenta <i class="fas fa-arrow-right"></i>
-                </button>
-
-                <p style="text-align: center; margin-top: 1.5rem; color: #94a3b8; font-size: 0.9rem;">
-                    Al registrarte, aceptas nuestros <a href="#" style="color: var(--primary);">Términos y Condiciones</a>
+    <!-- HERO SECTION -->
+    <section id="inicio" class="hero-section">
+        <div class="container">
+            <div class="hero-content text-center">
+                <h1 class="hero-title animate-fade-in-up">
+                    CONECTA ERP
+                </h1>
+                <p class="hero-subtitle animate-fade-in-up">
+                    La solución empresarial completa que tu negocio necesita
                 </p>
-            </form>
+                <p class="hero-description animate-fade-in-up">
+                    Sistema ERP profesional y robusto diseñado para empresas modernas.
+                    Gestiona todos los aspectos de tu negocio desde una sola plataforma:
+                    finanzas, ventas, inventario, producción, recursos humanos y más.
+                </p>
+
+                <div class="hero-buttons">
+                    <button class="btn-hero btn-hero-primary" onclick="window.location.href='register.php'">
+                        <i class="bi bi-rocket-takeoff-fill"></i>
+                        Comienza Gratis - 14 días de prueba
+                    </button>
+                    <button class="btn-hero btn-hero-secondary" onclick="document.getElementById('planes').scrollIntoView({behavior: 'smooth'})">
+                        <i class="bi bi-eye-fill"></i>
+                        Ver Planes y Precios
+                    </button>
+                </div>
+
+                <div class="stats-container">
+                    <div class="stat-card">
+                        <div class="stat-number">14</div>
+                        <div class="stat-label">Módulos Principales</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">106</div>
+                        <div class="stat-label">Submódulos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">9</div>
+                        <div class="stat-label">Idiomas</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">9</div>
+                        <div class="stat-label">Países</div>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
+    </section>
 
-    <!-- Footer -->
+    <!-- CARACTERÍSTICAS -->
+    <section id="caracteristicas" class="section bg-white">
+        <div class="container">
+            <h2 class="section-title">Características Principales</h2>
+            <p class="section-subtitle">
+                Un sistema completo y profesional diseñado para impulsar tu negocio
+            </p>
+
+            <div class="row g-4">
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-globe"></i>
+                        </div>
+                        <h3 class="feature-title">Multipaís y Multimoneda</h3>
+                        <p class="feature-description">
+                            Opera en 9 países diferentes con soporte completo para múltiples monedas,
+                            tipos de cambio automáticos y regulaciones locales. Cada país con su tipo de documento (RUT, DNI, RFC, etc.).
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-translate"></i>
+                        </div>
+                        <h3 class="feature-title">9 Idiomas Disponibles</h3>
+                        <p class="feature-description">
+                            Interfaz completamente traducida en Español, English, Português, Français,
+                            Deutsch, Italiano, Русский, 中文 y 日本語. Cambia de idioma en cualquier momento.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-building"></i>
+                        </div>
+                        <h3 class="feature-title">Multiempresa</h3>
+                        <p class="feature-description">
+                            Gestiona múltiples empresas desde una sola cuenta. Ideal para holdings,
+                            consultoras y grupos empresariales. Datos completamente segregados.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+                        <h3 class="feature-title">Seguridad Avanzada</h3>
+                        <p class="feature-description">
+                            Control de acceso por roles, autenticación de dos factores, cifrado de datos,
+                            auditoría completa y backups automáticos. Tu información siempre protegida.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-graph-up-arrow"></i>
+                        </div>
+                        <h3 class="feature-title">Business Intelligence</h3>
+                        <p class="feature-description">
+                            Dashboards interactivos, KPIs en tiempo real, reportes personalizados,
+                            análisis predictivo y herramientas de visualización de datos avanzadas.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-link-45deg"></i>
+                        </div>
+                        <h3 class="feature-title">Integraciones</h3>
+                        <p class="feature-description">
+                            Conexión directa con SII Chile, Previred, actualización automática de UF,
+                            USD, UTM, relojes control de asistencia y APIs abiertas para extensiones.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PLANES Y PRECIOS -->
+    <section id="planes" class="section">
+        <div class="container">
+            <h2 class="section-title">Planes y Precios</h2>
+            <p class="section-subtitle">
+                Elige el plan perfecto para tu empresa. Todos con 14 días de prueba gratuita.
+            </p>
+
+            <div class="plans-container">
+                <!-- Plan 1: Básico -->
+                <div class="plan-card">
+                    <div class="plan-name">Básico</div>
+                    <div class="plan-description">
+                        Ideal para pequeñas empresas y emprendedores
+                    </div>
+                    <div class="plan-price">
+                        $29.99
+                        <small>/mes</small>
+                    </div>
+                    <div class="plan-period">
+                        o $299.90/año (ahorra $60)
+                    </div>
+                    <ul class="plan-features">
+                        <li><i class="bi bi-check-circle-fill"></i> Hasta 5 usuarios</li>
+                        <li><i class="bi bi-check-circle-fill"></i> 1 empresa</li>
+                        <li><i class="bi bi-check-circle-fill"></i> 10 GB almacenamiento</li>
+                        <li><i class="bi bi-check-circle-fill"></i> Módulos: Finanzas, Ventas, Inventario</li>
+                        <li><i class="bi bi-check-circle-fill"></i> Soporte por email</li>
+                        <li><i class="bi bi-check-circle-fill"></i> 14 días de prueba</li>
+                    </ul>
+                    <button class="btn-plan btn-plan-secondary" onclick="window.location.href='register.php?plan=basic'">
+                        Comenzar Ahora
+                    </button>
+                </div>
+
+                <!-- Plan 2: Profesional (Featured) -->
+                <div class="plan-card featured">
+                    <div class="plan-badge">POPULAR</div>
+                    <div class="plan-name">Profesional</div>
+                    <div class="plan-description">
+                        Completo para empresas en crecimiento
+                    </div>
+                    <div class="plan-price">
+                        $79.99
+                        <small>/mes</small>
+                    </div>
+                    <div class="plan-period">
+                        o $799.90/año (ahorra $160)
+                    </div>
+                    <ul class="plan-features">
+                        <li><i class="bi bi-check-circle-fill"></i> Hasta 20 usuarios</li>
+                        <li><i class="bi bi-check-circle-fill"></i> 3 empresas</li>
+                        <li><i class="bi bi-check-circle-fill"></i> 50 GB almacenamiento</li>
+                        <li><i class="bi bi-check-circle-fill"></i> Todos los módulos básicos + Producción + RRHH</li>
+                        <li><i class="bi bi-check-circle-fill"></i> Soporte email + teléfono</li>
+                        <li><i class="bi bi-check-circle-fill"></i> Integraciones SII/Previred</li>
+                        <li><i class="bi bi-check-circle-fill"></i> 14 días de prueba</li>
+                    </ul>
+                    <button class="btn-plan btn-plan-primary" onclick="window.location.href='register.php?plan=professional'">
+                        Comenzar Ahora
+                    </button>
+                </div>
+
+                <!-- Plan 3: Empresarial -->
+                <div class="plan-card">
+                    <div class="plan-name">Empresarial</div>
+                    <div class="plan-description">
+                        Avanzado con todas las funcionalidades
+                    </div>
+                    <div class="plan-price">
+                        $199.99
+                        <small>/mes</small>
+                    </div>
+                    <div class="plan-period">
+                        o $1,999.90/año (ahorra $400)
+                    </div>
+                    <ul class="plan-features">
+                        <li><i class="bi bi-check-circle-fill"></i> Hasta 100 usuarios</li>
+                        <li><i class="bi bi-check-circle-fill"></i> 10 empresas</li>
+                        <li><i class="bi bi-check-circle-fill"></i> 200 GB almacenamiento</li>
+                        <li><i class="bi bi-check-circle-fill"></i> TODOS los módulos (14 módulos completos)</li>
+                        <li><i class="bi bi-check-circle-fill"></i> Soporte 24/7</li>
+                        <li><i class="bi bi-check-circle-fill"></i> Módulos personalizados</li>
+                        <li><i class="bi bi-check-circle-fill"></i> API completa</li>
+                        <li><i class="bi bi-check-circle-fill"></i> 14 días de prueba</li>
+                    </ul>
+                    <button class="btn-plan btn-plan-secondary" onclick="window.location.href='register.php?plan=enterprise'">
+                        Comenzar Ahora
+                    </button>
+                </div>
+
+                <!-- Plan 4: Personalizado -->
+                <div class="plan-card">
+                    <div class="plan-name">Personalizado</div>
+                    <div class="plan-description">
+                        Diseñado según tus necesidades específicas
+                    </div>
+                    <div class="plan-price">
+                        Consultar
+                    </div>
+                    <div class="plan-period">
+                        Precio según requerimientos
+                    </div>
+                    <ul class="plan-features">
+                        <li><i class="bi bi-check-circle-fill"></i> Usuarios ilimitados</li>
+                        <li><i class="bi bi-check-circle-fill"></i> Empresas ilimitadas</li>
+                        <li><i class="bi bi-check-circle-fill"></i> Almacenamiento ilimitado</li>
+                        <li><i class="bi bi-check-circle-fill"></i> Desarrollo a medida</li>
+                        <li><i class="bi bi-check-circle-fill"></i> Soporte dedicado 24/7</li>
+                        <li><i class="bi bi-check-circle-fill"></i> Capacitación incluida</li>
+                        <li><i class="bi bi-check-circle-fill"></i> SLA garantizado</li>
+                        <li><i class="bi bi-check-circle-fill"></i> Consultoría estratégica</li>
+                    </ul>
+                    <button class="btn-plan btn-plan-secondary" onclick="window.location.href='mailto:auditorexchile@gmail.com?subject=Consulta Plan Personalizado'">
+                        Contactar Ventas
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- MÓDULOS -->
+    <section id="modulos" class="section bg-white">
+        <div class="container">
+            <h2 class="section-title">14 Módulos Completos</h2>
+            <p class="section-subtitle">
+                106 submódulos diseñados para cubrir todas las necesidades de tu empresa
+            </p>
+
+            <div class="modules-grid">
+                <!-- Módulo 1 -->
+                <div class="module-card">
+                    <div class="module-header">
+                        <div class="module-icon" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+                            <i class="bi bi-gear-fill"></i>
+                        </div>
+                        <div>
+                            <div class="module-title">Administración Central</div>
+                            <span class="module-count">3 submódulos</span>
+                        </div>
+                    </div>
+                    <p class="module-description">
+                        Gestión de empresas, seguridad, usuarios, roles y parametrización global del sistema.
+                    </p>
+                </div>
+
+                <!-- Módulo 2 -->
+                <div class="module-card">
+                    <div class="module-header">
+                        <div class="module-icon" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+                            <i class="bi bi-people-fill"></i>
+                        </div>
+                        <div>
+                            <div class="module-title">Gestión de Entidades</div>
+                            <span class="module-count">5 submódulos</span>
+                        </div>
+                    </div>
+                    <p class="module-description">
+                        Maestros de clientes, proveedores, empleados, productos y servicios.
+                    </p>
+                </div>
+
+                <!-- Módulo 3 -->
+                <div class="module-card">
+                    <div class="module-header">
+                        <div class="module-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+                            <i class="bi bi-cash-stack"></i>
+                        </div>
+                        <div>
+                            <div class="module-title">Finanzas (FI)</div>
+                            <span class="module-count">11 submódulos</span>
+                        </div>
+                    </div>
+                    <p class="module-description">
+                        Contabilidad general, cuentas por pagar/cobrar, tesorería, activos fijos, IFRS, presupuestos e impuestos.
+                    </p>
+                </div>
+
+                <!-- Módulo 4 -->
+                <div class="module-card">
+                    <div class="module-header">
+                        <div class="module-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                            <i class="bi bi-graph-up"></i>
+                        </div>
+                        <div>
+                            <div class="module-title">Controlling (CO)</div>
+                            <span class="module-count">8 submódulos</span>
+                        </div>
+                    </div>
+                    <p class="module-description">
+                        Centros de costo, rentabilidad, control de gastos, costos de producto y análisis de resultados.
+                    </p>
+                </div>
+
+                <!-- Módulo 5 -->
+                <div class="module-card">
+                    <div class="module-header">
+                        <div class="module-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+                            <i class="bi bi-cart-fill"></i>
+                        </div>
+                        <div>
+                            <div class="module-title">Ventas (SD)</div>
+                            <span class="module-count">9 submódulos</span>
+                        </div>
+                    </div>
+                    <p class="module-description">
+                        Pedidos, facturación, punto de venta, precios, promociones, devoluciones y análisis de ventas.
+                    </p>
+                </div>
+
+                <!-- Módulo 6 -->
+                <div class="module-card">
+                    <div class="module-header">
+                        <div class="module-icon" style="background: linear-gradient(135deg, #06b6d4, #0891b2);">
+                            <i class="bi bi-box-seam-fill"></i>
+                        </div>
+                        <div>
+                            <div class="module-title">Materiales (MM)</div>
+                            <span class="module-count">8 submódulos</span>
+                        </div>
+                    </div>
+                    <p class="module-description">
+                        Inventario, compras, almacenes, valoración, planificación de necesidades y control de calidad.
+                    </p>
+                </div>
+
+                <!-- Módulo 7 -->
+                <div class="module-card">
+                    <div class="module-header">
+                        <div class="module-icon" style="background: linear-gradient(135deg, #ec4899, #db2777);">
+                            <i class="bi bi-gear-wide-connected"></i>
+                        </div>
+                        <div>
+                            <div class="module-title">Producción (PP)</div>
+                            <span class="module-count">10 submódulos</span>
+                        </div>
+                    </div>
+                    <p class="module-description">
+                        Órdenes de producción, MRP, planificación, control de planta, calidad, mantenimiento y trazabilidad.
+                    </p>
+                </div>
+
+                <!-- Módulo 8 -->
+                <div class="module-card">
+                    <div class="module-header">
+                        <div class="module-icon" style="background: linear-gradient(135deg, #14b8a6, #0d9488);">
+                            <i class="bi bi-person-badge-fill"></i>
+                        </div>
+                        <div>
+                            <div class="module-title">Recursos Humanos (HCM)</div>
+                            <span class="module-count">11 submódulos</span>
+                        </div>
+                    </div>
+                    <p class="module-description">
+                        Personal, nómina, reclutamiento, evaluación, capacitación, asistencia con relojes control, vacaciones y salud ocupacional.
+                    </p>
+                </div>
+
+                <!-- Módulo 9 -->
+                <div class="module-card">
+                    <div class="module-header">
+                        <div class="module-icon" style="background: linear-gradient(135deg, #f97316, #ea580c);">
+                            <i class="bi bi-truck"></i>
+                        </div>
+                        <div>
+                            <div class="module-title">Supply Chain (SCM)</div>
+                            <span class="module-count">10 submódulos</span>
+                        </div>
+                    </div>
+                    <p class="module-description">
+                        Logística, transporte, rutas, entregas, flotilla, optimización y trazabilidad de envíos.
+                    </p>
+                </div>
+
+                <!-- Módulo 10 -->
+                <div class="module-card">
+                    <div class="module-header">
+                        <div class="module-icon" style="background: linear-gradient(135deg, #6366f1, #4f46e5);">
+                            <i class="bi bi-heart-fill"></i>
+                        </div>
+                        <div>
+                            <div class="module-title">CRM</div>
+                            <span class="module-count">8 submódulos</span>
+                        </div>
+                    </div>
+                    <p class="module-description">
+                        Gestión de clientes, oportunidades, leads, pipeline de ventas, contactos, campañas y cotizaciones.
+                    </p>
+                </div>
+
+                <!-- Módulo 11 -->
+                <div class="module-card">
+                    <div class="module-header">
+                        <div class="module-icon" style="background: linear-gradient(135deg, #eab308, #ca8a04);">
+                            <i class="bi bi-star-fill"></i>
+                        </div>
+                        <div>
+                            <div class="module-title">Fidelización</div>
+                            <span class="module-count">7 submódulos</span>
+                        </div>
+                    </div>
+                    <p class="module-description">
+                        Programas de lealtad, puntos, recompensas, campañas personalizadas y segmentación de clientes.
+                    </p>
+                </div>
+
+                <!-- Módulo 12 -->
+                <div class="module-card">
+                    <div class="module-header">
+                        <div class="module-icon" style="background: linear-gradient(135deg, #a855f7, #9333ea);">
+                            <i class="bi bi-bar-chart-fill"></i>
+                        </div>
+                        <div>
+                            <div class="module-title">Business Intelligence</div>
+                            <span class="module-count">15 submódulos</span>
+                        </div>
+                    </div>
+                    <p class="module-description">
+                        Dashboards, KPIs, informes ejecutivos, análisis predictivo y reportes personalizados para todos los módulos.
+                    </p>
+                </div>
+
+                <!-- Módulo 13 -->
+                <div class="module-card">
+                    <div class="module-header">
+                        <div class="module-icon" style="background: linear-gradient(135deg, #64748b, #475569);">
+                            <i class="bi bi-sliders"></i>
+                        </div>
+                        <div>
+                            <div class="module-title">Configuración</div>
+                            <span class="module-count">1 submódulo</span>
+                        </div>
+                    </div>
+                    <p class="module-description">
+                        Configuración general del sistema, parámetros y ajustes globales.
+                    </p>
+                </div>
+
+                <!-- Módulo 14 -->
+                <div class="module-card">
+                    <div class="module-header">
+                        <div class="module-icon" style="background: linear-gradient(135deg, #0ea5e9, #0284c7);">
+                            <i class="bi bi-speedometer2"></i>
+                        </div>
+                        <div>
+                            <div class="module-title">Dashboard Principal</div>
+                            <span class="module-count">Panel de navegación</span>
+                        </div>
+                    </div>
+                    <p class="module-description">
+                        Panel principal con estadísticas, accesos rápidos y navegación a todos los módulos del sistema.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
     <footer class="footer">
-        <div class="footer-container">
-            <div class="footer-section">
-                <h3><i class="fas fa-network-wired"></i> CONECTA ERP</h3>
-                <p style="color: #94a3b8; margin-bottom: 1rem;">Sistema ERP profesional para empresas modernas. Compite con SAP y Softland.</p>
-                <div class="social-links">
-                    <a href="#"><i class="fab fa-linkedin"></i></a>
-                    <a href="#"><i class="fab fa-twitter"></i></a>
-                    <a href="#"><i class="fab fa-facebook"></i></a>
-                    <a href="#"><i class="fab fa-instagram"></i></a>
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4">
+                    <h3 class="footer-title">CONECTA ERP</h3>
+                    <p style="color: rgba(255, 255, 255, 0.7);">
+                        Sistema ERP empresarial completo y profesional.
+                        Gestiona tu negocio desde una sola plataforma.
+                    </p>
+                    <div class="mt-3">
+                        <a href="mailto:auditorexchile@gmail.com" style="color: rgba(255, 255, 255, 0.7); text-decoration: none;">
+                            <i class="bi bi-envelope me-2"></i> auditorexchile@gmail.com
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-4 mb-4">
+                    <h4 class="footer-title">Producto</h4>
+                    <ul class="footer-links">
+                        <li><a href="#caracteristicas">Características</a></li>
+                        <li><a href="#planes">Planes</a></li>
+                        <li><a href="#modulos">Módulos</a></li>
+                        <li><a href="register.php">Prueba Gratis</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-4 mb-4">
+                    <h4 class="footer-title">Empresa</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">Acerca de</a></li>
+                        <li><a href="#">Blog</a></li>
+                        <li><a href="#">Carreras</a></li>
+                        <li><a href="#">Contacto</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-4 mb-4">
+                    <h4 class="footer-title">Soporte</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">Centro de Ayuda</a></li>
+                        <li><a href="#">Documentación</a></li>
+                        <li><a href="#">API</a></li>
+                        <li><a href="#">Estado del Sistema</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-4 mb-4">
+                    <h4 class="footer-title">Legal</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">Términos de Servicio</a></li>
+                        <li><a href="#">Privacidad</a></li>
+                        <li><a href="#">Seguridad</a></li>
+                        <li><a href="#">Cookies</a></li>
+                    </ul>
                 </div>
             </div>
 
-            <div class="footer-section">
-                <h3>Producto</h3>
-                <ul>
-                    <li><a href="#">Características</a></li>
-                    <li><a href="#">Módulos</a></li>
-                    <li><a href="#">Precios</a></li>
-                    <li><a href="#">Demo</a></li>
-                </ul>
+            <div class="footer-bottom">
+                <p>© 2024 CONECTA ERP by Auditorex Chile. Todos los derechos reservados.</p>
             </div>
-
-            <div class="footer-section">
-                <h3>Soporte</h3>
-                <ul>
-                    <li><a href="#">Documentación</a></li>
-                    <li><a href="#">Centro de Ayuda</a></li>
-                    <li><a href="#">API</a></li>
-                    <li><a href="#">Contacto</a></li>
-                </ul>
-            </div>
-
-            <div class="footer-section">
-                <h3>Empresa</h3>
-                <ul>
-                    <li><a href="#">Nosotros</a></li>
-                    <li><a href="#">Blog</a></li>
-                    <li><a href="#">Casos de Éxito</a></li>
-                    <li><a href="#">Trabaja con Nosotros</a></li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="footer-bottom">
-            <p>&copy; 2024 CONECTA ERP. Todos los derechos reservados. | Sistema de Producción v2.0.0</p>
-            <p style="margin-top: 0.5rem;">Admin: auditorexchile@gmail.com</p>
         </div>
     </footer>
 
-    <!-- RUT Validator JS Library -->
-    <script src="/assets/js/rut-validator.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        // Modal Functions
-        function openModal() {
-            document.getElementById('registroModal').style.display = 'block';
-            document.body.style.overflow = 'hidden'; // Prevent scrolling
-        }
-
-        function closeModal() {
-            document.getElementById('registroModal').style.display = 'none';
-            document.body.style.overflow = 'auto'; // Restore scrolling
-        }
-
-        // Close modal when clicking outside of it
-        window.onclick = function(event) {
-            const modal = document.getElementById('registroModal');
-            if (event.target == modal) {
-                closeModal();
-            }
-        }
-
-        // Close modal on ESC key
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                closeModal();
-            }
-        });
-
-        // Auto-open modal if there's an error or success message
-        <?php if ($error || $success): ?>
-        window.addEventListener('DOMContentLoaded', function() {
-            openModal();
-        });
-        <?php endif; ?>
-
-        // Language Selector
-        function changeLanguage(lang) {
-            // Redirect to same page with language parameter
-            window.location.href = '?lang=' + lang;
-        }
-
-        function generatePassword() {
-            const length = 16;
-            const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?";
-            let password = "";
-
-            // Asegurar al menos un carácter de cada tipo
-            const lower = "abcdefghijklmnopqrstuvwxyz";
-            const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-            const numbers = "0123456789";
-            const special = "!@#$%^&*()_+-=";
-
-            password += lower[Math.floor(Math.random() * lower.length)];
-            password += upper[Math.floor(Math.random() * upper.length)];
-            password += numbers[Math.floor(Math.random() * numbers.length)];
-            password += special[Math.floor(Math.random() * special.length)];
-
-            // Completar el resto de la contraseña
-            for (let i = password.length; i < length; i++) {
-                password += charset[Math.floor(Math.random() * charset.length)];
-            }
-
-            // Mezclar los caracteres
-            password = password.split('').sort(() => Math.random() - 0.5).join('');
-
-            // Establecer la contraseña y mostrarla
-            const passwordInput = document.getElementById('password');
-            passwordInput.type = 'text';
-            passwordInput.value = password;
-
-            // Cambiar icono a visible
-            document.getElementById('eyeIcon').classList.remove('fa-eye');
-            document.getElementById('eyeIcon').classList.add('fa-eye-slash');
-
-            // Copiar al portapapeles
-            navigator.clipboard.writeText(password).then(() => {
-                // Mostrar notificación
-                const notification = document.createElement('div');
-                notification.textContent = '✓ Contraseña generada y copiada al portapapeles';
-                notification.style.cssText = 'position: fixed; top: 20px; right: 20px; background: linear-gradient(135deg, var(--success), #059669); color: white; padding: 1rem 2rem; border-radius: 10px; z-index: 10000; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.3);';
-                document.body.appendChild(notification);
-
-                setTimeout(() => {
-                    notification.style.transition = 'opacity 0.5s';
-                    notification.style.opacity = '0';
-                    setTimeout(() => notification.remove(), 500);
-                }, 3000);
-            });
-        }
-
-        function togglePassword() {
-            const passwordInput = document.getElementById('password');
-            const eyeIcon = document.getElementById('eyeIcon');
-
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                eyeIcon.classList.remove('fa-eye');
-                eyeIcon.classList.add('fa-eye-slash');
+        // Navbar scroll effect
+        window.addEventListener('scroll', function() {
+            const navbar = document.querySelector('.navbar-custom');
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
             } else {
-                passwordInput.type = 'password';
-                eyeIcon.classList.remove('fa-eye-slash');
-                eyeIcon.classList.add('fa-eye');
+                navbar.classList.remove('scrolled');
             }
-        }
+        });
 
-        // Initialize RUT Validator (now using global library)
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize RUT validation on the tax_id input
-            RUTValidator.init('#tax_id', '#country');
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
         });
     </script>
 </body>
