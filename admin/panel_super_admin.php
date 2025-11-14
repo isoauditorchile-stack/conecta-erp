@@ -189,11 +189,11 @@ $usuarios_trial = $db->fetchAll("
 
 // Pagos pendientes de verificación
 $pagos_pendientes = $db->fetchAll("
-    SELECT p.*, u.firstname, u.lastname, u.email, c.company_name, pl.nombre_es as plan_nombre
+    SELECT p.*, s.*, c.company_name, pl.plan_name
     FROM pagos p
-    INNER JOIN users u ON p.user_id = u.id
-    LEFT JOIN companies c ON p.company_id = c.id
-    INNER JOIN planes pl ON p.plan_id = pl.id
+    INNER JOIN suscripciones s ON p.suscripcion_id = s.id
+    INNER JOIN companies c ON s.company_id = c.id
+    INNER JOIN planes pl ON s.plan_id = pl.id
     WHERE p.estado = 'pendiente'
     ORDER BY p.created_at DESC
 ");

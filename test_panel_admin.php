@@ -171,10 +171,9 @@ try {
 echo "12. Intentando obtener lista de pagos pendientes...\n";
 try {
     $pagos_pendientes = $db->fetchAll("
-        SELECT p.*, s.*, u.email, c.company_name, pl.nombre_es as plan_name
+        SELECT p.*, s.*, c.company_name, pl.plan_name
         FROM pagos p
         INNER JOIN suscripciones s ON p.suscripcion_id = s.id
-        INNER JOIN users u ON s.user_id = u.id
         INNER JOIN companies c ON s.company_id = c.id
         INNER JOIN planes pl ON s.plan_id = pl.id
         WHERE p.estado = 'pendiente'
@@ -185,7 +184,7 @@ try {
 } catch (Exception $e) {
     echo "❌ ERROR al obtener pagos pendientes: " . $e->getMessage() . "\n\n";
     echo "  DETALLE: Este error puede indicar que las tablas tienen estructura diferente\n";
-    echo "  SOLUCIÓN: Ejecutar autofix_sistema_completo.php\n\n";
+    echo "  SOLUCIÓN: Ejecutar fix_definitivo.php\n\n";
 }
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
