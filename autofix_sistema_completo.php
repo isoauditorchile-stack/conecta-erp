@@ -120,13 +120,20 @@ try {
     $required_tables = ['planes', 'suscripciones', 'pagos', 'aprobaciones_usuario', 'historial_suscripciones'];
 
     foreach ($required_tables as $table) {
-        $result = $pdo->query("SHOW TABLES LIKE '$table'")->fetchAll();
+        $stmt = $pdo->prepare("SHOW TABLES LIKE ?");
+        $stmt->execute([$table]);
+        $result = $stmt->fetchAll();
+
         if (count($result) > 0) {
-            $count = $pdo->query("SELECT COUNT(*) as c FROM `$table`")->fetch()['c'];
+            $stmt2 = $pdo->prepare("SELECT COUNT(*) as c FROM `$table`");
+            $stmt2->execute();
+            $count = $stmt2->fetch(PDO::FETCH_ASSOC)['c'];
+            $stmt2->closeCursor();
             echo "   ✅ $table ($count registros)\n";
         } else {
             echo "   ❌ $table NO EXISTE\n";
         }
+        $stmt->closeCursor();
     }
 
     echo "\n";
