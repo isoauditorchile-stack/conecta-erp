@@ -183,6 +183,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
             $email_empresa = $_POST['email'];
 
             $stmt = $conn->prepare("INSERT INTO empresas (nombre_empresa, razon_social, rut, pais_id, direccion, ciudad, telefono, email, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'activo')");
+
+            if (!$stmt) {
+                throw new Exception("Error al preparar consulta empresa: " . $conn->error);
+            }
+
             $stmt->bind_param("sssissss",
                 $nombre_empresa,
                 $razon_social,
@@ -193,7 +198,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
                 $telefono_empresa,
                 $email_empresa
             );
-            $stmt->execute();
+
+            if (!$stmt->execute()) {
+                throw new Exception("Error al crear empresa: " . $stmt->error);
+            }
+
             $empresa_id = $conn->insert_id;
             $stmt->close();
 
@@ -211,6 +220,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
             $plan_id = 1;
 
             $stmt = $conn->prepare("INSERT INTO usuarios (empresa_id, nombre, apellido, email, username, password, rut, telefono, idioma_preferido, plan_id, es_admin, es_super_admin, estado, en_periodo_prueba, fecha_inicio_trial, fecha_fin_trial, suscripcion_activa) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 'activo', 1, ?, ?, 1)");
+
+            if (!$stmt) {
+                throw new Exception("Error al preparar consulta usuario: " . $conn->error);
+            }
+
             $stmt->bind_param("issssssssis",
                 $empresa_id,
                 $nombre,
@@ -225,12 +239,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
                 $fecha_inicio_trial,
                 $fecha_fin_trial
             );
-            $stmt->execute();
+
+            if (!$stmt->execute()) {
+                throw new Exception("Error al crear usuario: " . $stmt->error);
+            }
+
             $usuario_id = $conn->insert_id;
             $stmt->close();
 
             // 3. Crear suscripción
             $stmt = $conn->prepare("INSERT INTO suscripciones (usuario_id, empresa_id, plan_id, estado, fecha_inicio, fecha_fin, es_trial, auto_renovar, monto_mensual) VALUES (?, ?, ?, 'trial', ?, ?, 1, 1, 0.00)");
+
+            if (!$stmt) {
+                throw new Exception("Error al preparar consulta suscripción: " . $conn->error);
+            }
+
             $stmt->bind_param("iiiss",
                 $usuario_id,
                 $empresa_id,
@@ -238,14 +261,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
                 $fecha_inicio_trial,
                 $fecha_fin_trial
             );
-            $stmt->execute();
+
+            if (!$stmt->execute()) {
+                throw new Exception("Error al crear suscripción: " . $stmt->error);
+            }
+
             $stmt->close();
 
             // 4. Asignar rol
             $rol_usuario = 3;
             $stmt = $conn->prepare("INSERT INTO usuario_roles (usuario_id, rol_id) VALUES (?, ?)");
+
+            if (!$stmt) {
+                throw new Exception("Error al preparar consulta rol: " . $conn->error);
+            }
+
             $stmt->bind_param("ii", $usuario_id, $rol_usuario);
-            $stmt->execute();
+
+            if (!$stmt->execute()) {
+                throw new Exception("Error al asignar rol: " . $stmt->error);
+            }
+
             $stmt->close();
 
             $conn->commit();
