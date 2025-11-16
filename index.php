@@ -588,6 +588,176 @@ function validarRutChileno($rut) {
             }
         }
     </style>
+
+        /* Sección de Planes */
+        .pricing-section {
+            padding: 80px 20px;
+            background: #f8f9fa;
+        }
+
+        .pricing-title {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .pricing-title h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #2d3748;
+            margin-bottom: 15px;
+        }
+
+        .pricing-title p {
+            font-size: 1.2rem;
+            color: #718096;
+        }
+
+        .pricing-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .pricing-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px 30px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            text-align: center;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .pricing-card.popular {
+            border: 3px solid #667eea;
+            transform: scale(1.05);
+        }
+
+        .pricing-card.popular::before {
+            content: '⭐ MÁS POPULAR';
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 5px 20px;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 700;
+        }
+
+        .plan-name {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .plan-price {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .plan-price small {
+            font-size: 1rem;
+            color: #718096;
+            font-weight: normal;
+        }
+
+        .plan-description {
+            color: #718096;
+            margin-bottom: 30px;
+            font-size: 0.95rem;
+        }
+
+        .plan-features {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 30px 0;
+            text-align: left;
+        }
+
+        .plan-features li {
+            padding: 10px 0;
+            color: #4a5568;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .plan-features li i {
+            color: #48bb78;
+            font-size: 1.2rem;
+        }
+
+        .plan-btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .plan-btn.btn-basic {
+            background: #e2e8f0;
+            color: #2d3748;
+        }
+
+        .plan-btn.btn-basic:hover {
+            background: #cbd5e0;
+        }
+
+        .plan-btn.btn-professional {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .plan-btn.btn-professional:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .plan-btn.btn-enterprise {
+            background: #2d3748;
+            color: white;
+        }
+
+        .plan-btn.btn-enterprise:hover {
+            background: #1a202c;
+        }
+
+        .plan-btn.btn-custom {
+            background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+            color: white;
+        }
+
+        .plan-btn.btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(237, 137, 54, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .pricing-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .pricing-card.popular {
+                transform: scale(1);
+            }
+        }
 </head>
 <body>
     <!-- Hero Section -->
@@ -625,6 +795,106 @@ function validarRutChileno($rut) {
             </div>
         </div>
     </div>
+    <!-- Sección de Planes de Pricing -->
+    <section class="pricing-section" id="planes">
+        <div class="container">
+            <div class="pricing-title">
+                <h2>Planes y Precios</h2>
+                <p>Elige el plan perfecto para tu empresa. Todos incluyen 14 días de prueba gratis.</p>
+            </div>
+
+            <div class="pricing-cards">
+                <!-- Plan Básico -->
+                <div class="pricing-card">
+                    <div class="plan-name">Básico</div>
+                    <div class="plan-price">
+                        $49,990 <small>/mes</small>
+                    </div>
+                    <div class="plan-description">
+                        Ideal para pequeñas empresas que están comenzando
+                    </div>
+                    <ul class="plan-features">
+                        <li><i class="fas fa-check-circle"></i> Hasta 5 usuarios</li>
+                        <li><i class="fas fa-check-circle"></i> 1 empresa</li>
+                        <li><i class="fas fa-check-circle"></i> 6 módulos básicos</li>
+                        <li><i class="fas fa-check-circle"></i> Soporte por email</li>
+                        <li><i class="fas fa-check-circle"></i> Actualizaciones incluidas</li>
+                    </ul>
+                    <button class="plan-btn btn-basic" data-bs-toggle="modal" data-bs-target="#registerModal">
+                        Empezar Gratis
+                    </button>
+                </div>
+
+                <!-- Plan Profesional (Popular) -->
+                <div class="pricing-card popular">
+                    <div class="plan-name">Profesional</div>
+                    <div class="plan-price">
+                        $99,990 <small>/mes</small>
+                    </div>
+                    <div class="plan-description">
+                        Para empresas en crecimiento que necesitan más poder
+                    </div>
+                    <ul class="plan-features">
+                        <li><i class="fas fa-check-circle"></i> Hasta 25 usuarios</li>
+                        <li><i class="fas fa-check-circle"></i> 3 empresas</li>
+                        <li><i class="fas fa-check-circle"></i> 12 módulos completos</li>
+                        <li><i class="fas fa-check-circle"></i> Soporte prioritario</li>
+                        <li><i class="fas fa-check-circle"></i> Reportes avanzados</li>
+                        <li><i class="fas fa-check-circle"></i> Integraciones SII/Previred</li>
+                    </ul>
+                    <button class="plan-btn btn-professional" data-bs-toggle="modal" data-bs-target="#registerModal">
+                        Empezar Gratis
+                    </button>
+                </div>
+
+                <!-- Plan Empresarial -->
+                <div class="pricing-card">
+                    <div class="plan-name">Empresarial</div>
+                    <div class="plan-price">
+                        $199,990 <small>/mes</small>
+                    </div>
+                    <div class="plan-description">
+                        Para grandes empresas con necesidades avanzadas
+                    </div>
+                    <ul class="plan-features">
+                        <li><i class="fas fa-check-circle"></i> Usuarios ilimitados</li>
+                        <li><i class="fas fa-check-circle"></i> Empresas ilimitadas</li>
+                        <li><i class="fas fa-check-circle"></i> 14 módulos + 106 submódulos</li>
+                        <li><i class="fas fa-check-circle"></i> Soporte 24/7</li>
+                        <li><i class="fas fa-check-circle"></i> Business Intelligence</li>
+                        <li><i class="fas fa-check-circle"></i> API completa</li>
+                        <li><i class="fas fa-check-circle"></i> Capacitación incluida</li>
+                    </ul>
+                    <button class="plan-btn btn-enterprise" data-bs-toggle="modal" data-bs-target="#registerModal">
+                        Empezar Gratis
+                    </button>
+                </div>
+
+                <!-- Plan Personalizado -->
+                <div class="pricing-card">
+                    <div class="plan-name">Personalizado</div>
+                    <div class="plan-price">
+                        Cotizar
+                    </div>
+                    <div class="plan-description">
+                        Soluciones diseñadas específicamente para tu negocio
+                    </div>
+                    <ul class="plan-features">
+                        <li><i class="fas fa-check-circle"></i> Todo de Empresarial</li>
+                        <li><i class="fas fa-check-circle"></i> Desarrollo a medida</li>
+                        <li><i class="fas fa-check-circle"></i> Módulos personalizados</li>
+                        <li><i class="fas fa-check-circle"></i> Servidor dedicado</li>
+                        <li><i class="fas fa-check-circle"></i> Gerente de cuenta</li>
+                        <li><i class="fas fa-check-circle"></i> SLA garantizado</li>
+                    </ul>
+                    <button class="plan-btn btn-custom" data-bs-toggle="modal" data-bs-target="#registerModal">
+                        Contactar Ventas
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
 
     <!-- Modal LOGIN -->
     <div class="modal fade" id="loginModal" tabindex="-1">
