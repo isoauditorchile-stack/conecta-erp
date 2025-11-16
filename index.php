@@ -134,6 +134,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
         }
     }
 
+    // Verificar email reservado del super admin
+    if (empty($errors)) {
+        if (strtolower($_POST['email']) === strtolower(SUPER_ADMIN_EMAIL)) {
+            $errors[] = "Este email está reservado para el administrador del sistema";
+        }
+    }
+
+    // Verificar username reservado del super admin
+    if (empty($errors)) {
+        if (strtolower($_POST['username']) === strtolower(SUPER_ADMIN_USERNAME)) {
+            $errors[] = "Este nombre de usuario está reservado";
+        }
+    }
+
     // Verificar email único
     if (empty($errors)) {
         $stmt = $conn->prepare("SELECT id FROM usuarios WHERE email = ?");
