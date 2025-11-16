@@ -1,20 +1,295 @@
+<?php
+session_start();
+
+// Si ya está autenticado, redirigir al dashboard
+if (isset($_SESSION['user_id'])) {
+    $redirect = ($_SESSION['es_super_admin'] == 1) ? 'admin/dashboard_admin.php' : 'user/dashboard_user.php';
+    header("Location: $redirect");
+    exit();
+}
+
+require_once 'includes/config.php';
+
+$errors = [];
+$success = false;
+$login_error = '';
+
+// Procesar LOGIN
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
+    $email_or_username = trim($_POST['email_or_username'] ?? '');
+    $password = $_POST['password'] ?? '';
+
+    if (empty($email_or_username) || empty($password)) {
+        $login_error = 'Por favor ingresa tus credenciales';
+    } else {
+        $stmt = $conn->prepare("SELECT u.*, e.nombre_empresa, e.estado as empresa_estado
+                                FROM usuarios u
+                                LEFT JOIN empresas e ON u.empresa_id = e.id
+                                WHERE u.email = ? OR u.username = ?");
+        $stmt->bind_param("ss", $email_or_username, $email_or_username);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows === 1) {
+            $user = $result->fetch_assoc();
+
+            if (password_verify($password, $user['password'])) {
+                if ($user['estado'] !== 'activo') {
+                    $login_error = 'Tu cuenta está ' . $user['estado'];
+                } elseif ($user['es_super_admin'] == 1) {
+                    // SUPER ADMIN
+                    $_SESSION['user_id'] = $user['id'];
+                    $_SESSION['username'] = $user['username'];
+                    $_SESSION['email'] = $user['email'];
+                    $_SESSION['nombre'] = $user['nombre'];
+                    $_SESSION['apellido'] = $user['apellido'];
+                    $_SESSION['empresa_id'] = $user['empresa_id'];
+                    $_SESSION['es_admin'] = 1;
+                    $_SESSION['es_super_admin'] = 1;
+                    $_SESSION['idioma_preferido'] = $user['idioma_preferido'];
+                    $_SESSION['en_periodo_prueba'] = 0;
+
+                    header("Location: admin/dashboard_admin.php");
+                    exit();
+                } else {
+                    // Usuario normal
+                    if ($user['en_periodo_prueba'] == 1) {
+                        $fecha_fin_trial = strtotime($user['fecha_fin_trial']);
+                        $hoy = time();
+
+                        if ($hoy > $fecha_fin_trial) {
+                            $login_error = 'Tu periodo de prueba ha expirado';
+                        } else {
+                            $dias_restantes = ceil(($fecha_fin_trial - $hoy) / 86400);
+                            $_SESSION['user_id'] = $user['id'];
+                            $_SESSION['username'] = $user['username'];
+                            $_SESSION['email'] = $user['email'];
+                            $_SESSION['nombre'] = $user['nombre'];
+                            $_SESSION['apellido'] = $user['apellido'];
+                            $_SESSION['empresa_id'] = $user['empresa_id'];
+                            $_SESSION['nombre_empresa'] = $user['nombre_empresa'];
+                            $_SESSION['es_admin'] = $user['es_admin'];
+                            $_SESSION['es_super_admin'] = 0;
+                            $_SESSION['idioma_preferido'] = $user['idioma_preferido'];
+                            $_SESSION['en_periodo_prueba'] = 1;
+                            $_SESSION['dias_restantes_trial'] = $dias_restantes;
+
+                            header("Location: user/dashboard_user.php");
+                            exit();
+                        }
+                    } elseif ($user['suscripcion_activa'] == 1) {
+                        $_SESSION['user_id'] = $user['id'];
+                        $_SESSION['username'] = $user['username'];
+                        $_SESSION['email'] = $user['email'];
+                        $_SESSION['nombre'] = $user['nombre'];
+                        $_SESSION['apellido'] = $user['apellido'];
+                        $_SESSION['empresa_id'] = $user['empresa_id'];
+                        $_SESSION['nombre_empresa'] = $user['nombre_empresa'];
+                        $_SESSION['es_admin'] = $user['es_admin'];
+                        $_SESSION['idioma_preferido'] = $user['idioma_preferido'];
+                        $_SESSION['en_periodo_prueba'] = 0;
+
+                        header("Location: user/dashboard_user.php");
+                        exit();
+                    } else {
+                        $login_error = 'Tu suscripción no está activa';
+                    }
+                }
+            } else {
+                $login_error = 'Credenciales incorrectas';
+            }
+        } else {
+            $login_error = 'Credenciales incorrectas';
+        }
+        $stmt->close();
+    }
+}
+
+// Procesar REGISTRO
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
+    $required_fields = ['nombre', 'apellido', 'email', 'username', 'password', 'confirm_password', 'nombre_empresa', 'razon_social', 'rut_empresa', 'pais_id', 'idioma_preferido'];
+
+    foreach ($required_fields as $field) {
+        if (empty($_POST[$field])) {
+            $errors[] = "El campo " . str_replace('_', ' ', $field) . " es obligatorio";
+        }
+    }
+
+    if (!empty($_POST['email']) && !filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) {
+        $errors[] = "El email no es válido";
+    }
+
+    if (!empty($_POST['password']) && strlen($_POST['password']) < 8) {
+        $errors[] = "La contraseña debe tener al menos 8 caracteres";
+    }
+
+    if ($_POST['password'] !== $_POST['confirm_password']) {
+        $errors[] = "Las contraseñas no coinciden";
+    }
+
+    // Validar RUT si es Chile
+    if ($_POST['pais_id'] == 1 && !empty($_POST['rut_empresa'])) {
+        if (!validarRutChileno($_POST['rut_empresa'])) {
+            $errors[] = "El RUT de la empresa no es válido";
+        }
+    }
+
+    // Verificar email único
+    if (empty($errors)) {
+        $stmt = $conn->prepare("SELECT id FROM usuarios WHERE email = ?");
+        $stmt->bind_param("s", $_POST['email']);
+        $stmt->execute();
+        if ($stmt->get_result()->num_rows > 0) {
+            $errors[] = "El email ya está registrado";
+        }
+        $stmt->close();
+    }
+
+    // Verificar username único
+    if (empty($errors)) {
+        $stmt = $conn->prepare("SELECT id FROM usuarios WHERE username = ?");
+        $stmt->bind_param("s", $_POST['username']);
+        $stmt->execute();
+        if ($stmt->get_result()->num_rows > 0) {
+            $errors[] = "El nombre de usuario ya está en uso";
+        }
+        $stmt->close();
+    }
+
+    // Verificar RUT empresa único
+    if (empty($errors)) {
+        $stmt = $conn->prepare("SELECT id FROM empresas WHERE rut = ?");
+        $stmt->bind_param("s", $_POST['rut_empresa']);
+        $stmt->execute();
+        if ($stmt->get_result()->num_rows > 0) {
+            $errors[] = "El RUT de la empresa ya está registrado";
+        }
+        $stmt->close();
+    }
+
+    // Si no hay errores, registrar
+    if (empty($errors)) {
+        $conn->begin_transaction();
+
+        try {
+            // 1. Crear empresa
+            $stmt = $conn->prepare("INSERT INTO empresas (nombre_empresa, razon_social, rut, pais_id, direccion, ciudad, telefono, email, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'activo')");
+            $stmt->bind_param("sssiss ss",
+                $_POST['nombre_empresa'],
+                $_POST['razon_social'],
+                $_POST['rut_empresa'],
+                $_POST['pais_id'],
+                $_POST['direccion'] ?? null,
+                $_POST['ciudad'] ?? null,
+                $_POST['telefono_empresa'] ?? null,
+                $_POST['email']
+            );
+            $stmt->execute();
+            $empresa_id = $conn->insert_id;
+            $stmt->close();
+
+            // 2. Crear usuario
+            $password_hash = password_hash($_POST['password'], PASSWORD_BCRYPT);
+            $fecha_inicio_trial = date('Y-m-d H:i:s');
+            $fecha_fin_trial = date('Y-m-d H:i:s', strtotime('+14 days'));
+            $plan_id = 1;
+
+            $stmt = $conn->prepare("INSERT INTO usuarios (empresa_id, nombre, apellido, email, username, password, rut, telefono, idioma_preferido, plan_id, es_admin, es_super_admin, estado, en_periodo_prueba, fecha_inicio_trial, fecha_fin_trial, suscripcion_activa) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 'activo', 1, ?, ?, 1)");
+            $stmt->bind_param("issssssssis",
+                $empresa_id,
+                $_POST['nombre'],
+                $_POST['apellido'],
+                $_POST['email'],
+                $_POST['username'],
+                $password_hash,
+                $_POST['rut'] ?? null,
+                $_POST['telefono'] ?? null,
+                $_POST['idioma_preferido'],
+                $plan_id,
+                $fecha_inicio_trial,
+                $fecha_fin_trial
+            );
+            $stmt->execute();
+            $usuario_id = $conn->insert_id;
+            $stmt->close();
+
+            // 3. Crear suscripción
+            $stmt = $conn->prepare("INSERT INTO suscripciones (usuario_id, empresa_id, plan_id, estado, fecha_inicio, fecha_fin, es_trial, auto_renovar, monto_mensual) VALUES (?, ?, ?, 'trial', ?, ?, 1, 1, 0.00)");
+            $stmt->bind_param("iiiss",
+                $usuario_id,
+                $empresa_id,
+                $plan_id,
+                $fecha_inicio_trial,
+                $fecha_fin_trial
+            );
+            $stmt->execute();
+            $stmt->close();
+
+            // 4. Asignar rol
+            $rol_usuario = 3;
+            $stmt = $conn->prepare("INSERT INTO usuario_roles (usuario_id, rol_id) VALUES (?, ?)");
+            $stmt->bind_param("ii", $usuario_id, $rol_usuario);
+            $stmt->execute();
+            $stmt->close();
+
+            $conn->commit();
+
+            // Auto-login
+            $_SESSION['user_id'] = $usuario_id;
+            $_SESSION['username'] = $_POST['username'];
+            $_SESSION['email'] = $_POST['email'];
+            $_SESSION['nombre'] = $_POST['nombre'];
+            $_SESSION['apellido'] = $_POST['apellido'];
+            $_SESSION['empresa_id'] = $empresa_id;
+            $_SESSION['es_admin'] = 0;
+            $_SESSION['es_super_admin'] = 0;
+            $_SESSION['idioma_preferido'] = $_POST['idioma_preferido'];
+            $_SESSION['en_periodo_prueba'] = 1;
+            $_SESSION['dias_restantes_trial'] = 14;
+
+            header("Location: user/dashboard_user.php?welcome=1");
+            exit();
+
+        } catch (Exception $e) {
+            $conn->rollback();
+            $errors[] = "Error al crear la cuenta: " . $e->getMessage();
+        }
+    }
+}
+
+// Obtener países e idiomas
+$paises = $conn->query("SELECT * FROM paises WHERE activo = 1 ORDER BY nombre");
+$idiomas = $conn->query("SELECT * FROM idiomas WHERE activo = 1 ORDER BY nombre");
+
+// Función validar RUT
+function validarRutChileno($rut) {
+    $rut = preg_replace('/[^0-9kK]/', '', $rut);
+    if (strlen($rut) < 2) return false;
+    $dv = strtoupper(substr($rut, -1));
+    $numero = intval(substr($rut, 0, -1));
+    $suma = 0;
+    $multiplo = 2;
+    while ($numero > 0) {
+        $suma += ($numero % 10) * $multiplo;
+        $numero = intval($numero / 10);
+        $multiplo = $multiplo === 7 ? 2 : $multiplo + 1;
+    }
+    $dvEsperado = 11 - ($suma % 11);
+    if ($dvEsperado === 11) $dvEsperado = '0';
+    else if ($dvEsperado === 10) $dvEsperado = 'K';
+    else $dvEsperado = strval($dvEsperado);
+    return $dv === $dvEsperado;
+}
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CONECTA ERP - Sistema de Gestión Empresarial</title>
+    <title>CONECTA ERP - Sistema de Gestión Empresarial Completo</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        :root {
-            --primary-color: #2563eb;
-            --secondary-color: #10b981;
-            --accent-color: #f59e0b;
-            --dark-color: #1e293b;
-            --light-color: #f8fafc;
-        }
-
         * {
             margin: 0;
             padding: 0;
@@ -69,307 +344,169 @@
 
         .hero .subtitle {
             font-size: 1.5rem;
-            margin-bottom: 1rem;
-            opacity: 0.95;
-        }
-
-        .hero .description {
-            font-size: 1.1rem;
             margin-bottom: 2rem;
-            opacity: 0.9;
+            opacity: 0.95;
         }
 
         .hero .stats {
             display: flex;
             justify-content: center;
             gap: 3rem;
-            margin-top: 2rem;
+            margin: 3rem 0;
             flex-wrap: wrap;
         }
 
-        .hero .stat-item {
+        .stat-item {
             text-align: center;
         }
 
-        .hero .stat-number {
+        .stat-number {
             font-size: 3rem;
             font-weight: 800;
             display: block;
         }
 
-        .hero .stat-label {
+        .stat-label {
             font-size: 1rem;
             opacity: 0.9;
         }
 
         .cta-buttons {
             display: flex;
-            gap: 1rem;
+            gap: 20px;
             justify-content: center;
             margin-top: 2rem;
             flex-wrap: wrap;
         }
 
-        .btn-primary-custom {
+        .btn-hero {
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-login {
             background: white;
             color: #667eea;
-            padding: 15px 40px;
-            border-radius: 50px;
-            text-decoration: none;
-            font-weight: 700;
-            font-size: 1.1rem;
-            transition: all 0.3s;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
 
-        .btn-primary-custom:hover {
+        .btn-login:hover {
             transform: translateY(-3px);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
-            color: #667eea;
+            box-shadow: 0 10px 25px rgba(255,255,255,0.3);
         }
 
-        .btn-secondary-custom {
-            background: transparent;
+        .btn-register {
+            background: rgba(255,255,255,0.2);
             color: white;
-            padding: 15px 40px;
-            border-radius: 50px;
-            text-decoration: none;
-            font-weight: 700;
-            font-size: 1.1rem;
             border: 2px solid white;
-            transition: all 0.3s;
         }
 
-        .btn-secondary-custom:hover {
+        .btn-register:hover {
             background: white;
             color: #667eea;
             transform: translateY(-3px);
         }
 
-        /* Plans Section */
-        .plans-section {
-            padding: 100px 20px;
-            background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+        /* Modales personalizados */
+        .modal-content {
+            border-radius: 20px;
+            border: none;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 20px 20px 0 0;
+            padding: 30px;
+        }
+
+        .modal-header .modal-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .modal-header .btn-close {
+            filter: brightness(0) invert(1);
+        }
+
+        .modal-body {
+            padding: 30px;
+            max-height: 70vh;
+            overflow-y: auto;
         }
 
         .section-title {
-            text-align: center;
-            font-size: 3rem;
-            font-weight: 800;
-            margin-bottom: 1rem;
-            color: #1e293b;
-        }
-
-        .section-subtitle {
-            text-align: center;
-            font-size: 1.3rem;
-            color: #64748b;
-            margin-bottom: 4rem;
-            max-width: 800px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .plans-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 30px;
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        .plan-card {
-            background: white;
-            border-radius: 20px;
-            padding: 40px 30px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-            transition: all 0.3s;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .plan-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 5px;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-        }
-
-        .plan-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-        }
-
-        .plan-card.featured {
-            border: 3px solid #667eea;
-            transform: scale(1.05);
-        }
-
-        .plan-badge {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 700;
-        }
-
-        .plan-name {
-            font-size: 1.8rem;
-            font-weight: 800;
-            color: #1e293b;
-            margin-bottom: 1rem;
-        }
-
-        .plan-price {
-            font-size: 3rem;
-            font-weight: 800;
-            color: #667eea;
-            margin-bottom: 0.5rem;
-        }
-
-        .plan-price small {
             font-size: 1.2rem;
-            color: #64748b;
-            font-weight: 400;
-        }
-
-        .plan-description {
-            color: #64748b;
-            margin-bottom: 2rem;
-            font-size: 1rem;
-        }
-
-        .plan-features {
-            list-style: none;
-            margin-bottom: 2rem;
-        }
-
-        .plan-features li {
-            padding: 10px 0;
-            color: #475569;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
             display: flex;
             align-items: center;
             gap: 10px;
         }
 
-        .plan-features li i {
-            color: #10b981;
-            font-size: 1.2rem;
+        .form-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
         }
 
-        .plan-button {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
+        .form-control, .form-select {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+
+        .input-group-text {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-right: none;
+        }
+
+        .input-group .form-control {
+            border-left: none;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            border-radius: 10px;
-            font-weight: 700;
+            padding: 15px;
             font-size: 1.1rem;
-            cursor: pointer;
-            transition: all 0.3s;
+            font-weight: 600;
+            border-radius: 10px;
+            width: 100%;
+            transition: all 0.3s ease;
+            margin-top: 20px;
         }
 
-        .plan-button:hover {
+        .btn-submit:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
         }
 
-        /* Features Section */
-        .features-section {
-            padding: 100px 20px;
-            background: white;
+        .password-strength {
+            height: 5px;
+            border-radius: 3px;
+            margin-top: 5px;
+            transition: all 0.3s ease;
         }
 
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 40px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .feature-item {
-            text-align: center;
-            padding: 30px;
-        }
-
-        .feature-icon {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 20px;
-            font-size: 2rem;
-            color: white;
-        }
-
-        .feature-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #1e293b;
-            margin-bottom: 1rem;
-        }
-
-        .feature-description {
-            color: #64748b;
-            line-height: 1.6;
-        }
-
-        /* Footer */
-        .footer {
-            background: #1e293b;
-            color: white;
-            padding: 60px 20px 20px;
-        }
-
-        .footer-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            text-align: center;
-        }
-
-        .footer-logo {
-            font-size: 2rem;
-            font-weight: 800;
-            margin-bottom: 1rem;
-        }
-
-        .footer-links {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            margin: 20px 0;
-            flex-wrap: wrap;
-        }
-
-        .footer-links a {
-            color: white;
-            text-decoration: none;
-            transition: color 0.3s;
-        }
-
-        .footer-links a:hover {
-            color: #667eea;
-        }
-
-        .footer-bottom {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            color: rgba(255,255,255,0.7);
-        }
+        .strength-weak { background: #dc3545; width: 33%; }
+        .strength-medium { background: #ffc107; width: 66%; }
+        .strength-strong { background: #28a745; width: 100%; }
 
         @media (max-width: 768px) {
             .hero h1 {
@@ -380,30 +517,18 @@
                 font-size: 1.2rem;
             }
 
-            .hero .stats {
-                gap: 2rem;
-            }
-
-            .section-title {
+            .stat-number {
                 font-size: 2rem;
-            }
-
-            .plan-card.featured {
-                transform: scale(1);
             }
         }
     </style>
 </head>
 <body>
     <!-- Hero Section -->
-    <section class="hero">
+    <div class="hero">
         <div class="hero-content">
-            <h1>🚀 CONECTA ERP</h1>
-            <p class="subtitle">Sistema de Gestión Empresarial Completo</p>
-            <p class="description">
-                La solución ERP más completa del mercado con 14 módulos principales y 106 submódulos especializados.
-                <br>Multiusuario • Multiempresa • Multipais • Multimoneda • Multiidioma
-            </p>
+            <h1><i class="fas fa-rocket"></i> CONECTA ERP</h1>
+            <p class="subtitle">Sistema de Gestión Empresarial Completo para LATAM</p>
 
             <div class="stats">
                 <div class="stat-item">
@@ -425,193 +550,369 @@
             </div>
 
             <div class="cta-buttons">
-                <a href="register.php" class="btn-primary-custom">
-                    <i class="fas fa-rocket"></i> Comenzar Gratis - 14 Días
-                </a>
-                <a href="login.php" class="btn-secondary-custom">
-                    <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
-                </a>
-            </div>
-        </div>
-    </section>
-
-    <!-- Plans Section -->
-    <section class="plans-section" id="planes">
-        <h2 class="section-title">Planes y Precios</h2>
-        <p class="section-subtitle">
-            Elige el plan que mejor se adapte a las necesidades de tu empresa.
-            Todos incluyen 14 días de prueba gratis sin necesidad de tarjeta de crédito.
-        </p>
-
-        <div class="plans-container">
-            <!-- Plan Básico -->
-            <div class="plan-card">
-                <h3 class="plan-name">Básico</h3>
-                <div class="plan-price">$49.990<small>/mes</small></div>
-                <p class="plan-description">Ideal para pequeñas empresas que están comenzando</p>
-                <ul class="plan-features">
-                    <li><i class="fas fa-check-circle"></i> Hasta 5 usuarios</li>
-                    <li><i class="fas fa-check-circle"></i> 6 módulos básicos</li>
-                    <li><i class="fas fa-check-circle"></i> 1 empresa</li>
-                    <li><i class="fas fa-check-circle"></i> Soporte email</li>
-                    <li><i class="fas fa-check-circle"></i> Actualizaciones incluidas</li>
-                </ul>
-                <button class="plan-button" onclick="window.location.href='register.php?plan=1'">
-                    Comenzar Ahora
+                <button class="btn-hero btn-login" data-bs-toggle="modal" data-bs-target="#loginModal">
+                    <i class="fas fa-sign-in-alt"></i> INICIAR SESIÓN
                 </button>
-            </div>
-
-            <!-- Plan Profesional -->
-            <div class="plan-card featured">
-                <div class="plan-badge">MÁS POPULAR</div>
-                <h3 class="plan-name">Profesional</h3>
-                <div class="plan-price">$99.990<small>/mes</small></div>
-                <p class="plan-description">Para empresas en crecimiento que necesitan más poder</p>
-                <ul class="plan-features">
-                    <li><i class="fas fa-check-circle"></i> Hasta 25 usuarios</li>
-                    <li><i class="fas fa-check-circle"></i> 12 módulos completos</li>
-                    <li><i class="fas fa-check-circle"></i> 3 empresas</li>
-                    <li><i class="fas fa-check-circle"></i> Soporte prioritario</li>
-                    <li><i class="fas fa-check-circle"></i> Reportes avanzados</li>
-                    <li><i class="fas fa-check-circle"></i> Integraciones SII/Previred</li>
-                </ul>
-                <button class="plan-button" onclick="window.location.href='register.php?plan=2'">
-                    Comenzar Ahora
-                </button>
-            </div>
-
-            <!-- Plan Empresarial -->
-            <div class="plan-card">
-                <h3 class="plan-name">Empresarial</h3>
-                <div class="plan-price">$199.990<small>/mes</small></div>
-                <p class="plan-description">Para grandes empresas con necesidades avanzadas</p>
-                <ul class="plan-features">
-                    <li><i class="fas fa-check-circle"></i> Usuarios ilimitados</li>
-                    <li><i class="fas fa-check-circle"></i> 14 módulos + 106 submódulos</li>
-                    <li><i class="fas fa-check-circle"></i> Empresas ilimitadas</li>
-                    <li><i class="fas fa-check-circle"></i> Soporte 24/7</li>
-                    <li><i class="fas fa-check-circle"></i> Business Intelligence</li>
-                    <li><i class="fas fa-check-circle"></i> API completa</li>
-                    <li><i class="fas fa-check-circle"></i> Capacitación incluida</li>
-                </ul>
-                <button class="plan-button" onclick="window.location.href='register.php?plan=3'">
-                    Comenzar Ahora
-                </button>
-            </div>
-
-            <!-- Plan Personalizado -->
-            <div class="plan-card">
-                <h3 class="plan-name">Personalizado</h3>
-                <div class="plan-price">A medida</div>
-                <p class="plan-description">Soluciones diseñadas específicamente para tu negocio</p>
-                <ul class="plan-features">
-                    <li><i class="fas fa-check-circle"></i> Todo de Empresarial</li>
-                    <li><i class="fas fa-check-circle"></i> Desarrollo a medida</li>
-                    <li><i class="fas fa-check-circle"></i> Módulos personalizados</li>
-                    <li><i class="fas fa-check-circle"></i> Servidor dedicado</li>
-                    <li><i class="fas fa-check-circle"></i> Gerente de cuenta</li>
-                    <li><i class="fas fa-check-circle"></i> SLA garantizado</li>
-                </ul>
-                <button class="plan-button" onclick="window.location.href='register.php?plan=4'">
-                    Contactar Ventas
+                <button class="btn-hero btn-register" data-bs-toggle="modal" data-bs-target="#registerModal">
+                    <i class="fas fa-user-plus"></i> REGISTRARSE GRATIS
                 </button>
             </div>
         </div>
-    </section>
+    </div>
 
-    <!-- Features Section -->
-    <section class="features-section">
-        <h2 class="section-title">Características Principales</h2>
-        <p class="section-subtitle">
-            Un sistema ERP completo con todo lo que tu empresa necesita para crecer
-        </p>
-
-        <div class="features-grid">
-            <div class="feature-item">
-                <div class="feature-icon">
-                    <i class="fas fa-globe"></i>
+    <!-- Modal LOGIN -->
+    <div class="modal fade" id="loginModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-sign-in-alt"></i> Iniciar Sesión</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <h3 class="feature-title">Multipaís y Multiidioma</h3>
-                <p class="feature-description">
-                    Opera en 9 países diferentes con soporte para 8 idiomas. El sistema se adapta automáticamente a las leyes y regulaciones de cada país.
-                </p>
-            </div>
+                <div class="modal-body">
+                    <?php if (!empty($login_error)): ?>
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle"></i> <?php echo htmlspecialchars($login_error); ?>
+                        </div>
+                    <?php endif; ?>
 
-            <div class="feature-item">
-                <div class="feature-icon">
-                    <i class="fas fa-building"></i>
-                </div>
-                <h3 class="feature-title">Multiempresa</h3>
-                <p class="feature-description">
-                    Gestiona múltiples empresas desde una sola cuenta. Ideal para holdings y grupos empresariales.
-                </p>
-            </div>
+                    <form method="POST" action="">
+                        <div class="mb-3">
+                            <label class="form-label">Email o Usuario</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                <input type="text" name="email_or_username" class="form-control" required autofocus>
+                            </div>
+                        </div>
 
-            <div class="feature-item">
-                <div class="feature-icon">
-                    <i class="fas fa-shield-alt"></i>
-                </div>
-                <h3 class="feature-title">Seguridad Avanzada</h3>
-                <p class="feature-description">
-                    Sistema de permisos granular, autenticación de dos factores, encriptación de datos y cumplimiento GDPR.
-                </p>
-            </div>
+                        <div class="mb-3">
+                            <label class="form-label">Contraseña</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <input type="password" name="password" class="form-control" required>
+                            </div>
+                        </div>
 
-            <div class="feature-item">
-                <div class="feature-icon">
-                    <i class="fas fa-chart-line"></i>
-                </div>
-                <h3 class="feature-title">Business Intelligence</h3>
-                <p class="feature-description">
-                    Dashboards interactivos, reportes personalizados, KPIs en tiempo real y análisis predictivo con IA.
-                </p>
-            </div>
+                        <button type="submit" name="login" class="btn-submit">
+                            <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+                        </button>
 
-            <div class="feature-item">
-                <div class="feature-icon">
-                    <i class="fas fa-plug"></i>
+                        <div class="text-center mt-3">
+                            <small>¿No tienes cuenta? <a href="#" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#registerModal">Regístrate gratis</a></small>
+                        </div>
+                    </form>
                 </div>
-                <h3 class="feature-title">Integraciones</h3>
-                <p class="feature-description">
-                    Conecta con SII, Previred, bancos, y más de 100 aplicaciones de terceros mediante API REST.
-                </p>
-            </div>
-
-            <div class="feature-item">
-                <div class="feature-icon">
-                    <i class="fas fa-mobile-alt"></i>
-                </div>
-                <h3 class="feature-title">Responsive Design</h3>
-                <p class="feature-description">
-                    Accede desde cualquier dispositivo: computador, tablet o smartphone. 100% responsive y optimizado.
-                </p>
             </div>
         </div>
-    </section>
+    </div>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="footer-content">
-            <div class="footer-logo">
-                <i class="fas fa-network-wired"></i> CONECTA ERP
-            </div>
-            <p>El sistema ERP más completo del mercado</p>
+    <!-- Modal REGISTRO -->
+    <div class="modal fade" id="registerModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-user-plus"></i> Registro - 14 Días de Prueba Gratis</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <?php if (!empty($errors)): ?>
+                        <div class="alert alert-danger">
+                            <h6><i class="fas fa-exclamation-triangle"></i> Errores:</h6>
+                            <ul class="mb-0">
+                                <?php foreach ($errors as $error): ?>
+                                    <li><?php echo htmlspecialchars($error); ?></li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </div>
+                    <?php endif; ?>
 
-            <div class="footer-links">
-                <a href="#planes">Planes</a>
-                <a href="#">Características</a>
-                <a href="#">Documentación</a>
-                <a href="#">Soporte</a>
-                <a href="#">Contacto</a>
-            </div>
+                    <form method="POST" action="" id="registerForm">
+                        <!-- Configuración Inicial -->
+                        <div class="section-title">
+                            <i class="fas fa-globe"></i> Configuración Inicial
+                        </div>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">País <span class="text-danger">*</span></label>
+                                <select name="pais_id" id="pais_id" class="form-select" required>
+                                    <option value="">Seleccione un país</option>
+                                    <?php
+                                    $paises->data_seek(0);
+                                    while ($pais = $paises->fetch_assoc()): ?>
+                                        <option value="<?php echo $pais['id']; ?>"
+                                                data-tipo-doc="<?php echo htmlspecialchars($pais['tipo_documento']); ?>"
+                                                data-formato="<?php echo htmlspecialchars($pais['formato_documento']); ?>">
+                                            <?php echo htmlspecialchars($pais['nombre']); ?>
+                                        </option>
+                                    <?php endwhile; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Idioma Preferido <span class="text-danger">*</span></label>
+                                <select name="idioma_preferido" class="form-select" required>
+                                    <?php
+                                    $idiomas->data_seek(0);
+                                    while ($idioma = $idiomas->fetch_assoc()): ?>
+                                        <option value="<?php echo $idioma['codigo']; ?>">
+                                            <?php echo htmlspecialchars($idioma['nombre_nativo']); ?> (<?php echo htmlspecialchars($idioma['nombre']); ?>)
+                                        </option>
+                                    <?php endwhile; ?>
+                                </select>
+                            </div>
+                        </div>
 
-            <div class="footer-bottom">
-                <p>&copy; 2024 CONECTA ERP. Todos los derechos reservados.</p>
-                <p>Sistema desarrollado para empresas chilenas y latinoamericanas</p>
+                        <!-- Datos de la Empresa -->
+                        <div class="section-title">
+                            <i class="fas fa-building"></i> Datos de la Empresa
+                        </div>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Nombre de la Empresa <span class="text-danger">*</span></label>
+                                <input type="text" name="nombre_empresa" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Razón Social <span class="text-danger">*</span></label>
+                                <input type="text" name="razon_social" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label"><span id="doc_tipo_empresa">RUT</span> Empresa <span class="text-danger">*</span></label>
+                                <input type="text" name="rut_empresa" id="rut_empresa" class="form-control" required>
+                                <small class="text-muted" id="doc_ejemplo_empresa">Ejemplo: 12.345.678-9</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Email Empresa <span class="text-danger">*</span></label>
+                                <input type="email" name="email" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label">Dirección</label>
+                                <input type="text" name="direccion" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Ciudad</label>
+                                <input type="text" name="ciudad" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Teléfono Empresa</label>
+                                <input type="tel" name="telefono_empresa" class="form-control">
+                            </div>
+                        </div>
+
+                        <!-- Datos del Usuario Administrador -->
+                        <div class="section-title">
+                            <i class="fas fa-user-tie"></i> Datos del Usuario Administrador
+                        </div>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                                <input type="text" name="nombre" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Apellido <span class="text-danger">*</span></label>
+                                <input type="text" name="apellido" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label"><span id="doc_tipo_personal">RUT</span> Personal</label>
+                                <input type="text" name="rut" id="rut_personal" class="form-control">
+                                <small class="text-muted" id="doc_ejemplo_personal">Ejemplo: 12.345.678-9</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Teléfono Personal</label>
+                                <input type="tel" name="telefono" class="form-control">
+                            </div>
+                        </div>
+
+                        <!-- Credenciales de Acceso -->
+                        <div class="section-title">
+                            <i class="fas fa-key"></i> Credenciales de Acceso
+                        </div>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-12">
+                                <label class="form-label">Nombre de Usuario <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                    <input type="text" name="username" class="form-control" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Contraseña <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                    <input type="password" name="password" id="password" class="form-control" required minlength="8">
+                                </div>
+                                <div class="password-strength" id="password-strength"></div>
+                                <small class="text-muted">Mínimo 8 caracteres</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Confirmar Contraseña <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                    <input type="password" name="confirm_password" id="confirm_password" class="form-control" required minlength="8">
+                                </div>
+                                <div id="password-match"></div>
+                            </div>
+                        </div>
+
+                        <button type="submit" name="register" class="btn-submit">
+                            <i class="fas fa-rocket"></i> Crear Cuenta y Comenzar Prueba Gratis (14 Días)
+                        </button>
+
+                        <div class="text-center mt-3">
+                            <small>¿Ya tienes cuenta? <a href="#" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#loginModal">Inicia sesión</a></small>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
-    </footer>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Auto-abrir modales si hay errores
+        <?php if (!empty($login_error)): ?>
+            new bootstrap.Modal(document.getElementById('loginModal')).show();
+        <?php endif; ?>
+        <?php if (!empty($errors)): ?>
+            new bootstrap.Modal(document.getElementById('registerModal')).show();
+        <?php endif; ?>
+
+        // RUT Validator y Formatter
+        function limpiarRut(rut) {
+            return rut.replace(/[^0-9kK]/g, '');
+        }
+
+        function formatearRut(rut) {
+            rut = limpiarRut(rut);
+            if (rut.length < 2) return rut;
+            let dv = rut.slice(-1);
+            let numero = rut.slice(0, -1);
+            numero = numero.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            return numero + '-' + dv;
+        }
+
+        function validarRutChileno(rut) {
+            rut = limpiarRut(rut);
+            if (rut.length < 2) return false;
+            let dv = rut.slice(-1).toUpperCase();
+            let numero = parseInt(rut.slice(0, -1));
+            let suma = 0;
+            let multiplo = 2;
+            while (numero > 0) {
+                suma += (numero % 10) * multiplo;
+                numero = Math.floor(numero / 10);
+                multiplo = multiplo === 7 ? 2 : multiplo + 1;
+            }
+            let dvEsperado = 11 - (suma % 11);
+            if (dvEsperado === 11) dvEsperado = '0';
+            else if (dvEsperado === 10) dvEsperado = 'K';
+            else dvEsperado = dvEsperado.toString();
+            return dv === dvEsperado;
+        }
+
+        // Auto-formato RUT
+        document.getElementById('rut_empresa').addEventListener('input', function(e) {
+            let paisId = document.getElementById('pais_id').value;
+            if (paisId == 1) {
+                let cursorPos = e.target.selectionStart;
+                let oldLength = e.target.value.length;
+                e.target.value = formatearRut(e.target.value);
+                let newLength = e.target.value.length;
+                e.target.setSelectionRange(cursorPos + (newLength - oldLength), cursorPos + (newLength - oldLength));
+            }
+        });
+
+        document.getElementById('rut_personal').addEventListener('input', function(e) {
+            let paisId = document.getElementById('pais_id').value;
+            if (paisId == 1) {
+                let cursorPos = e.target.selectionStart;
+                let oldLength = e.target.value.length;
+                e.target.value = formatearRut(e.target.value);
+                let newLength = e.target.value.length;
+                e.target.setSelectionRange(cursorPos + (newLength - oldLength), cursorPos + (newLength - oldLength));
+            }
+        });
+
+        // Cambio dinámico de tipo documento
+        document.getElementById('pais_id').addEventListener('change', function() {
+            let selectedOption = this.options[this.selectedIndex];
+            let tipoDoc = selectedOption.dataset.tipoDoc || 'RUT';
+            let formato = selectedOption.dataset.formato || '##.###.###-#';
+
+            document.getElementById('doc_tipo_empresa').textContent = tipoDoc;
+            document.getElementById('doc_tipo_personal').textContent = tipoDoc;
+            document.getElementById('doc_ejemplo_empresa').textContent = 'Ejemplo: ' + formato;
+            document.getElementById('doc_ejemplo_personal').textContent = 'Ejemplo: ' + formato;
+        });
+
+        // Password strength
+        document.getElementById('password').addEventListener('input', function() {
+            let password = this.value;
+            let strength = document.getElementById('password-strength');
+            if (password.length === 0) {
+                strength.className = 'password-strength';
+                return;
+            }
+            let score = 0;
+            if (password.length >= 8) score++;
+            if (password.length >= 12) score++;
+            if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score++;
+            if (/\d/.test(password)) score++;
+            if (/[^a-zA-Z0-9]/.test(password)) score++;
+
+            if (score <= 2) {
+                strength.className = 'password-strength strength-weak';
+            } else if (score <= 4) {
+                strength.className = 'password-strength strength-medium';
+            } else {
+                strength.className = 'password-strength strength-strong';
+            }
+        });
+
+        // Password match
+        document.getElementById('confirm_password').addEventListener('input', function() {
+            let password = document.getElementById('password').value;
+            let confirmPassword = this.value;
+            let message = document.getElementById('password-match');
+            if (confirmPassword.length === 0) {
+                message.innerHTML = '';
+                return;
+            }
+            if (password === confirmPassword) {
+                message.innerHTML = '<small class="text-success"><i class="fas fa-check"></i> Las contraseñas coinciden</small>';
+            } else {
+                message.innerHTML = '<small class="text-danger"><i class="fas fa-times"></i> Las contraseñas no coinciden</small>';
+            }
+        });
+
+        // Validación antes de enviar
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            let paisId = document.getElementById('pais_id').value;
+            if (paisId == 1) {
+                let rutEmpresa = document.getElementById('rut_empresa').value;
+                if (!validarRutChileno(rutEmpresa)) {
+                    e.preventDefault();
+                    alert('El RUT de la empresa no es válido');
+                    return false;
+                }
+            }
+            let password = document.getElementById('password').value;
+            let confirmPassword = document.getElementById('confirm_password').value;
+            if (password !== confirmPassword) {
+                e.preventDefault();
+                alert('Las contraseñas no coinciden');
+                return false;
+            }
+        });
+    </script>
 </body>
 </html>

@@ -26,10 +26,6 @@ define('SITE_VERSION', '1.0.0');
 define('SUPER_ADMIN_EMAIL', 'auditorexchile@gmail.com');
 define('SUPER_ADMIN_USERNAME', 'auditorex chile');
 
-// Configuración de sesiones
-ini_set('session.gc_maxlifetime', 86400); // 24 horas
-session_set_cookie_params(86400);
-
 // Conexión a la base de datos
 $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
 
