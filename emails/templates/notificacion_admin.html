@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notificación Admin - CONECTA ERP</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+        }
+        .email-container {
+            max-width: 650px;
+            margin: 40px auto;
+            background: #ffffff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: 3px solid #ed8936;
+        }
+        .header {
+            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+        }
+        .header .badge {
+            display: inline-block;
+            background: #ed8936;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        .content {
+            padding: 35px 30px;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+        .content h2 {
+            color: #2d3748;
+            font-size: 22px;
+            margin-top: 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .content p {
+            margin: 15px 0;
+            font-size: 16px;
+        }
+        .alert-box {
+            background: #fff5f0;
+            border-left: 4px solid #ed8936;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 5px;
+        }
+        .alert-box h3 {
+            color: #ed8936;
+            margin-top: 0;
+            font-size: 18px;
+        }
+        .data-box {
+            background: #f5f7fa;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #2d3748;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 40px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        .metadata {
+            background: #edf2f7;
+            padding: 15px 20px;
+            margin: 25px 0;
+            border-radius: 5px;
+            font-size: 14px;
+            color: #4a5568;
+        }
+        .metadata table {
+            width: 100%;
+        }
+        .metadata td {
+            padding: 5px 0;
+        }
+        .metadata td:first-child {
+            font-weight: 600;
+            width: 30%;
+        }
+        .footer {
+            background: #2d3748;
+            padding: 25px;
+            text-align: center;
+            color: #cbd5e1;
+            font-size: 14px;
+        }
+        .footer a {
+            color: #90cdf4;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>🔔 Notificación del Sistema</h1>
+            <div class="badge">SUPER ADMIN</div>
+        </div>
+
+        <div class="content">
+            <h2>{{asunto}}</h2>
+
+            <div class="alert-box">
+                <h3>Mensaje del Sistema</h3>
+                <p style="margin: 10px 0 0 0; color: #4a5568;">{{mensaje}}</p>
+            </div>
+
+            <div class="metadata">
+                <table>
+                    <tr>
+                        <td><strong>📅 Fecha:</strong></td>
+                        <td>{{fecha}}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>🖥️ Sistema:</strong></td>
+                        <td>CONECTA ERP - Notificación Automática</td>
+                    </tr>
+                    <tr>
+                        <td><strong>⚙️ Tipo:</strong></td>
+                        <td>Alerta Administrativa</td>
+                    </tr>
+                </table>
+            </div>
+
+            <p><strong>📊 Datos Adicionales:</strong></p>
+
+            <div class="data-box">{{datos}}</div>
+
+            <center>
+                <a href="{{url_admin}}" class="cta-button">Ir al Panel Admin →</a>
+            </center>
+
+            <p style="margin-top: 30px; padding: 15px; background: #fffaf0; border-left: 4px solid #ed8936; border-radius: 5px; font-size: 14px;">
+                <strong>⚠️ Esta es una notificación automática del sistema.</strong><br>
+                Por favor revisa la información y toma las acciones necesarias desde el panel de administración.
+            </p>
+
+            <p style="color: #718096; font-size: 14px; margin-top: 25px;">
+                <strong>Acciones sugeridas:</strong>
+            </p>
+            <ul style="color: #4a5568; font-size: 14px;">
+                <li>Revisa los logs de auditoría para más detalles</li>
+                <li>Verifica el estado del sistema desde el dashboard</li>
+                <li>Toma acciones correctivas si es necesario</li>
+                <li>Documenta el incidente si aplica</li>
+            </ul>
+
+            <p>
+                Este email fue generado automáticamente por el sistema.<br>
+                <strong>Sistema CONECTA ERP</strong>
+            </p>
+        </div>
+
+        <div class="footer">
+            <p>
+                <a href="{{url_admin}}">Panel Admin</a> •
+                <a href="#">Logs</a> •
+                <a href="#">Documentación</a>
+            </p>
+            <p style="font-size: 12px; color: #94a3b8; margin-top: 15px;">
+                © {{anio}} CONECTA ERP - Sistema de Administración.<br>
+                Email exclusivo para Super Administradores.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

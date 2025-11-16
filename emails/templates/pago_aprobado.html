@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pago Recibido - CONECTA ERP</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: #ffffff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 32px;
+            font-weight: 700;
+        }
+        .content {
+            padding: 40px 30px;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+        .content h2 {
+            color: #48bb78;
+            font-size: 24px;
+            margin-top: 0;
+        }
+        .content p {
+            margin: 15px 0;
+            font-size: 16px;
+        }
+        .success-box {
+            background: #f0fff4;
+            border: 2px solid #48bb78;
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .success-box .amount {
+            font-size: 36px;
+            font-weight: 700;
+            color: #48bb78;
+            margin: 10px 0;
+        }
+        .details-table {
+            width: 100%;
+            margin: 25px 0;
+            border-collapse: collapse;
+        }
+        .details-table tr {
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .details-table td {
+            padding: 12px 0;
+        }
+        .details-table td:first-child {
+            color: #718096;
+            width: 40%;
+        }
+        .details-table td:last-child {
+            color: #2d3748;
+            font-weight: 600;
+            text-align: right;
+        }
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 40px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        .footer {
+            background: #f5f7fa;
+            padding: 30px;
+            text-align: center;
+            color: #718096;
+            font-size: 14px;
+        }
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>✅ ¡Pago Recibido!</h1>
+            <p>Tu suscripción está activa</p>
+        </div>
+
+        <div class="content">
+            <h2>Hola {{nombre}},</h2>
+
+            <p>Hemos recibido tu pago exitosamente. ¡Gracias por confiar en <strong>CONECTA ERP</strong>!</p>
+
+            <div class="success-box">
+                <div style="color: #718096; font-size: 14px; margin-bottom: 5px;">MONTO PAGADO</div>
+                <div class="amount">{{monto}}</div>
+                <div style="color: #718096; font-size: 14px; margin-top: 5px;">Plan {{plan}}</div>
+            </div>
+
+            <table class="details-table">
+                <tr>
+                    <td>Orden de Pago</td>
+                    <td>#{{orden_id}}</td>
+                </tr>
+                <tr>
+                    <td>Fecha de Pago</td>
+                    <td>{{fecha_pago}}</td>
+                </tr>
+                <tr>
+                    <td>Método de Pago</td>
+                    <td>{{metodo_pago}}</td>
+                </tr>
+                <tr>
+                    <td>Plan</td>
+                    <td>{{plan}}</td>
+                </tr>
+            </table>
+
+            <p style="background: #f0f4ff; padding: 20px; border-radius: 8px; border-left: 4px solid #667eea;">
+                <strong>✨ Tu cuenta está ahora 100% activa</strong><br>
+                Ya puedes disfrutar de todas las funcionalidades de tu plan sin restricciones.
+            </p>
+
+            <center>
+                <a href="{{url_factura}}" class="cta-button" style="background: transparent; color: #667eea; border: 2px solid #667eea; box-shadow: none; padding: 13px 38px; margin-right: 10px;">Descargar Factura</a>
+                <a href="{{url_dashboard}}" class="cta-button">Ir al Dashboard →</a>
+            </center>
+
+            <p style="margin-top: 30px; color: #718096; font-size: 14px;">
+                <strong>💡 Nota:</strong> Recibirás un recordatorio antes de tu próximo cobro. Puedes gestionar tu suscripción en cualquier momento desde tu dashboard.
+            </p>
+
+            <p>Si tienes alguna pregunta sobre tu factura o suscripción, no dudes en contactarnos.</p>
+
+            <p>
+                ¡Gracias por elegirnos!<br>
+                <strong>El equipo de CONECTA ERP</strong>
+            </p>
+        </div>
+
+        <div class="footer">
+            <p>
+                <a href="{{url_factura}}">Ver Factura</a> •
+                <a href="{{url_dashboard}}">Mi Dashboard</a> •
+                <a href="#">Soporte</a>
+            </p>
+            <p style="font-size: 12px; color: #a0aec0; margin-top: 15px;">
+                © {{anio}} CONECTA ERP. Todos los derechos reservados.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

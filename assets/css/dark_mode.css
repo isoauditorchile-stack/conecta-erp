@@ -1,0 +1,518 @@
+/**
+ * DARK MODE STYLES - CONECTA ERP
+ * Variables CSS para tema oscuro y transiciones suaves
+ */
+
+/* ============================================
+   VARIABLES CSS - LIGHT THEME (Default)
+   ============================================ */
+:root.light-theme,
+:root {
+    /* Colores principales */
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --primary-color: #667eea;
+    --primary-dark: #5568d3;
+
+    /* Backgrounds */
+    --bg-body: #f5f7fa;
+    --bg-card: #ffffff;
+    --bg-sidebar: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --bg-topbar: #ffffff;
+    --bg-modal: #ffffff;
+    --bg-input: #ffffff;
+    --bg-input-disabled: #f7fafc;
+    --bg-hover: rgba(102, 126, 234, 0.1);
+    --bg-active: rgba(102, 126, 234, 0.2);
+
+    /* Texto */
+    --text-primary: #2d3748;
+    --text-secondary: #4a5568;
+    --text-muted: #718096;
+    --text-light: #a0aec0;
+    --text-inverse: #ffffff;
+
+    /* Bordes */
+    --border-color: #e2e8f0;
+    --border-light: #edf2f7;
+    --border-focus: #667eea;
+
+    /* Sombras */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 2px 10px rgba(0, 0, 0, 0.05);
+    --shadow-lg: 0 5px 15px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 10px 30px rgba(0, 0, 0, 0.15);
+
+    /* Estados */
+    --success: #48bb78;
+    --warning: #ed8936;
+    --danger: #f56565;
+    --info: #4299e1;
+
+    /* Sidebar */
+    --sidebar-text: rgba(255, 255, 255, 0.8);
+    --sidebar-text-active: #ffffff;
+    --sidebar-hover: rgba(255, 255, 255, 0.1);
+    --sidebar-active: rgba(255, 255, 255, 0.2);
+}
+
+/* ============================================
+   VARIABLES CSS - DARK THEME
+   ============================================ */
+:root.dark-theme {
+    /* Colores principales (mantener gradiente) */
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --primary-color: #7c3aed;
+    --primary-dark: #6d28d9;
+
+    /* Backgrounds */
+    --bg-body: #0f172a;
+    --bg-card: #1e293b;
+    --bg-sidebar: linear-gradient(135deg, #1e293b 0%, #312e81 100%);
+    --bg-topbar: #1e293b;
+    --bg-modal: #1e293b;
+    --bg-input: #334155;
+    --bg-input-disabled: #1e293b;
+    --bg-hover: rgba(124, 58, 237, 0.15);
+    --bg-active: rgba(124, 58, 237, 0.25);
+
+    /* Texto */
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
+    --text-light: #64748b;
+    --text-inverse: #0f172a;
+
+    /* Bordes */
+    --border-color: #334155;
+    --border-light: #475569;
+    --border-focus: #7c3aed;
+
+    /* Sombras (más sutiles en dark mode) */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 2px 10px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 5px 15px rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 10px 30px rgba(0, 0, 0, 0.6);
+
+    /* Estados (ajustados para dark mode) */
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --info: #3b82f6;
+
+    /* Sidebar */
+    --sidebar-text: rgba(241, 245, 249, 0.7);
+    --sidebar-text-active: #ffffff;
+    --sidebar-hover: rgba(241, 245, 249, 0.1);
+    --sidebar-active: rgba(241, 245, 249, 0.2);
+}
+
+/* ============================================
+   APLICAR VARIABLES A ELEMENTOS
+   ============================================ */
+
+/* Body */
+body {
+    background: var(--bg-body);
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Cards */
+.card {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+    box-shadow: var(--shadow-md);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.card-header {
+    background: var(--bg-card);
+    border-bottom-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.card-body {
+    color: var(--text-secondary);
+}
+
+/* Topbar */
+.topbar {
+    background: var(--bg-topbar);
+    box-shadow: var(--shadow-md);
+    transition: background-color 0.3s ease;
+}
+
+/* Sidebar */
+.sidebar {
+    background: var(--bg-sidebar);
+}
+
+.sidebar-menu a {
+    color: var(--sidebar-text);
+}
+
+.sidebar-menu a:hover {
+    background: var(--sidebar-hover);
+    color: var(--sidebar-text-active);
+}
+
+.sidebar-menu a.active {
+    background: var(--sidebar-active);
+    color: var(--sidebar-text-active);
+}
+
+/* Forms */
+.form-control,
+.form-select {
+    background: var(--bg-input);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+    background: var(--bg-input);
+    border-color: var(--border-focus);
+    color: var(--text-primary);
+}
+
+.form-control:disabled {
+    background: var(--bg-input-disabled);
+    color: var(--text-muted);
+}
+
+.form-label {
+    color: var(--text-secondary);
+}
+
+/* Modals */
+.modal-content {
+    background: var(--bg-modal);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+.modal-header {
+    border-bottom-color: var(--border-color);
+}
+
+.modal-footer {
+    border-top-color: var(--border-color);
+}
+
+/* Dark mode: ajustar close button */
+.dark-theme .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+/* Tables */
+.table {
+    color: var(--text-primary);
+}
+
+.table thead th {
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    border-color: var(--border-color);
+}
+
+.table tbody td {
+    border-color: var(--border-color);
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background: var(--bg-hover);
+}
+
+.table-hover tbody tr:hover {
+    background: var(--bg-hover);
+}
+
+/* Badges */
+.badge {
+    transition: background-color 0.3s ease;
+}
+
+/* Alerts - mantener colores pero ajustar contraste */
+.dark-theme .alert-success {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: var(--success);
+    color: var(--success);
+}
+
+.dark-theme .alert-warning {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: var(--warning);
+    color: var(--warning);
+}
+
+.dark-theme .alert-danger {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+.dark-theme .alert-info {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: var(--info);
+    color: var(--info);
+}
+
+/* Stats cards */
+.stat-card {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+    transition: background-color 0.3s ease;
+}
+
+.stat-number {
+    color: var(--text-primary);
+}
+
+.stat-label {
+    color: var(--text-muted);
+}
+
+/* Botón de toggle dark mode */
+.theme-toggle {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+    background: var(--bg-hover);
+    transform: translateY(-2px);
+}
+
+.theme-toggle i {
+    font-size: 1.2rem;
+    transition: transform 0.3s ease;
+}
+
+.theme-toggle:hover i {
+    transform: rotate(20deg);
+}
+
+/* Dropdown menus */
+.dropdown-menu {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+    box-shadow: var(--shadow-lg);
+}
+
+.dropdown-item {
+    color: var(--text-primary);
+}
+
+.dropdown-item:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.dropdown-divider {
+    border-color: var(--border-color);
+}
+
+/* Links */
+a {
+    color: var(--primary-color);
+    transition: color 0.3s ease;
+}
+
+a:hover {
+    color: var(--primary-dark);
+}
+
+/* Code blocks */
+code {
+    background: var(--bg-input);
+    color: var(--primary-color);
+    border: 1px solid var(--border-color);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+/* Scrollbar dark mode */
+.dark-theme ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.dark-theme ::-webkit-scrollbar-track {
+    background: var(--bg-body);
+}
+
+.dark-theme ::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 5px;
+}
+
+.dark-theme ::-webkit-scrollbar-thumb:hover {
+    background: var(--border-light);
+}
+
+/* Pricing cards (index.php) */
+.pricing-card {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.pricing-card:hover {
+    transform: translateY(-10px);
+    box-shadow: var(--shadow-xl);
+}
+
+.plan-name {
+    color: var(--text-primary);
+}
+
+.plan-price {
+    color: var(--primary-color);
+}
+
+.plan-features li {
+    color: var(--text-secondary);
+}
+
+/* Charts (ajustar para dark mode) */
+.dark-theme canvas {
+    filter: brightness(0.9);
+}
+
+/* Transiciones suaves globales */
+* {
+    transition-property: background-color, border-color, color;
+    transition-duration: 0.3s;
+    transition-timing-function: ease;
+}
+
+/* Desactivar transiciones en elementos específicos */
+button,
+input,
+select,
+textarea {
+    transition-property: background-color, border-color, color, transform, box-shadow;
+}
+
+/* Breadcrumbs */
+.breadcrumb {
+    background: var(--bg-card);
+}
+
+.breadcrumb-item a {
+    color: var(--primary-color);
+}
+
+.breadcrumb-item.active {
+    color: var(--text-muted);
+}
+
+/* Pagination */
+.pagination .page-link {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.pagination .page-link:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-focus);
+}
+
+.pagination .page-item.active .page-link {
+    background: var(--primary-gradient);
+    border-color: var(--primary-color);
+}
+
+/* Toast notifications */
+.toast {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+/* Progress bars */
+.progress {
+    background: var(--bg-input);
+}
+
+/* List groups */
+.list-group-item {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.list-group-item:hover {
+    background: var(--bg-hover);
+}
+
+/* Nav tabs/pills */
+.nav-tabs .nav-link {
+    color: var(--text-muted);
+    border-color: var(--border-color);
+}
+
+.nav-tabs .nav-link.active {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+/* Utilities dark mode específicos */
+.dark-theme .text-dark {
+    color: var(--text-primary) !important;
+}
+
+.dark-theme .text-muted {
+    color: var(--text-muted) !important;
+}
+
+.dark-theme .bg-light {
+    background: var(--bg-card) !important;
+}
+
+.dark-theme .border {
+    border-color: var(--border-color) !important;
+}
+
+/* Imágenes - ajustar brillo en dark mode */
+.dark-theme img:not(.no-dark-filter) {
+    opacity: 0.9;
+}
+
+.dark-theme .logo {
+    filter: brightness(1.2);
+}
+
+/* Media queries - ajustar para móviles */
+@media (max-width: 768px) {
+    .theme-toggle {
+        padding: 6px 10px;
+        font-size: 0.9rem;
+    }
+}
+
+/* Animación de cambio de tema */
+@keyframes themeTransition {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.8;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+html.theme-transitioning {
+    animation: themeTransition 0.3s ease;
+}

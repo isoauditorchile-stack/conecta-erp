@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tu periodo de prueba está por expirar</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: #ffffff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 32px;
+            font-weight: 700;
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        .content {
+            padding: 40px 30px;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+        .content h2 {
+            color: #ed8936;
+            font-size: 24px;
+            margin-top: 0;
+        }
+        .content p {
+            margin: 15px 0;
+            font-size: 16px;
+        }
+        .countdown-box {
+            background: #fff5f0;
+            border: 2px solid #ed8936;
+            padding: 30px;
+            margin: 25px 0;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .countdown-box .days {
+            font-size: 48px;
+            font-weight: 700;
+            color: #ed8936;
+            margin: 0;
+        }
+        .countdown-box .label {
+            font-size: 18px;
+            color: #718096;
+            margin-top: 5px;
+        }
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 40px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        .benefits-box {
+            background: #f0f4ff;
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .benefits-box h3 {
+            color: #667eea;
+            margin-top: 0;
+        }
+        .benefits-box ul {
+            margin: 15px 0;
+            padding-left: 20px;
+        }
+        .benefits-box li {
+            margin: 8px 0;
+            color: #4a5568;
+        }
+        .footer {
+            background: #f5f7fa;
+            padding: 30px;
+            text-align: center;
+            color: #718096;
+            font-size: 14px;
+        }
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>⏰ Tu periodo de prueba está por expirar</h1>
+            <p>No pierdas acceso a tu información</p>
+        </div>
+
+        <div class="content">
+            <h2>Hola {{nombre}},</h2>
+
+            <p>Esperamos que hayas disfrutado explorando <strong>CONECTA ERP</strong> durante tu periodo de prueba.</p>
+
+            <div class="countdown-box">
+                <div class="days">{{dias_restantes}}</div>
+                <div class="label">días restantes hasta el {{fecha_expiracion}}</div>
+            </div>
+
+            <p>Para continuar disfrutando de todas las funcionalidades del sistema sin interrupciones, te invitamos a elegir el plan que mejor se adapte a tus necesidades.</p>
+
+            <div class="benefits-box">
+                <h3>✨ Al suscribirte obtendrás:</h3>
+                <ul>
+                    <li>Acceso ilimitado a todos los módulos de tu plan</li>
+                    <li>Soporte técnico prioritario</li>
+                    <li>Actualizaciones automáticas</li>
+                    <li>Seguridad y respaldo de tus datos</li>
+                    <li>Capacitación y recursos exclusivos</li>
+                </ul>
+            </div>
+
+            <center>
+                <a href="{{url_planes}}" class="cta-button">Ver Planes y Precios →</a>
+            </center>
+
+            <p style="margin-top: 30px; padding: 20px; background: #fffaf0; border-left: 4px solid #ed8936; border-radius: 5px;">
+                <strong>⚠️ Importante:</strong> Si no activas un plan antes del {{fecha_expiracion}}, tu cuenta será desactivada y no podrás acceder al sistema.
+            </p>
+
+            <p style="margin-top: 30px;">¿Tienes dudas sobre qué plan elegir? Contáctanos y te ayudaremos a encontrar la mejor opción para tu empresa.</p>
+
+            <p>
+                Saludos,<br>
+                <strong>El equipo de CONECTA ERP</strong>
+            </p>
+        </div>
+
+        <div class="footer">
+            <p>
+                <a href="{{url_planes}}">Ver Planes</a> •
+                <a href="{{url_dashboard}}">Mi Dashboard</a> •
+                <a href="#">Contacto</a>
+            </p>
+            <p style="font-size: 12px; color: #a0aec0; margin-top: 15px;">
+                © {{anio}} CONECTA ERP. Todos los derechos reservados.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

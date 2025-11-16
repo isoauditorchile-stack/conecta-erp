@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cambio de Plan Confirmado</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: #ffffff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 32px;
+            font-weight: 700;
+        }
+        .content {
+            padding: 40px 30px;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+        .content h2 {
+            color: #667eea;
+            font-size: 24px;
+            margin-top: 0;
+        }
+        .content p {
+            margin: 15px 0;
+            font-size: 16px;
+        }
+        .plan-change-box {
+            background: #f0f4ff;
+            padding: 30px;
+            margin: 25px 0;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .plan-item {
+            display: inline-block;
+            padding: 15px 25px;
+            margin: 10px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 18px;
+        }
+        .plan-old {
+            background: #e2e8f0;
+            color: #718096;
+            text-decoration: line-through;
+        }
+        .plan-new {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        .arrow {
+            font-size: 24px;
+            color: #667eea;
+            margin: 0 10px;
+        }
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 40px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        .footer {
+            background: #f5f7fa;
+            padding: 30px;
+            text-align: center;
+            color: #718096;
+            font-size: 14px;
+        }
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>🔄 Cambio de Plan Confirmado</h1>
+            <p>Tu suscripción ha sido actualizada</p>
+        </div>
+
+        <div class="content">
+            <h2>Hola {{nombre}},</h2>
+
+            <p>¡Excelente noticia! Tu cambio de plan en <strong>CONECTA ERP</strong> se ha procesado exitosamente.</p>
+
+            <div class="plan-change-box">
+                <div style="color: #718096; font-size: 14px; margin-bottom: 15px;">CAMBIO DE PLAN</div>
+                <div>
+                    <span class="plan-item plan-old">{{plan_anterior}}</span>
+                    <span class="arrow">→</span>
+                    <span class="plan-item plan-new">{{plan_nuevo}}</span>
+                </div>
+                <div style="color: #718096; font-size: 13px; margin-top: 15px;">
+                    Fecha de cambio: {{fecha_cambio}}
+                </div>
+            </div>
+
+            <p><strong>¿Qué cambia con tu nuevo plan?</strong></p>
+
+            <div style="background: #f5f7fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <p style="margin-top: 0;"><strong>Con tu plan {{plan_nuevo}} ahora tienes:</strong></p>
+                <ul style="color: #4a5568; margin-bottom: 0;">
+                    <li>Acceso a funcionalidades adicionales según tu nuevo plan</li>
+                    <li>Límites actualizados de usuarios y empresas</li>
+                    <li>Módulos premium (si aplica)</li>
+                    <li>Prioridad en soporte técnico</li>
+                </ul>
+            </div>
+
+            <center>
+                <a href="{{url_dashboard}}" class="cta-button">Ver Mi Dashboard →</a>
+            </center>
+
+            <p style="margin-top: 30px; padding: 20px; background: #fffaf0; border-left: 4px solid #ed8936; border-radius: 5px;">
+                <strong>💡 Nota:</strong> El cambio de facturación se reflejará en tu próximo cobro. Si tienes dudas sobre los cargos, revisa la sección de facturación en tu dashboard.
+            </p>
+
+            <p>Gracias por confiar en CONECTA ERP. Estamos seguros de que este cambio ayudará a tu empresa a crecer aún más.</p>
+
+            <p>
+                Saludos,<br>
+                <strong>El equipo de CONECTA ERP</strong>
+            </p>
+        </div>
+
+        <div class="footer">
+            <p>
+                <a href="{{url_dashboard}}">Mi Dashboard</a> •
+                <a href="#">Facturación</a> •
+                <a href="#">Soporte</a>
+            </p>
+            <p style="font-size: 12px; color: #a0aec0; margin-top: 15px;">
+                © {{anio}} CONECTA ERP. Todos los derechos reservados.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pago Rechazado - CONECTA ERP</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: #ffffff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #f56565 0%, #c53030 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 32px;
+            font-weight: 700;
+        }
+        .content {
+            padding: 40px 30px;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+        .content h2 {
+            color: #f56565;
+            font-size: 24px;
+            margin-top: 0;
+        }
+        .content p {
+            margin: 15px 0;
+            font-size: 16px;
+        }
+        .error-box {
+            background: #fff5f5;
+            border: 2px solid #f56565;
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 8px;
+        }
+        .error-box .amount {
+            font-size: 28px;
+            font-weight: 700;
+            color: #f56565;
+            margin: 10px 0;
+        }
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 40px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        .reasons-list {
+            background: #f5f7fa;
+            padding: 20px 25px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .reasons-list li {
+            margin: 8px 0;
+            color: #4a5568;
+        }
+        .footer {
+            background: #f5f7fa;
+            padding: 30px;
+            text-align: center;
+            color: #718096;
+            font-size: 14px;
+        }
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>❌ Pago No Procesado</h1>
+            <p>Hubo un problema con tu pago</p>
+        </div>
+
+        <div class="content">
+            <h2>Hola {{nombre}},</h2>
+
+            <p>Lamentamos informarte que no pudimos procesar tu pago en <strong>CONECTA ERP</strong>.</p>
+
+            <div class="error-box">
+                <div style="color: #718096; font-size: 14px; margin-bottom: 5px;">MONTO RECHAZADO</div>
+                <div class="amount">{{monto}}</div>
+                <div style="color: #718096; font-size: 14px; margin-top: 15px;">
+                    <strong>Motivo:</strong> {{motivo}}
+                </div>
+                <div style="color: #a0aec0; font-size: 13px; margin-top: 5px;">
+                    Fecha del intento: {{fecha_intento}}
+                </div>
+            </div>
+
+            <p><strong>¿Qué puedo hacer?</strong></p>
+
+            <div class="reasons-list">
+                <p style="margin-top: 0; font-weight: 600; color: #2d3748;">Causas comunes y soluciones:</p>
+                <ul>
+                    <li>Fondos insuficientes - Verifica el saldo de tu cuenta</li>
+                    <li>Datos incorrectos - Revisa el número de tarjeta y fecha de vencimiento</li>
+                    <li>Límite de compra excedido - Contacta a tu banco</li>
+                    <li>Tarjeta bloqueada o vencida - Usa otro método de pago</li>
+                    <li>Restricción internacional - Autoriza el pago con tu banco</li>
+                </ul>
+            </div>
+
+            <center>
+                <a href="{{url_reintentar}}" class="cta-button">Reintentar Pago →</a>
+            </center>
+
+            <p style="margin-top: 30px; padding: 20px; background: #fffaf0; border-left: 4px solid #ed8936; border-radius: 5px;">
+                <strong>⚠️ Importante:</strong> Tu cuenta permanecerá activa por un tiempo limitado. Para evitar la suspensión del servicio, por favor completa el pago lo antes posible.
+            </p>
+
+            <p>Si crees que se trata de un error o necesitas ayuda para completar tu pago, nuestro equipo de soporte está disponible para asistirte.</p>
+
+            <center>
+                <a href="{{url_soporte}}" style="display: inline-block; background: transparent; color: #667eea; border: 2px solid #667eea; padding: 13px 38px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 10px;">Contactar Soporte</a>
+            </center>
+
+            <p>
+                Saludos,<br>
+                <strong>El equipo de CONECTA ERP</strong>
+            </p>
+        </div>
+
+        <div class="footer">
+            <p>
+                <a href="{{url_reintentar}}">Reintentar Pago</a> •
+                <a href="{{url_soporte}}">Soporte</a> •
+                <a href="#">Centro de Ayuda</a>
+            </p>
+            <p style="font-size: 12px; color: #a0aec0; margin-top: 15px;">
+                © {{anio}} CONECTA ERP. Todos los derechos reservados.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
