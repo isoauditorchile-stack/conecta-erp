@@ -225,7 +225,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
                 throw new Exception("Error al preparar consulta usuario: " . $conn->error);
             }
 
-            $stmt->bind_param("issssssssis",
+            $stmt->bind_param("issssssssiss",
                 $empresa_id,
                 $nombre,
                 $apellido,
