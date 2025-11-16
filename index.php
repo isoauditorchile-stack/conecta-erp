@@ -172,24 +172,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
         $conn->begin_transaction();
 
         try {
-            // 1. Crear empresa
+            // 1. Crear empresa - Preparar variables
+            $nombre_empresa = $_POST['nombre_empresa'];
+            $razon_social = $_POST['razon_social'];
+            $rut_empresa = $_POST['rut_empresa'];
+            $pais_id = $_POST['pais_id'];
+            $direccion = $_POST['direccion'] ?? null;
+            $ciudad = $_POST['ciudad'] ?? null;
+            $telefono_empresa = $_POST['telefono_empresa'] ?? null;
+            $email_empresa = $_POST['email'];
+
             $stmt = $conn->prepare("INSERT INTO empresas (nombre_empresa, razon_social, rut, pais_id, direccion, ciudad, telefono, email, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'activo')");
-            $stmt->bind_param("sssiss ss",
-                $_POST['nombre_empresa'],
-                $_POST['razon_social'],
-                $_POST['rut_empresa'],
-                $_POST['pais_id'],
-                $_POST['direccion'] ?? null,
-                $_POST['ciudad'] ?? null,
-                $_POST['telefono_empresa'] ?? null,
-                $_POST['email']
+            $stmt->bind_param("sssissss",
+                $nombre_empresa,
+                $razon_social,
+                $rut_empresa,
+                $pais_id,
+                $direccion,
+                $ciudad,
+                $telefono_empresa,
+                $email_empresa
             );
             $stmt->execute();
             $empresa_id = $conn->insert_id;
             $stmt->close();
 
-            // 2. Crear usuario
+            // 2. Crear usuario - Preparar variables
+            $nombre = $_POST['nombre'];
+            $apellido = $_POST['apellido'];
+            $email = $_POST['email'];
+            $username = $_POST['username'];
             $password_hash = password_hash($_POST['password'], PASSWORD_BCRYPT);
+            $rut_personal = $_POST['rut'] ?? null;
+            $telefono_personal = $_POST['telefono'] ?? null;
+            $idioma_preferido = $_POST['idioma_preferido'];
             $fecha_inicio_trial = date('Y-m-d H:i:s');
             $fecha_fin_trial = date('Y-m-d H:i:s', strtotime('+14 days'));
             $plan_id = 1;
@@ -197,14 +213,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
             $stmt = $conn->prepare("INSERT INTO usuarios (empresa_id, nombre, apellido, email, username, password, rut, telefono, idioma_preferido, plan_id, es_admin, es_super_admin, estado, en_periodo_prueba, fecha_inicio_trial, fecha_fin_trial, suscripcion_activa) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 'activo', 1, ?, ?, 1)");
             $stmt->bind_param("issssssssis",
                 $empresa_id,
-                $_POST['nombre'],
-                $_POST['apellido'],
-                $_POST['email'],
-                $_POST['username'],
+                $nombre,
+                $apellido,
+                $email,
+                $username,
                 $password_hash,
-                $_POST['rut'] ?? null,
-                $_POST['telefono'] ?? null,
-                $_POST['idioma_preferido'],
+                $rut_personal,
+                $telefono_personal,
+                $idioma_preferido,
                 $plan_id,
                 $fecha_inicio_trial,
                 $fecha_fin_trial
@@ -236,14 +252,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
 
             // Auto-login
             $_SESSION['user_id'] = $usuario_id;
-            $_SESSION['username'] = $_POST['username'];
-            $_SESSION['email'] = $_POST['email'];
-            $_SESSION['nombre'] = $_POST['nombre'];
-            $_SESSION['apellido'] = $_POST['apellido'];
+            $_SESSION['username'] = $username;
+            $_SESSION['email'] = $email;
+            $_SESSION['nombre'] = $nombre;
+            $_SESSION['apellido'] = $apellido;
             $_SESSION['empresa_id'] = $empresa_id;
             $_SESSION['es_admin'] = 0;
             $_SESSION['es_super_admin'] = 0;
-            $_SESSION['idioma_preferido'] = $_POST['idioma_preferido'];
+            $_SESSION['idioma_preferido'] = $idioma_preferido;
             $_SESSION['en_periodo_prueba'] = 1;
             $_SESSION['dias_restantes_trial'] = 14;
 
