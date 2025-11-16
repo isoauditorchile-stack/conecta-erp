@@ -1138,7 +1138,7 @@ $cuentas_pagar = getCuentasPorPagarProximas($conn, $empresa_id);
                         <span class="menu-title">Business Intelligence</span>
                     </div>
                     <div>
-                        <span class="menu-badge">15</span>
+                        <span class="menu-badge">18</span>
                         <i class="fas fa-chevron-right menu-arrow"></i>
                     </div>
                 </a>
@@ -1219,6 +1219,21 @@ $cuentas_pagar = getCuentasPorPagarProximas($conn, $empresa_id);
                                 <i class="fas fa-cogs submenu-icon"></i> Reportes Personalizados
                             </a>
                         </li>
+                        <li class="submenu-item">
+                            <a href="../modulos/bi/machine_learning.php" class="submenu-link">
+                                <i class="fas fa-robot submenu-icon"></i> Machine Learning
+                            </a>
+                        </li>
+                        <li class="submenu-item">
+                            <a href="../modulos/bi/analytics_tiempo_real.php" class="submenu-link">
+                                <i class="fas fa-bolt submenu-icon"></i> Analytics en Tiempo Real
+                            </a>
+                        </li>
+                        <li class="submenu-item">
+                            <a href="../modulos/bi/analisis_comportamiento.php" class="submenu-link">
+                                <i class="fas fa-user-chart submenu-icon"></i> Análisis de Comportamiento
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </li>
@@ -1239,6 +1254,133 @@ $cuentas_pagar = getCuentasPorPagarProximas($conn, $empresa_id);
                         <li class="submenu-item">
                             <a href="../modulos/configuracion/index.php" class="submenu-link">
                                 <i class="fas fa-sliders-h submenu-icon"></i> Panel Configuración
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+
+            <!-- MÓDULO 14: E-COMMERCE -->
+            <li class="menu-item">
+                <a class="menu-link" data-bs-toggle="collapse" href="#menuEcommerce" role="button">
+                    <div class="menu-link-left">
+                        <i class="fas fa-shopping-bag menu-icon"></i>
+                        <span class="menu-title">E-Commerce</span>
+                    </div>
+                    <div>
+                        <span class="menu-badge">4</span>
+                        <i class="fas fa-chevron-right menu-arrow"></i>
+                    </div>
+                </a>
+                <div class="collapse" id="menuEcommerce">
+                    <ul class="submenu">
+                        <li class="submenu-item">
+                            <a href="../modulos/ecommerce/catalogo.php" class="submenu-link">
+                                <i class="fas fa-th-large submenu-icon"></i> Catálogo Web
+                            </a>
+                        </li>
+                        <li class="submenu-item">
+                            <a href="../modulos/ecommerce/pedidos.php" class="submenu-link">
+                                <i class="fas fa-shopping-cart submenu-icon"></i> Pedidos Online
+                            </a>
+                        </li>
+                        <li class="submenu-item">
+                            <a href="../modulos/ecommerce/cupones.php" class="submenu-link">
+                                <i class="fas fa-ticket-alt submenu-icon"></i> Cupones y Descuentos
+                            </a>
+                        </li>
+                        <li class="submenu-item">
+                            <a href="../modulos/ecommerce/analytics.php" class="submenu-link">
+                                <i class="fas fa-chart-line submenu-icon"></i> Analytics Web
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+
+            <!-- MÓDULO 15: PROYECTOS -->
+            <li class="menu-item">
+                <a class="menu-link" data-bs-toggle="collapse" href="#menuProyectos" role="button">
+                    <div class="menu-link-left">
+                        <i class="fas fa-project-diagram menu-icon"></i>
+                        <span class="menu-title">Proyectos</span>
+                    </div>
+                    <div>
+                        <span class="menu-badge">3</span>
+                        <i class="fas fa-chevron-right menu-arrow"></i>
+                    </div>
+                </a>
+                <div class="collapse" id="menuProyectos">
+                    <ul class="submenu">
+                        <li class="submenu-item">
+                            <a href="../modulos/proyectos/gestion.php" class="submenu-link">
+                                <i class="fas fa-folder submenu-icon"></i> Gestión de Proyectos
+                            </a>
+                        </li>
+                        <li class="submenu-item">
+                            <a href="../modulos/proyectos/tareas.php" class="submenu-link">
+                                <i class="fas fa-tasks submenu-icon"></i> Tareas y Asignaciones
+                            </a>
+                        </li>
+                        <li class="submenu-item">
+                            <a href="../modulos/proyectos/costos.php" class="submenu-link">
+                                <i class="fas fa-dollar-sign submenu-icon"></i> Seguimiento de Costos
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+
+            <!-- MÓDULO 16: CALIDAD -->
+            <li class="menu-item">
+                <a class="menu-link" data-bs-toggle="collapse" href="#menuCalidad" role="button">
+                    <div class="menu-link-left">
+                        <i class="fas fa-award menu-icon"></i>
+                        <span class="menu-title">Calidad</span>
+                    </div>
+                    <div>
+                        <span class="menu-badge">2</span>
+                        <i class="fas fa-chevron-right menu-arrow"></i>
+                    </div>
+                </a>
+                <div class="collapse" id="menuCalidad">
+                    <ul class="submenu">
+                        <li class="submenu-item">
+                            <a href="../modulos/calidad/inspecciones.php" class="submenu-link">
+                                <i class="fas fa-check-circle submenu-icon"></i> Inspecciones
+                            </a>
+                        </li>
+                        <li class="submenu-item">
+                            <a href="../modulos/calidad/no_conformidades.php" class="submenu-link">
+                                <i class="fas fa-exclamation-triangle submenu-icon"></i> No Conformidades
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+
+            <!-- MÓDULO 17: MANTENIMIENTO -->
+            <li class="menu-item">
+                <a class="menu-link" data-bs-toggle="collapse" href="#menuMantenimiento" role="button">
+                    <div class="menu-link-left">
+                        <i class="fas fa-tools menu-icon"></i>
+                        <span class="menu-title">Mantenimiento</span>
+                    </div>
+                    <div>
+                        <span class="menu-badge">2</span>
+                        <i class="fas fa-chevron-right menu-arrow"></i>
+                    </div>
+                </a>
+                <div class="collapse" id="menuMantenimiento">
+                    <ul class="submenu">
+                        <li class="submenu-item">
+                            <a href="../modulos/mantenimiento/ordenes.php" class="submenu-link">
+                                <i class="fas fa-wrench submenu-icon"></i> Órdenes de Mantenimiento
+                            </a>
+                        </li>
+                        <li class="submenu-item">
+                            <a href="../modulos/mantenimiento/planificacion.php" class="submenu-link">
+                                <i class="fas fa-calendar-check submenu-icon"></i> Planificación Preventiva
                             </a>
                         </li>
                     </ul>
