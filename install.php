@@ -20,7 +20,7 @@ $sql_files = [
     'sql/01_tablas_basicas.sql',
     'sql/02_usuarios_autenticacion.sql',
 
-    // Módulos del sistema (19 módulos completos)
+    // Módulos del sistema (20 módulos completos)
     'sql/modulos/01_entidades.sql',
     'sql/modulos/02_ventas.sql',
     'sql/modulos/03_compras.sql',
@@ -39,7 +39,8 @@ $sql_files = [
     'sql/modulos/16_proyectos_calidad_mantenimiento.sql',
     'sql/modulos/17_bi_avanzado.sql',
     'sql/modulos/18_reloj_control.sql',
-    'sql/modulos/19_password_recovery.sql'
+    'sql/modulos/19_password_recovery.sql',
+    'sql/modulos/20_control_acceso_planes.sql'  // Sistema de control de acceso
 ];
 
 // Verificar si ya está instalado
