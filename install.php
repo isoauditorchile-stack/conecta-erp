@@ -45,7 +45,8 @@ $sql_files = [
     'sql/modulos/21_sistema_integracion_completa.sql',  // Sistema completo: Indicadores, SII, Libros, DJ, Fechas
     'sql/modulos/22_tablas_complementarias.sql',  // Tablas complementarias: Ventas, Compras, Inventario, Contabilidad
     'sql/modulos/23_procedimientos_asientos_automaticos.sql',  // Procedimientos para asientos automáticos
-    'sql/modulos/24_datos_prueba.sql'  // Datos de prueba: Plan de cuentas, productos, indicadores
+    'sql/modulos/24_datos_prueba.sql',  // Datos de prueba: Plan de cuentas, productos, indicadores
+    'sql/modulos/25_tablas_integraciones.sql'  // Integraciones: Transbank, EmailManager, API, Webhooks, CRON
 ];
 
 /**
