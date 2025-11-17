@@ -53,6 +53,22 @@ $accesos_rapidos = getAccesosRapidos($conn, $usuario_id);
 $productos_stock_bajo = getProductosStockBajo($conn, $empresa_id, 5);
 $cuentas_cobrar = getCuentasPorCobrarVencidas($conn, $empresa_id);
 $cuentas_pagar = getCuentasPorPagarProximas($conn, $empresa_id);
+
+// Obtener indicadores económicos actuales
+$query_indicadores = "SELECT * FROM v_indicadores_actuales LIMIT 1";
+$result_indicadores = $conn->query($query_indicadores);
+$indicadores = $result_indicadores->fetch_assoc();
+
+// Obtener fechas importantes próximas
+$query_fechas = "SELECT * FROM v_proximas_fechas
+                 WHERE estado_alerta IN ('ALERTA', 'PROXIMA', 'VENCIDA')
+                 AND empresa_id IS NULL OR empresa_id = ?
+                 ORDER BY fecha ASC
+                 LIMIT 8";
+$stmt_fechas = $conn->prepare($query_fechas);
+$stmt_fechas->bind_param("i", $empresa_id);
+$stmt_fechas->execute();
+$fechas_importantes = $stmt_fechas->get_result()->fetch_all(MYSQLI_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -1556,6 +1572,128 @@ $cuentas_pagar = getCuentasPorPagarProximas($conn, $empresa_id);
                         <?php endif; ?>
                         vs mes anterior
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Indicadores Económicos -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div style="background: white; border-radius: 12px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                    <h3 style="margin-bottom: 20px; color: #2d3748;">
+                        <i class="fas fa-chart-line"></i> Indicadores Económicos
+                        <small style="font-size: 0.8rem; color: #718096; font-weight: normal;">
+                            Actualizado: <?php echo isset($indicadores) ? date('d/m/Y', strtotime($indicadores['fecha'])) : 'No disponible'; ?>
+                        </small>
+                    </h3>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); padding: 20px; border-radius: 10px; text-align: center; color: white;">
+                                <i class="fas fa-dollar-sign fa-2x mb-2"></i>
+                                <div style="font-size: 0.9rem; opacity: 0.9;">Dólar Observado</div>
+                                <div style="font-size: 2rem; font-weight: 700;">$<?php echo isset($indicadores) ? number_format($indicadores['dolar'], 2, ',', '.') : '---'; ?></div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div style="background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); padding: 20px; border-radius: 10px; text-align: center; color: white;">
+                                <i class="fas fa-home fa-2x mb-2"></i>
+                                <div style="font-size: 0.9rem; opacity: 0.9;">UF</div>
+                                <div style="font-size: 2rem; font-weight: 700;">$<?php echo isset($indicadores) ? number_format($indicadores['uf'], 2, ',', '.') : '---'; ?></div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div style="background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%); padding: 20px; border-radius: 10px; text-align: center; color: white;">
+                                <i class="fas fa-coins fa-2x mb-2"></i>
+                                <div style="font-size: 0.9rem; opacity: 0.9;">UTM</div>
+                                <div style="font-size: 2rem; font-weight: 700;">$<?php echo isset($indicadores) ? number_format($indicadores['utm'], 0, ',', '.') : '---'; ?></div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div style="background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%); padding: 20px; border-radius: 10px; text-align: center; color: white;">
+                                <i class="fas fa-euro-sign fa-2x mb-2"></i>
+                                <div style="font-size: 0.9rem; opacity: 0.9;">Euro</div>
+                                <div style="font-size: 2rem; font-weight: 700;">$<?php echo isset($indicadores) ? number_format($indicadores['euro'], 2, ',', '.') : '---'; ?></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fechas Importantes -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div style="background: white; border-radius: 12px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                    <h3 style="margin-bottom: 20px; color: #2d3748;">
+                        <i class="fas fa-calendar-alt"></i> Fechas Importantes
+                        <small style="font-size: 0.8rem; color: #718096; font-weight: normal;">Próximos vencimientos</small>
+                    </h3>
+                    <?php if (!empty($fechas_importantes)): ?>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Categoría</th>
+                                        <th>Descripción</th>
+                                        <th>Estado</th>
+                                        <th>Días</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($fechas_importantes as $fecha): ?>
+                                        <?php
+                                            $estado_color = [
+                                                'VENCIDA' => 'danger',
+                                                'ALERTA' => 'warning',
+                                                'PROXIMA' => 'info'
+                                            ];
+                                            $color = $estado_color[$fecha['estado_alerta']] ?? 'secondary';
+
+                                            $tipo_icono = [
+                                                'impuesto' => 'file-invoice-dollar',
+                                                'imposicion' => 'hand-holding-usd',
+                                                'declaracion' => 'file-alt',
+                                                'vencimiento' => 'exclamation-circle',
+                                                'otro' => 'calendar'
+                                            ];
+                                            $icono = $tipo_icono[$fecha['tipo']] ?? 'calendar';
+                                        ?>
+                                        <tr>
+                                            <td>
+                                                <strong><?php echo date('d/m/Y', strtotime($fecha['fecha'])); ?></strong>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-<?php echo $color; ?>">
+                                                    <i class="fas fa-<?php echo $icono; ?>"></i>
+                                                    <?php echo htmlspecialchars($fecha['categoria']); ?>
+                                                </span>
+                                            </td>
+                                            <td><?php echo htmlspecialchars($fecha['titulo']); ?></td>
+                                            <td>
+                                                <span class="badge bg-<?php echo $color; ?>">
+                                                    <?php echo $fecha['estado_alerta']; ?>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <?php if ($fecha['dias_restantes'] < 0): ?>
+                                                    <span class="text-danger">Vencido hace <?php echo abs($fecha['dias_restantes']); ?> días</span>
+                                                <?php elseif ($fecha['dias_restantes'] == 0): ?>
+                                                    <span class="text-warning"><strong>HOY</strong></span>
+                                                <?php else: ?>
+                                                    <span class="text-muted">En <?php echo $fecha['dias_restantes']; ?> días</span>
+                                                <?php endif; ?>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php else: ?>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> No hay fechas importantes próximas.
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
