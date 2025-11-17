@@ -99,7 +99,7 @@ $where_sql = implode(' AND ', $where_clauses);
 $query = "SELECT p.*,
           u.nombre, u.apellido, u.email,
           e.nombre_empresa,
-          pl.nombre as plan_nombre,
+          pl.nombre_plan as plan_nombre,
           s.fecha_inicio, s.fecha_fin
           FROM pagos p
           LEFT JOIN usuarios u ON p.usuario_id = u.id
