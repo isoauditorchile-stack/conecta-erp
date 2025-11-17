@@ -386,14 +386,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['install'])) {
             <!-- Links de navegación -->
             <div class="home-link">
                 <?php if (!empty($success_messages)): ?>
-                    <a href="login.php">
-                        <i class="fas fa-sign-in-alt"></i> Ir al Login
+                    <a href="index.php" class="btn btn-primary btn-lg mt-3">
+                        <i class="fas fa-home"></i> Ir al Inicio y Registrarse
                     </a>
-                    |
+                <?php else: ?>
+                    <a href="index.php">
+                        <i class="fas fa-home"></i> Volver al Inicio
+                    </a>
                 <?php endif; ?>
-                <a href="index.php">
-                    <i class="fas fa-home"></i> Ir al Inicio
-                </a>
             </div>
 
             <!-- Información del Super Admin -->
