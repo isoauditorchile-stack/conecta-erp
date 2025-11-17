@@ -20,27 +20,28 @@ $sql_files = [
     'sql/01_tablas_basicas.sql',
     'sql/02_usuarios_autenticacion.sql',
 
-    // Módulos del sistema (20 módulos completos)
-    'sql/modulos/01_entidades.sql',
-    'sql/modulos/02_ventas.sql',
-    'sql/modulos/03_compras.sql',
-    'sql/modulos/04_inventario.sql',
-    'sql/modulos/05_contabilidad.sql',
-    'sql/modulos/06_rrhh.sql',
-    'sql/modulos/07_crm.sql',
-    'sql/modulos/08_produccion.sql',
-    'sql/modulos/09_finanzas.sql',
-    'sql/modulos/10_logistica.sql',
-    'sql/modulos/11_marketing.sql',
+    // Módulos del sistema (orden correcto según archivos reales)
+    'sql/modulos/00_dashboard_tables.sql',
+    'sql/modulos/01_administracion.sql',
+    'sql/modulos/02_entidades.sql',
+    'sql/modulos/03_finanzas.sql',
+    'sql/modulos/04_controlling.sql',
+    'sql/modulos/05_ventas.sql',
+    'sql/modulos/06_materiales.sql',
+    'sql/modulos/07_produccion.sql',
+    'sql/modulos/08_rrhh.sql',
+    'sql/modulos/09_scm.sql',
+    'sql/modulos/10_crm.sql',
+    'sql/modulos/11_fidelizacion.sql',
     'sql/modulos/12_business_intelligence.sql',
-    'sql/modulos/13_configuracion_avanzada.sql',
+    'sql/modulos/13_configuracion.sql',
     'sql/modulos/14_api_y_reportes.sql',
     'sql/modulos/15_ecommerce.sql',
     'sql/modulos/16_proyectos_calidad_mantenimiento.sql',
     'sql/modulos/17_bi_avanzado.sql',
     'sql/modulos/18_reloj_control.sql',
     'sql/modulos/19_password_recovery.sql',
-    'sql/modulos/20_control_acceso_planes.sql'  // Sistema de control de acceso
+    'sql/modulos/20_control_acceso_planes.sql'
 ];
 
 /**
@@ -188,46 +189,102 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['install'])) {
         // PASO 2: Ejecutar FASE 1 (Tablas y datos)
         $phase1_executed = 0;
         $phase1_failed = 0;
+        $phase1_errors = [];
 
         foreach ($phase1_statements as $stmt_data) {
-            if ($conn->multi_query($stmt_data['sql'])) {
-                do {
-                    if ($result = $conn->store_result()) {
-                        $result->free();
+            try {
+                // Usar query() para statements simples
+                $is_procedure = stripos($stmt_data['sql'], 'CREATE PROCEDURE') !== false ||
+                                stripos($stmt_data['sql'], 'CREATE FUNCTION') !== false;
+
+                if ($is_procedure) {
+                    // Procedimientos necesitan multi_query
+                    if (!$conn->multi_query($stmt_data['sql'])) {
+                        throw new Exception($conn->error);
                     }
-                } while ($conn->more_results() && $conn->next_result());
-                $phase1_executed++;
-            } else {
-                $phase1_failed++;
-                if ($phase1_failed <= 10) {
-                    $errors[] = "❌ FASE 1 [{$stmt_data['file']}]: " . $conn->error;
+                    do {
+                        if ($result = $conn->store_result()) {
+                            $result->free();
+                        }
+                    } while ($conn->more_results() && $conn->next_result());
+                } else {
+                    // Tablas e inserts usan query simple
+                    if (!$conn->query($stmt_data['sql'])) {
+                        throw new Exception($conn->error);
+                    }
                 }
+                $phase1_executed++;
+
+            } catch (Exception $e) {
+                $phase1_failed++;
+                $stmt_preview = substr($stmt_data['sql'], 0, 150);
+                $stmt_preview = str_replace(["\n", "\r", "\t"], ' ', $stmt_preview);
+                $stmt_preview = preg_replace('/\s+/', ' ', $stmt_preview);
+
+                $phase1_errors[] = [
+                    'file' => $stmt_data['file'],
+                    'error' => $e->getMessage(),
+                    'sql' => $stmt_preview . '...'
+                ];
             }
         }
 
         $success_messages[] = "✅ Fase 1: $phase1_executed/" . count($phase1_statements) . " ejecutadas ($phase1_failed errores)";
 
+        // Mostrar errores de Fase 1 detalladamente
+        if ($phase1_failed > 0) {
+            $errors[] = "<div class='mt-3'><strong>⚠️ ERRORES EN FASE 1 (Tablas/Datos):</strong></div>";
+            foreach (array_slice($phase1_errors, 0, 20) as $err) {
+                $errors[] = "<div class='ms-3 mb-2'><strong>[{$err['file']}]</strong> {$err['error']}<br><code style='font-size:10px; color:#666'>{$err['sql']}</code></div>";
+            }
+            if ($phase1_failed > 20) {
+                $errors[] = "<div class='ms-3'>... y " . ($phase1_failed - 20) . " errores más</div>";
+            }
+        }
+
         // PASO 3: Ejecutar FASE 2 (Procedimientos, triggers, funciones)
         $phase2_executed = 0;
         $phase2_failed = 0;
+        $phase2_errors = [];
 
         foreach ($phase2_statements as $stmt_data) {
-            if ($conn->multi_query($stmt_data['sql'])) {
+            try {
+                if (!$conn->multi_query($stmt_data['sql'])) {
+                    throw new Exception($conn->error);
+                }
                 do {
                     if ($result = $conn->store_result()) {
                         $result->free();
                     }
                 } while ($conn->more_results() && $conn->next_result());
                 $phase2_executed++;
-            } else {
+
+            } catch (Exception $e) {
                 $phase2_failed++;
-                if ($phase2_failed <= 10) {
-                    $errors[] = "❌ FASE 2 [{$stmt_data['file']}]: " . $conn->error;
-                }
+                $stmt_preview = substr($stmt_data['sql'], 0, 150);
+                $stmt_preview = str_replace(["\n", "\r", "\t"], ' ', $stmt_preview);
+                $stmt_preview = preg_replace('/\s+/', ' ', $stmt_preview);
+
+                $phase2_errors[] = [
+                    'file' => $stmt_data['file'],
+                    'error' => $e->getMessage(),
+                    'sql' => $stmt_preview . '...'
+                ];
             }
         }
 
         $success_messages[] = "✅ Fase 2: $phase2_executed/" . count($phase2_statements) . " ejecutadas ($phase2_failed errores)";
+
+        // Mostrar errores de Fase 2 detalladamente
+        if ($phase2_failed > 0) {
+            $errors[] = "<div class='mt-3'><strong>⚠️ ERRORES EN FASE 2 (Procedimientos/Triggers):</strong></div>";
+            foreach (array_slice($phase2_errors, 0, 20) as $err) {
+                $errors[] = "<div class='ms-3 mb-2'><strong>[{$err['file']}]</strong> {$err['error']}<br><code style='font-size:10px; color:#666'>{$err['sql']}</code></div>";
+            }
+            if ($phase2_failed > 20) {
+                $errors[] = "<div class='ms-3'>... y " . ($phase2_failed - 20) . " errores más</div>";
+            }
+        }
 
         // Reactivar verificación de foreign keys
         $conn->query("SET FOREIGN_KEY_CHECKS = 1");
