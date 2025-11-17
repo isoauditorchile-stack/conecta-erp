@@ -11,7 +11,7 @@ $message_type = '';
 $usuario_id = $_SESSION['user_id'];
 
 // Obtener información del usuario y suscripción
-$stmt = $conn->prepare("SELECT u.*, s.*, p.nombre as plan_nombre, p.precio_mensual, p.descripcion as plan_descripcion, p.caracteristicas as plan_caracteristicas
+$stmt = $conn->prepare("SELECT u.*, s.*, p.nombre_plan as plan_nombre, p.precio_mensual, p.descripcion as plan_descripcion, p.caracteristicas as plan_caracteristicas
                         FROM usuarios u
                         LEFT JOIN suscripciones s ON s.usuario_id = u.id AND s.estado IN ('trial', 'activo')
                         LEFT JOIN planes p ON u.plan_id = p.id
@@ -428,7 +428,7 @@ $stmt->close();
                                 </div>
                             <?php endif; ?>
 
-                            <div class="plan-name"><?php echo htmlspecialchars($plan['nombre']); ?></div>
+                            <div class="plan-name"><?php echo htmlspecialchars($plan['nombre_plan']); ?></div>
                             <div class="plan-price"><?php echo formatCurrency($plan['precio_mensual']); ?></div>
                             <p style="color: #6c757d; margin-bottom: 20px;">
                                 <?php echo htmlspecialchars($plan['descripcion']); ?>
@@ -454,7 +454,7 @@ $stmt->close();
                                     <i class="fas fa-check"></i> Plan Actual
                                 </button>
                             <?php else: ?>
-                                <button class="btn-select-plan" onclick="seleccionarPlan(<?php echo $plan['id']; ?>, '<?php echo htmlspecialchars($plan['nombre']); ?>')">
+                                <button class="btn-select-plan" onclick="seleccionarPlan(<?php echo $plan['id']; ?>, '<?php echo htmlspecialchars($plan['nombre_plan']); ?>')">
                                     <i class="fas fa-arrow-up"></i> Seleccionar Plan
                                 </button>
                             <?php endif; ?>

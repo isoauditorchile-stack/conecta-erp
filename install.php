@@ -42,7 +42,8 @@ $sql_files = [
     'sql/modulos/18_reloj_control.sql',
     'sql/modulos/19_password_recovery.sql',
     'sql/modulos/20_control_acceso_planes.sql',
-    'sql/modulos/21_sistema_integracion_completa.sql'  // Sistema completo: Indicadores, SII, Libros, DJ, Fechas
+    'sql/modulos/21_sistema_integracion_completa.sql',  // Sistema completo: Indicadores, SII, Libros, DJ, Fechas
+    'sql/modulos/22_tablas_complementarias.sql'  // Tablas complementarias: Ventas, Compras, Inventario, Contabilidad
 ];
 
 /**
