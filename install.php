@@ -94,6 +94,26 @@ function parseSQLFile($sql_content) {
     return $statements;
 }
 
+/**
+ * Clasificar statement por tipo para ejecutar en el orden correcto
+ */
+function getStatementType($statement) {
+    $stmt_upper = strtoupper(substr($statement, 0, 100));
+
+    // Pasada 1: DDL básico (tablas, índices, datos)
+    if (preg_match('/^(CREATE\s+TABLE|ALTER\s+TABLE|CREATE\s+INDEX|INSERT\s+INTO|DROP\s+TABLE)/i', $stmt_upper)) {
+        return 'phase1_ddl';
+    }
+
+    // Pasada 2: Objetos que dependen de tablas
+    if (preg_match('/^(CREATE\s+(PROCEDURE|TRIGGER|FUNCTION|VIEW|EVENT)|DROP\s+(PROCEDURE|TRIGGER|FUNCTION|VIEW))/i', $stmt_upper)) {
+        return 'phase2_objects';
+    }
+
+    // Por defecto, ejecutar en pasada 1
+    return 'phase1_ddl';
+}
+
 // Verificar si ya está instalado
 $already_installed = false;
 $errors = [];
@@ -127,6 +147,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['install'])) {
         $conn->query("SET FOREIGN_KEY_CHECKS = 0");
         $conn->query("SET SQL_MODE = 'NO_AUTO_VALUE_ON_ZERO'");
 
+        // PASO 1: Recolectar y clasificar todos los statements
+        $phase1_statements = []; // CREATE TABLE, ALTER TABLE, INSERT
+        $phase2_statements = []; // CREATE PROCEDURE, TRIGGER, FUNCTION, VIEW
+
         foreach ($sql_files as $file) {
             $file_path = __DIR__ . '/' . $file;
 
@@ -136,56 +160,87 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['install'])) {
             }
 
             $sql_content = file_get_contents($file_path);
-
-            // Parsear el archivo SQL manejando DELIMITER correctamente
             $statements = parseSQLFile($sql_content);
-
-            $file_basename = basename($file);
-            $executed = 0;
-            $failed = 0;
 
             foreach ($statements as $statement) {
                 $statement = trim($statement);
                 if (empty($statement)) continue;
 
-                // Ejecutar la declaración
-                if ($conn->multi_query($statement)) {
-                    do {
-                        // Limpiar todos los resultados
-                        if ($result = $conn->store_result()) {
-                            $result->free();
-                        }
-                    } while ($conn->more_results() && $conn->next_result());
+                $type = getStatementType($statement);
 
-                    $executed++;
+                if ($type === 'phase1_ddl') {
+                    $phase1_statements[] = [
+                        'sql' => $statement,
+                        'file' => basename($file)
+                    ];
                 } else {
-                    $failed++;
-                    // Solo mostrar primeros 10 errores por archivo
-                    if ($failed <= 10) {
-                        $error_msg = $conn->error;
-                        // Truncar statement si es muy largo
-                        $stmt_preview = strlen($statement) > 100 ? substr($statement, 0, 100) . '...' : $statement;
-                        $errors[] = "Excepción en $file_basename: $error_msg";
-                    }
+                    $phase2_statements[] = [
+                        'sql' => $statement,
+                        'file' => basename($file)
+                    ];
                 }
             }
+        }
 
-            if ($failed === 0) {
-                $success_messages[] = "✓ $file_basename: $executed declaraciones ejecutadas exitosamente";
+        $success_messages[] = "📊 Fase 1: " . count($phase1_statements) . " tablas/datos a crear";
+        $success_messages[] = "📊 Fase 2: " . count($phase2_statements) . " procedimientos/triggers a crear";
+
+        // PASO 2: Ejecutar FASE 1 (Tablas y datos)
+        $phase1_executed = 0;
+        $phase1_failed = 0;
+
+        foreach ($phase1_statements as $stmt_data) {
+            if ($conn->multi_query($stmt_data['sql'])) {
+                do {
+                    if ($result = $conn->store_result()) {
+                        $result->free();
+                    }
+                } while ($conn->more_results() && $conn->next_result());
+                $phase1_executed++;
             } else {
-                $errors[] = "✗ $file_basename: $failed declaraciones fallaron de " . count($statements) . " totales";
+                $phase1_failed++;
+                if ($phase1_failed <= 10) {
+                    $errors[] = "❌ FASE 1 [{$stmt_data['file']}]: " . $conn->error;
+                }
             }
         }
+
+        $success_messages[] = "✅ Fase 1: $phase1_executed/" . count($phase1_statements) . " ejecutadas ($phase1_failed errores)";
+
+        // PASO 3: Ejecutar FASE 2 (Procedimientos, triggers, funciones)
+        $phase2_executed = 0;
+        $phase2_failed = 0;
+
+        foreach ($phase2_statements as $stmt_data) {
+            if ($conn->multi_query($stmt_data['sql'])) {
+                do {
+                    if ($result = $conn->store_result()) {
+                        $result->free();
+                    }
+                } while ($conn->more_results() && $conn->next_result());
+                $phase2_executed++;
+            } else {
+                $phase2_failed++;
+                if ($phase2_failed <= 10) {
+                    $errors[] = "❌ FASE 2 [{$stmt_data['file']}]: " . $conn->error;
+                }
+            }
+        }
+
+        $success_messages[] = "✅ Fase 2: $phase2_executed/" . count($phase2_statements) . " ejecutadas ($phase2_failed errores)";
 
         // Reactivar verificación de foreign keys
         $conn->query("SET FOREIGN_KEY_CHECKS = 1");
 
-        if (empty($errors)) {
+        if ($phase1_failed === 0 && $phase2_failed === 0) {
             $success_messages[] = "🎉 <strong>Instalación completada exitosamente!</strong>";
             $success_messages[] = "Puedes acceder al sistema con:";
             $success_messages[] = "<strong>Email:</strong> auditorexchile@gmail.com";
             $success_messages[] = "<strong>Username:</strong> auditorex chile";
             $success_messages[] = "<strong>Password:</strong> password";
+        } else {
+            $total_errors = $phase1_failed + $phase2_failed;
+            $errors[] = "⚠️ Instalación completada con $total_errors errores (algunos pueden ser normales)";
         }
     } else {
         $errors[] = "El sistema ya está instalado. Marca 'Forzar reinstalación' si deseas reinstalar.";
