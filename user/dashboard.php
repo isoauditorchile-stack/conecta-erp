@@ -69,6 +69,50 @@ $stmt_fechas = $conn->prepare($query_fechas);
 $stmt_fechas->bind_param("i", $empresa_id);
 $stmt_fechas->execute();
 $fechas_importantes = $stmt_fechas->get_result()->fetch_all(MYSQLI_ASSOC);
+
+// Obtener datos para gráficos - Últimos 6 meses
+$query_ventas_grafico = "SELECT
+    DATE_FORMAT(periodo, '%b %Y') as mes,
+    CAST(total_ventas AS DECIMAL(15,2)) as total
+FROM (
+    SELECT
+        CONCAT(YEAR(fecha_emision), '-', LPAD(MONTH(fecha_emision), 2, '0'), '-01') as periodo,
+        SUM(total) as total_ventas
+    FROM facturas
+    WHERE empresa_id = ?
+    AND fecha_emision >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+    AND estado NOT IN ('anulada', 'rechazada')
+    GROUP BY YEAR(fecha_emision), MONTH(fecha_emision)
+    ORDER BY periodo DESC
+    LIMIT 6
+) subq
+ORDER BY periodo ASC";
+
+$stmt_ventas = $conn->prepare($query_ventas_grafico);
+$stmt_ventas->bind_param("i", $empresa_id);
+$stmt_ventas->execute();
+$ventas_grafico = $stmt_ventas->get_result()->fetch_all(MYSQLI_ASSOC);
+
+$query_compras_grafico = "SELECT
+    DATE_FORMAT(periodo, '%b %Y') as mes,
+    CAST(total_compras AS DECIMAL(15,2)) as total
+FROM (
+    SELECT
+        CONCAT(YEAR(fecha_recepcion), '-', LPAD(MONTH(fecha_recepcion), 2, '0'), '-01') as periodo,
+        SUM(total) as total_compras
+    FROM facturas_compra
+    WHERE empresa_id = ?
+    AND fecha_recepcion >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+    GROUP BY YEAR(fecha_recepcion), MONTH(fecha_recepcion)
+    ORDER BY periodo DESC
+    LIMIT 6
+) subq
+ORDER BY periodo ASC";
+
+$stmt_compras = $conn->prepare($query_compras_grafico);
+$stmt_compras->bind_param("i", $empresa_id);
+$stmt_compras->execute();
+$compras_grafico = $stmt_compras->get_result()->fetch_all(MYSQLI_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -1698,6 +1742,29 @@ $fechas_importantes = $stmt_fechas->get_result()->fetch_all(MYSQLI_ASSOC);
             </div>
         </div>
 
+        <!-- Gráficos de Ventas y Compras -->
+        <div class="row mb-4">
+            <!-- Gráfico de Ventas -->
+            <div class="col-md-6">
+                <div style="background: white; border-radius: 12px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                    <h3 style="margin-bottom: 20px; color: #2d3748;">
+                        <i class="fas fa-chart-line" style="color: #48bb78;"></i> Ventas Últimos 6 Meses
+                    </h3>
+                    <canvas id="ventasChart" height="80"></canvas>
+                </div>
+            </div>
+
+            <!-- Gráfico de Compras -->
+            <div class="col-md-6">
+                <div style="background: white; border-radius: 12px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                    <h3 style="margin-bottom: 20px; color: #2d3748;">
+                        <i class="fas fa-chart-bar" style="color: #f56565;"></i> Compras Últimos 6 Meses
+                    </h3>
+                    <canvas id="comprasChart" height="80"></canvas>
+                </div>
+            </div>
+        </div>
+
         <!-- Content Cards -->
         <div class="row">
             <div class="col-md-12">
@@ -1732,6 +1799,7 @@ $fechas_importantes = $stmt_fechas->get_result()->fetch_all(MYSQLI_ASSOC);
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="../assets/js/dark_mode.js"></script>
 
     <script>
@@ -1746,6 +1814,141 @@ $fechas_importantes = $stmt_fechas->get_result()->fetch_all(MYSQLI_ASSOC);
                     });
                 }
             }
+
+            // GRÁFICO DE VENTAS
+            const ventasData = <?php echo json_encode($ventas_grafico); ?>;
+            const ventasLabels = ventasData.map(item => item.mes);
+            const ventasValues = ventasData.map(item => parseFloat(item.total));
+
+            const ctxVentas = document.getElementById('ventasChart').getContext('2d');
+            new Chart(ctxVentas, {
+                type: 'line',
+                data: {
+                    labels: ventasLabels,
+                    datasets: [{
+                        label: 'Ventas ($)',
+                        data: ventasValues,
+                        borderColor: '#48bb78',
+                        backgroundColor: 'rgba(72, 187, 120, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointBackgroundColor: '#48bb78',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            titleFont: {
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            bodyFont: {
+                                size: 13
+                            },
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Ventas: $' + context.parsed.y.toLocaleString('es-CL');
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString('es-CL');
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+
+            // GRÁFICO DE COMPRAS
+            const comprasData = <?php echo json_encode($compras_grafico); ?>;
+            const comprasLabels = comprasData.map(item => item.mes);
+            const comprasValues = comprasData.map(item => parseFloat(item.total));
+
+            const ctxCompras = document.getElementById('comprasChart').getContext('2d');
+            new Chart(ctxCompras, {
+                type: 'bar',
+                data: {
+                    labels: comprasLabels,
+                    datasets: [{
+                        label: 'Compras ($)',
+                        data: comprasValues,
+                        backgroundColor: 'rgba(245, 101, 101, 0.8)',
+                        borderColor: '#f56565',
+                        borderWidth: 2,
+                        borderRadius: 6,
+                        hoverBackgroundColor: '#f56565'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            titleFont: {
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            bodyFont: {
+                                size: 13
+                            },
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Compras: $' + context.parsed.y.toLocaleString('es-CL');
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString('es-CL');
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
         });
     </script>
 </body>
