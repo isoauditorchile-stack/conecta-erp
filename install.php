@@ -41,13 +41,38 @@ $sql_files = [
     'sql/modulos/17_bi_avanzado.sql',
     'sql/modulos/18_reloj_control.sql',
     'sql/modulos/19_password_recovery.sql',
-    'sql/modulos/20_control_acceso_planes.sql'
+    'sql/modulos/20_control_acceso_planes.sql',
+    'sql/modulos/21_sistema_integracion_completa.sql'  // Sistema completo: Indicadores, SII, Libros, DJ, Fechas
 ];
 
 /**
- * Parsear archivo SQL manejando correctamente DELIMITER
+ * Códigos de error MySQL que deben ser ignorados (normales en instalación)
+ */
+function esErrorIgnorable($errno) {
+    $errores_ignorables = [
+        1007, // Can't create database 'x'; database exists
+        1050, // Table 'x' already exists
+        1060, // Duplicate column name 'x'
+        1061, // Duplicate key name 'x'
+        1062, // Duplicate entry 'x' for key 'y'
+        1227, // Access denied; you need RELOAD privilege
+        1304, // PROCEDURE/FUNCTION already exists
+        1359, // Trigger already exists
+        1360, // Trigger already exists
+        1051, // Unknown table 'x' (DROP IF EXISTS)
+        1091, // Can't DROP 'x'; check that column/key exists
+        1146, // Table 'x' doesn't exist (en algunos ALTER)
+    ];
+    return in_array($errno, $errores_ignorables);
+}
+
+/**
+ * Parsear archivo SQL manejando correctamente DELIMITER y comentarios
  */
 function parseSQLFile($sql_content) {
+    // Eliminar comentarios multilínea /* ... */
+    $sql_content = preg_replace('/\/\*.*?\*\//s', '', $sql_content);
+
     $statements = [];
     $current_delimiter = ';';
     $current_statement = '';
@@ -63,10 +88,15 @@ function parseSQLFile($sql_content) {
             continue;
         }
 
+        // Ignorar FLUSH PRIVILEGES (requiere permisos especiales)
+        if (stripos($trimmed, 'FLUSH PRIVILEGES') !== false) {
+            continue;
+        }
+
         // Detectar cambio de DELIMITER
         if (preg_match('/^DELIMITER\s+(.+)$/i', $trimmed, $matches)) {
             $current_delimiter = trim($matches[1]);
-            continue; // No agregar esta línea al statement
+            continue;
         }
 
         // Agregar línea al statement actual
@@ -74,7 +104,6 @@ function parseSQLFile($sql_content) {
 
         // Verificar si la línea termina con el delimitador actual
         if (substr(rtrim($line), -strlen($current_delimiter)) === $current_delimiter) {
-            // Remover el delimitador del final
             $stmt = substr($current_statement, 0, -strlen($current_delimiter) - 1);
             $stmt = trim($stmt);
 
@@ -192,40 +221,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['install'])) {
         $phase1_errors = [];
 
         foreach ($phase1_statements as $stmt_data) {
-            try {
-                // Usar query() para statements simples
-                $is_procedure = stripos($stmt_data['sql'], 'CREATE PROCEDURE') !== false ||
-                                stripos($stmt_data['sql'], 'CREATE FUNCTION') !== false;
+            $is_procedure = stripos($stmt_data['sql'], 'CREATE PROCEDURE') !== false ||
+                            stripos($stmt_data['sql'], 'CREATE FUNCTION') !== false;
 
-                if ($is_procedure) {
-                    // Procedimientos necesitan multi_query
-                    if (!$conn->multi_query($stmt_data['sql'])) {
-                        throw new Exception($conn->error);
-                    }
+            if ($is_procedure) {
+                $success = $conn->multi_query($stmt_data['sql']);
+                if ($success) {
                     do {
                         if ($result = $conn->store_result()) {
                             $result->free();
                         }
                     } while ($conn->more_results() && $conn->next_result());
-                } else {
-                    // Tablas e inserts usan query simple
-                    if (!$conn->query($stmt_data['sql'])) {
-                        throw new Exception($conn->error);
-                    }
                 }
+            } else {
+                $success = $conn->query($stmt_data['sql']);
+            }
+
+            if ($success) {
                 $phase1_executed++;
+            } else {
+                // Verificar si es un error ignorable
+                if (esErrorIgnorable($conn->errno)) {
+                    $phase1_executed++; // Contar como exitoso
+                } else {
+                    $phase1_failed++;
+                    $stmt_preview = substr($stmt_data['sql'], 0, 150);
+                    $stmt_preview = str_replace(["\n", "\r", "\t"], ' ', $stmt_preview);
+                    $stmt_preview = preg_replace('/\s+/', ' ', $stmt_preview);
 
-            } catch (Exception $e) {
-                $phase1_failed++;
-                $stmt_preview = substr($stmt_data['sql'], 0, 150);
-                $stmt_preview = str_replace(["\n", "\r", "\t"], ' ', $stmt_preview);
-                $stmt_preview = preg_replace('/\s+/', ' ', $stmt_preview);
-
-                $phase1_errors[] = [
-                    'file' => $stmt_data['file'],
-                    'error' => $e->getMessage(),
-                    'sql' => $stmt_preview . '...'
-                ];
+                    $phase1_errors[] = [
+                        'file' => $stmt_data['file'],
+                        'errno' => $conn->errno,
+                        'error' => $conn->error,
+                        'sql' => $stmt_preview . '...'
+                    ];
+                }
             }
         }
 
@@ -248,28 +278,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['install'])) {
         $phase2_errors = [];
 
         foreach ($phase2_statements as $stmt_data) {
-            try {
-                if (!$conn->multi_query($stmt_data['sql'])) {
-                    throw new Exception($conn->error);
-                }
+            $success = $conn->multi_query($stmt_data['sql']);
+            if ($success) {
                 do {
                     if ($result = $conn->store_result()) {
                         $result->free();
                     }
                 } while ($conn->more_results() && $conn->next_result());
                 $phase2_executed++;
+            } else {
+                // Verificar si es un error ignorable
+                if (esErrorIgnorable($conn->errno)) {
+                    $phase2_executed++; // Contar como exitoso
+                } else {
+                    $phase2_failed++;
+                    $stmt_preview = substr($stmt_data['sql'], 0, 150);
+                    $stmt_preview = str_replace(["\n", "\r", "\t"], ' ', $stmt_preview);
+                    $stmt_preview = preg_replace('/\s+/', ' ', $stmt_preview);
 
-            } catch (Exception $e) {
-                $phase2_failed++;
-                $stmt_preview = substr($stmt_data['sql'], 0, 150);
-                $stmt_preview = str_replace(["\n", "\r", "\t"], ' ', $stmt_preview);
-                $stmt_preview = preg_replace('/\s+/', ' ', $stmt_preview);
-
-                $phase2_errors[] = [
-                    'file' => $stmt_data['file'],
-                    'error' => $e->getMessage(),
-                    'sql' => $stmt_preview . '...'
-                ];
+                    $phase2_errors[] = [
+                        'file' => $stmt_data['file'],
+                        'errno' => $conn->errno,
+                        'error' => $conn->error,
+                        'sql' => $stmt_preview . '...'
+                    ];
+                }
             }
         }
 
