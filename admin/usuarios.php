@@ -123,7 +123,7 @@ $where_sql = implode(' AND ', $where_clauses);
 // Obtener usuarios
 $query = "SELECT u.*,
           e.nombre_empresa, e.rut as empresa_rut,
-          p.nombre as plan_nombre, p.precio_mensual,
+          p.nombre_plan as plan_nombre, p.precio_mensual,
           DATEDIFF(u.fecha_fin_trial, NOW()) as dias_restantes_trial
           FROM usuarios u
           LEFT JOIN empresas e ON u.empresa_id = e.id
