@@ -406,5 +406,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset']) && $token_va
 
         document.getElementById('password_confirm')?.addEventListener('input', checkPasswordMatch);
     </script>
+
+    <!-- Footer Profesional -->
+    <?php include 'user/includes/footer.php'; ?>
+
 </body>
 </html>

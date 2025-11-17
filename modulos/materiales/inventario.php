@@ -59,5 +59,9 @@ while($row = $result->fetch_assoc()):
 </div>
 </div>
 </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

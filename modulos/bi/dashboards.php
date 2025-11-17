@@ -23,5 +23,9 @@ $empresa_id = $_SESSION['empresa_id'];
 <div class="col-md-6"><canvas id="productosChart"></canvas></div>
 </div>
 </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

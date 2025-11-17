@@ -67,5 +67,9 @@ $stmt->close();
             </div>
         </div>
     </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

@@ -35,5 +35,9 @@ $stmt->close();
 </div>
 <div class="alert alert-info"><i class="fas fa-info-circle"></i> Integración REAL con Previred para liquidaciones de sueldo</div>
 </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

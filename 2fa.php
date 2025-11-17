@@ -327,5 +327,9 @@ if (isset($_GET['reenviar'])) {
         // Focus automático
         document.getElementById('codigo').focus();
     </script>
+
+    <!-- Footer Profesional -->
+    <?php include 'user/includes/footer.php'; ?>
+
 </body>
 </html>

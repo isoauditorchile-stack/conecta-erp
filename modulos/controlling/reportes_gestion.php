@@ -15,5 +15,9 @@ requireLogin();
 <div class="content"><h2><i class="fas fa-file-alt text-primary"></i> Reportes de Gestión</h2>
 <div class="alert alert-info"><i class="fas fa-info-circle"></i> Reportes ejecutivos y operacionales</div>
 </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

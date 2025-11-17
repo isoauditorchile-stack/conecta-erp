@@ -17,5 +17,9 @@ requireLogin();
 <h2><i class="fas fa-shield-alt text-primary"></i> Seguridad y Salud</h2>
 <div class="alert alert-info"><i class="fas fa-info-circle"></i> Módulo de Seguridad y Salud para gestión de talento humano</div>
 </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

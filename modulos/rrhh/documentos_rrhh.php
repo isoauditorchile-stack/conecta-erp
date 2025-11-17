@@ -17,5 +17,9 @@ requireLogin();
 <h2><i class="fas fa-file-alt text-primary"></i> Documentos</h2>
 <div class="alert alert-info"><i class="fas fa-info-circle"></i> Módulo de Documentos para gestión de talento humano</div>
 </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

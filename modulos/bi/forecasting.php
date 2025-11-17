@@ -17,5 +17,9 @@ requireLogin();
 <h2><i class="fas fa-crystal-ball text-primary"></i> Forecasting</h2>
 <div class="alert alert-info"><i class="fas fa-info-circle"></i> Inteligencia de negocios: Forecasting</div>
 </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

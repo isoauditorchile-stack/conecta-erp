@@ -799,5 +799,9 @@ $stats = [
         });
         <?php endif; ?>
     </script>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

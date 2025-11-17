@@ -51,4 +51,8 @@ $total_general += $v['total'];
 </div>
 </div>
 </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body></html>

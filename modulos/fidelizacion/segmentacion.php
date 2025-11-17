@@ -17,5 +17,9 @@ requireLogin();
 <h2><i class="fas fa-th-list text-primary"></i> Segmentación</h2>
 <div class="alert alert-info"><i class="fas fa-info-circle"></i> Gestión de Segmentación para retención de clientes</div>
 </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

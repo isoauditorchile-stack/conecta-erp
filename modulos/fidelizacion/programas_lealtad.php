@@ -30,5 +30,9 @@ $stmt->close();
 <div class="col-md-6"><div class="stats-card"><h6 style="color:#48bb78">Programas Activos</h6><h3><?php echo $stats['programas_activos']; ?></h3></div></div>
 </div>
 </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

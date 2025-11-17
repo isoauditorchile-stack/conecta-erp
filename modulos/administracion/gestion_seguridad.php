@@ -785,5 +785,9 @@ $acciones_permisos = ['crear', 'leer', 'editar', 'eliminar', 'exportar'];
             alert('Función en desarrollo: Editar rol ' + id);
         }
     </script>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

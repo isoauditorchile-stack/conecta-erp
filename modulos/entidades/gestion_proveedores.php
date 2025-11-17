@@ -902,5 +902,9 @@ $stats = $conn->query("SELECT
             pageLength: 25
         });
     </script>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

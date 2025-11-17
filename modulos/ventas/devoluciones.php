@@ -26,5 +26,9 @@ $stmt->close();
 <div class="col-md-6"><div class="stats-card"><h6 style="color:#f56565">Monto Devuelto</h6><h3><?php echo formatearMoneda($stats['monto']); ?></h3></div></div>
 </div>
 </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

@@ -1292,5 +1292,9 @@ function validarRutChileno($rut) {
             }
         });
     </script>
+
+    <!-- Footer Profesional -->
+    <?php include 'user/includes/footer.php'; ?>
+
 </body>
 </html>

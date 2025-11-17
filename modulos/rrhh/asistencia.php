@@ -17,5 +17,9 @@ requireLogin();
 <h2><i class="fas fa-clock text-primary"></i> Asistencia</h2>
 <div class="alert alert-info"><i class="fas fa-info-circle"></i> Módulo de Asistencia para gestión de talento humano</div>
 </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

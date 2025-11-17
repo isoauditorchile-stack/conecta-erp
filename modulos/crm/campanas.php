@@ -17,5 +17,9 @@ requireLogin();
 <h2><i class="fas fa-bullhorn text-primary"></i> Campañas</h2>
 <div class="alert alert-info"><i class="fas fa-info-circle"></i> Gestión de Campañas para mejorar relaciones con clientes</div>
 </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

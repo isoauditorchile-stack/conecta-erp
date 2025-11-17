@@ -17,5 +17,9 @@ requireLogin();
 <h2><i class="fas fa-dolly text-primary"></i> Gestión de Distribución</h2>
 <div class="alert alert-info"><i class="fas fa-info-circle"></i> Planificación y optimización de rutas de distribución</div>
 </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

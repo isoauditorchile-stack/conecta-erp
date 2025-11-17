@@ -31,5 +31,9 @@ $stmt->close();
 </div>
 <div class="alert alert-info"><i class="fas fa-info-circle"></i> Integración con sistemas de tracking GPS en tiempo real</div>
 </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

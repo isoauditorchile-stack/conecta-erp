@@ -30,5 +30,9 @@ $stmt->close();
 <div class="col-md-6"><div class="stats-card"><h6 style="color:#48bb78">Clientes con Puntos</h6><h3><?php echo $stats['clientes_con_puntos']; ?></h3></div></div>
 </div>
 </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

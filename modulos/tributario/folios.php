@@ -28,4 +28,8 @@ $folios = $conn->query("SELECT f.*, t.nombre FROM folios_caf f LEFT JOIN tipos_d
 </tbody>
 </table>
 </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body></html>

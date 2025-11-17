@@ -26,4 +26,8 @@ $pedidos = $conn->query("SELECT p.*, c.razon_social FROM pedidos p LEFT JOIN cli
 </tbody>
 </table>
 </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body></html>

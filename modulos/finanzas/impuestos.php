@@ -47,5 +47,9 @@ $iva_pagar = $stats['iva_ventas'] - $stats['iva_compras'];
             <i class="fas fa-info-circle"></i> Integración REAL con SII para declaración automática de impuestos
         </div>
     </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

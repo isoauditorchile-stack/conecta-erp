@@ -44,5 +44,9 @@ $stmt->close();
             <div class="col-md-3"><div class="stats-card"><h6 style="color:#9f7aea">Presupuesto Anual</h6><h3><?php echo formatearMoneda($stats['presupuesto_anual']); ?></h3></div></div>
         </div>
     </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

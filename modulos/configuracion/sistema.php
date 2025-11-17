@@ -612,5 +612,9 @@ $stmt->close();
             alert('Función de edición de secuencias - Implementar modal');
         }
     </script>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

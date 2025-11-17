@@ -862,5 +862,9 @@ $stats = $conn->query($stats_query)->fetch_assoc();
             alert('Función en desarrollo: Ver detalle ' + id);
         }
     </script>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

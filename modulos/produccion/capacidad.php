@@ -17,5 +17,9 @@ requireLogin();
 <h2><i class="fas fa-chart-bar text-primary"></i> Capacidad</h2>
 <div class="alert alert-info"><i class="fas fa-info-circle"></i> Módulo de Capacidad en producción</div>
 </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

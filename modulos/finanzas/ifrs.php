@@ -29,5 +29,9 @@ $empresa_id = $_SESSION['empresa_id'];
             <i class="fas fa-info-circle"></i> Módulo de Normas Internacionales de Información Financiera (IFRS)
         </div>
     </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

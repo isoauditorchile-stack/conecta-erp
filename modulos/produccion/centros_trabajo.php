@@ -17,5 +17,9 @@ requireLogin();
 <h2><i class="fas fa-hammer text-primary"></i> Centros Trabajo</h2>
 <div class="alert alert-info"><i class="fas fa-info-circle"></i> Módulo de Centros Trabajo en producción</div>
 </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

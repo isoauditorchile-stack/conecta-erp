@@ -772,5 +772,9 @@ $top_clientes = $conn->query("SELECT codigo, nombre, clasificacion, estado
             }
         });
     </script>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

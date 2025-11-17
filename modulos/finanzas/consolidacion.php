@@ -29,5 +29,9 @@ $empresa_id = $_SESSION['empresa_id'];
             <i class="fas fa-info-circle"></i> Consolidación multi-empresa para holdings y grupos empresariales
         </div>
     </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

@@ -828,5 +828,9 @@ $proximos_vencimientos = $conn->query("SELECT cp.*, p.nombre as proveedor_nombre
             pageLength: 25
         });
     </script>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

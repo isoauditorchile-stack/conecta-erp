@@ -29,4 +29,8 @@ $cotizaciones = $conn->query("SELECT c.*, cl.razon_social FROM cotizaciones c LE
 </tbody>
 </table>
 </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body></html>

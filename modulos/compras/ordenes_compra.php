@@ -26,4 +26,8 @@ $ordenes = $conn->query("SELECT o.*, p.razon_social FROM ordenes_compra o LEFT J
 </tbody>
 </table>
 </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body></html>

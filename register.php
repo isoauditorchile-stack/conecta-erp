@@ -687,6 +687,10 @@ $idiomas = $conn->query("SELECT * FROM idiomas WHERE activo = 1 ORDER BY nombre"
             }
         });
     </script>
+
+    <!-- Footer Profesional -->
+    <?php include 'user/includes/footer.php'; ?>
+
 </body>
 </html>
 <?php

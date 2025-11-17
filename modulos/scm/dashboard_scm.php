@@ -34,5 +34,9 @@ $stmt->close();
 <div class="col-md-3"><div class="stats-card"><h6 style="color:#9f7aea">Proveedores</h6><h3><?php echo $stats['proveedores_activos']; ?></h3></div></div>
 </div>
 </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

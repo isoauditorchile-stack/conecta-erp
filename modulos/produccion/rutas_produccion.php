@@ -17,5 +17,9 @@ requireLogin();
 <h2><i class="fas fa-route text-primary"></i> Rutas Producción</h2>
 <div class="alert alert-info"><i class="fas fa-info-circle"></i> Módulo de Rutas Producción en producción</div>
 </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

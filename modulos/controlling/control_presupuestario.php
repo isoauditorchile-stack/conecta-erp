@@ -36,5 +36,9 @@ $disponible = $stats['total_presupuesto'] - $stats['total_ejecutado'];
             <div class="col-md-4"><div class="stats-card"><h6 style="color:#48bb78">Disponible</h6><h3><?php echo formatearMoneda($disponible); ?></h3></div></div>
         </div>
     </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

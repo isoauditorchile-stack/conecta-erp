@@ -551,5 +551,9 @@ $tipo_preseleccionado = $_GET['tipo'] ?? null;
             return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
         }
     </script>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

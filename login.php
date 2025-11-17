@@ -466,5 +466,9 @@ if (isset($_GET['registered'])) {
             </div>
         </div>
     </div>
+
+    <!-- Footer Profesional -->
+    <?php include 'user/includes/footer.php'; ?>
+
 </body>
 </html>

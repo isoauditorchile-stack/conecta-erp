@@ -17,5 +17,9 @@ requireLogin();
 <h2><i class="fas fa-file-export text-primary"></i> Exportación Datos</h2>
 <div class="alert alert-info"><i class="fas fa-info-circle"></i> Inteligencia de negocios: Exportación Datos</div>
 </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

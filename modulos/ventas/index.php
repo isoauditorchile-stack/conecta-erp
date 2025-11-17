@@ -202,5 +202,9 @@ $stmt->close();
     //     }
     // });
     </script>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

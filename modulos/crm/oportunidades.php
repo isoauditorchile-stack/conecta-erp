@@ -327,5 +327,9 @@ $tasa_conversion = $total_cerradas > 0 ? ($stats['ganadas'] / $total_cerradas * 
             window.location.href = '?detalle=' + id;
         }
     </script>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

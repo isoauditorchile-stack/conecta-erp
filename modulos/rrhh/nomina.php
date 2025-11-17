@@ -31,5 +31,9 @@ $stmt->close();
 </div>
 <div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> Integración REAL con Previred para cálculo de imposiciones AFP/ISAPRE/Fonasa</div>
 </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

@@ -29,5 +29,9 @@ $stmt->close();
 </div>
 <div class="alert alert-info"><i class="fas fa-info-circle"></i> Sistema MRP (Material Requirements Planning) con cálculo automático de necesidades</div>
 </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

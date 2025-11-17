@@ -17,5 +17,9 @@ requireLogin();
 <h2><i class="fas fa-box text-primary"></i> Análisis Productos</h2>
 <div class="alert alert-info"><i class="fas fa-info-circle"></i> Inteligencia de negocios: Análisis Productos</div>
 </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

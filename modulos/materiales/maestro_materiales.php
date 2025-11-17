@@ -27,5 +27,9 @@ $stmt->close();
 <div class="col-md-4"><div class="stats-card"><h6 style="color:#9f7aea">Prod. Terminados</h6><h3><?php echo $stats['productos_terminados']; ?></h3></div></div>
 </div>
 </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

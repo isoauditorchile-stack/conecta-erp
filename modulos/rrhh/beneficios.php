@@ -17,5 +17,9 @@ requireLogin();
 <h2><i class="fas fa-gift text-primary"></i> Beneficios</h2>
 <div class="alert alert-info"><i class="fas fa-info-circle"></i> Módulo de Beneficios para gestión de talento humano</div>
 </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

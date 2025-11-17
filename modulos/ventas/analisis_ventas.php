@@ -15,5 +15,9 @@ requireLogin();
 <div class="content"><h2><i class="fas fa-chart-area text-primary"></i> Análisis de Ventas</h2>
 <div class="alert alert-info"><i class="fas fa-info-circle"></i> Análisis por vendedor, producto, región y canal</div>
 </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

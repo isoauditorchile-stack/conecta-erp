@@ -1951,5 +1951,9 @@ $compras_grafico = $stmt_compras->get_result()->fetch_all(MYSQLI_ASSOC);
             });
         });
     </script>
+
+    <!-- Footer Profesional -->
+    <?php include 'includes/footer.php'; ?>
+
 </body>
 </html>

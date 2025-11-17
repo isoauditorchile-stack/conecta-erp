@@ -18,5 +18,9 @@ $empresa_id = $_SESSION['empresa_id'];
 <h2><i class="fas fa-link text-primary"></i> Colaboración Cadena</h2>
 <div class="alert alert-info"><i class="fas fa-info-circle"></i> Módulo de Colaboración Cadena para optimización de la cadena de suministro</div>
 </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

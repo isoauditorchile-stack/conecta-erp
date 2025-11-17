@@ -164,5 +164,9 @@ function calcularTotales() {
     document.getElementById('totalHaber').textContent = '$' + totalH.toLocaleString('es-CL');
 }
 </script>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

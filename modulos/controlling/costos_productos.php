@@ -16,5 +16,9 @@ $empresa_id = $_SESSION['empresa_id'];
 <div class="content"><h2><i class="fas fa-tags text-primary"></i> Costos de Productos</h2>
 <div class="alert alert-info"><i class="fas fa-info-circle"></i> Cálculo de costos: Materiales + Mano de obra + Costos indirectos</div>
 </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

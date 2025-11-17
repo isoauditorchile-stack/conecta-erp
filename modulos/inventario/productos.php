@@ -32,4 +32,8 @@ $clase_stock = $prod['stock_actual'] <= $prod['stock_minimo'] ? 'text-danger' : 
 </tbody>
 </table>
 </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body></html>

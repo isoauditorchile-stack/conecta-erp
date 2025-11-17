@@ -546,5 +546,9 @@ function calcularDiasParaRenovar($tipo_documento, $folios_disponibles, $conn, $e
             location.reload();
         }, 300000);
     </script>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

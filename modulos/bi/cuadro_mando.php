@@ -17,5 +17,9 @@ requireLogin();
 <h2><i class="fas fa-th text-primary"></i> Cuadro de Mando</h2>
 <div class="alert alert-info"><i class="fas fa-info-circle"></i> Inteligencia de negocios: Cuadro de Mando</div>
 </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

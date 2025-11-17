@@ -17,5 +17,9 @@ requireLogin();
 <h2><i class="fas fa-database text-primary"></i> Data Mining</h2>
 <div class="alert alert-info"><i class="fas fa-info-circle"></i> Inteligencia de negocios: Data Mining</div>
 </div>
+
+    <!-- Footer Profesional -->
+    <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>
