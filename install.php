@@ -16,8 +16,30 @@ define('DB_CHARSET', 'utf8mb4');
 
 // Archivos SQL a ejecutar en orden
 $sql_files = [
+    // Tablas base del sistema
     'sql/01_tablas_basicas.sql',
-    'sql/02_usuarios_autenticacion.sql'
+    'sql/02_usuarios_autenticacion.sql',
+
+    // Módulos del sistema (19 módulos completos)
+    'sql/modulos/01_entidades.sql',
+    'sql/modulos/02_ventas.sql',
+    'sql/modulos/03_compras.sql',
+    'sql/modulos/04_inventario.sql',
+    'sql/modulos/05_contabilidad.sql',
+    'sql/modulos/06_rrhh.sql',
+    'sql/modulos/07_crm.sql',
+    'sql/modulos/08_produccion.sql',
+    'sql/modulos/09_finanzas.sql',
+    'sql/modulos/10_logistica.sql',
+    'sql/modulos/11_marketing.sql',
+    'sql/modulos/12_business_intelligence.sql',
+    'sql/modulos/13_configuracion_avanzada.sql',
+    'sql/modulos/14_api_y_reportes.sql',
+    'sql/modulos/15_ecommerce.sql',
+    'sql/modulos/16_proyectos_calidad_mantenimiento.sql',
+    'sql/modulos/17_bi_avanzado.sql',
+    'sql/modulos/18_reloj_control.sql',
+    'sql/modulos/19_password_recovery.sql'
 ];
 
 // Verificar si ya está instalado

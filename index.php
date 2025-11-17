@@ -587,7 +587,6 @@ function validarRutChileno($rut) {
                 font-size: 2rem;
             }
         }
-    </style>
 
         /* Sección de Planes */
         .pricing-section {
@@ -758,6 +757,7 @@ function validarRutChileno($rut) {
                 transform: scale(1);
             }
         }
+    </style>
 </head>
 <body>
     <!-- Hero Section -->
@@ -933,6 +933,12 @@ function validarRutChileno($rut) {
                         </button>
 
                         <div class="text-center mt-3">
+                            <small>
+                                <a href="#" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#forgotPasswordModal">¿Olvidaste tu contraseña?</a>
+                            </small>
+                        </div>
+
+                        <div class="text-center mt-2">
                             <small>¿No tienes cuenta? <a href="#" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#registerModal">Regístrate gratis</a></small>
                         </div>
                     </form>
@@ -1105,6 +1111,42 @@ function validarRutChileno($rut) {
 
                         <div class="text-center mt-3">
                             <small>¿Ya tienes cuenta? <a href="#" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#loginModal">Inicia sesión</a></small>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal OLVIDÉ MI CONTRASEÑA -->
+    <div class="modal fade" id="forgotPasswordModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-key"></i> Recuperar Contraseña</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-4">
+                        Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.
+                    </p>
+
+                    <form method="POST" action="reset_password.php" id="forgotPasswordForm">
+                        <div class="mb-3">
+                            <label class="form-label">Correo Electrónico</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                <input type="email" name="email" class="form-control" placeholder="tu@email.com" required autofocus>
+                            </div>
+                            <small class="text-muted">Te enviaremos un correo con instrucciones para restablecer tu contraseña.</small>
+                        </div>
+
+                        <button type="submit" name="send_reset_link" class="btn-submit">
+                            <i class="fas fa-paper-plane"></i> Enviar Enlace de Recuperación
+                        </button>
+
+                        <div class="text-center mt-3">
+                            <small><a href="#" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#loginModal">Volver al inicio de sesión</a></small>
                         </div>
                     </form>
                 </div>
