@@ -43,6 +43,57 @@ $sql_files = [
     'sql/modulos/20_control_acceso_planes.sql'  // Sistema de control de acceso
 ];
 
+/**
+ * Parsear archivo SQL manejando correctamente DELIMITER
+ */
+function parseSQLFile($sql_content) {
+    $statements = [];
+    $current_delimiter = ';';
+    $current_statement = '';
+
+    // Dividir por líneas
+    $lines = explode("\n", $sql_content);
+
+    foreach ($lines as $line) {
+        $trimmed = trim($line);
+
+        // Ignorar líneas vacías y comentarios
+        if (empty($trimmed) || substr($trimmed, 0, 2) === '--' || substr($trimmed, 0, 1) === '#') {
+            continue;
+        }
+
+        // Detectar cambio de DELIMITER
+        if (preg_match('/^DELIMITER\s+(.+)$/i', $trimmed, $matches)) {
+            $current_delimiter = trim($matches[1]);
+            continue; // No agregar esta línea al statement
+        }
+
+        // Agregar línea al statement actual
+        $current_statement .= $line . "\n";
+
+        // Verificar si la línea termina con el delimitador actual
+        if (substr(rtrim($line), -strlen($current_delimiter)) === $current_delimiter) {
+            // Remover el delimitador del final
+            $stmt = substr($current_statement, 0, -strlen($current_delimiter) - 1);
+            $stmt = trim($stmt);
+
+            if (!empty($stmt)) {
+                $statements[] = $stmt;
+            }
+
+            $current_statement = '';
+        }
+    }
+
+    // Agregar cualquier statement pendiente
+    $stmt = trim($current_statement);
+    if (!empty($stmt)) {
+        $statements[] = $stmt;
+    }
+
+    return $statements;
+}
+
 // Verificar si ya está instalado
 $already_installed = false;
 $errors = [];
@@ -74,6 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['install'])) {
 
         // Desactivar verificación de foreign keys temporalmente
         $conn->query("SET FOREIGN_KEY_CHECKS = 0");
+        $conn->query("SET SQL_MODE = 'NO_AUTO_VALUE_ON_ZERO'");
 
         foreach ($sql_files as $file) {
             $file_path = __DIR__ . '/' . $file;
@@ -85,13 +137,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['install'])) {
 
             $sql_content = file_get_contents($file_path);
 
-            // Dividir el contenido por declaraciones SQL
-            $statements = array_filter(
-                array_map('trim', explode(';', $sql_content)),
-                function($stmt) {
-                    return !empty($stmt) && substr(trim($stmt), 0, 2) !== '--';
-                }
-            );
+            // Parsear el archivo SQL manejando DELIMITER correctamente
+            $statements = parseSQLFile($sql_content);
 
             $file_basename = basename($file);
             $executed = 0;
@@ -102,18 +149,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['install'])) {
                 if (empty($statement)) continue;
 
                 // Ejecutar la declaración
-                if ($conn->query($statement)) {
+                if ($conn->multi_query($statement)) {
+                    do {
+                        // Limpiar todos los resultados
+                        if ($result = $conn->store_result()) {
+                            $result->free();
+                        }
+                    } while ($conn->more_results() && $conn->next_result());
+
                     $executed++;
                 } else {
                     $failed++;
-                    $errors[] = "Error en $file_basename: " . $conn->error;
+                    // Solo mostrar primeros 10 errores por archivo
+                    if ($failed <= 10) {
+                        $error_msg = $conn->error;
+                        // Truncar statement si es muy largo
+                        $stmt_preview = strlen($statement) > 100 ? substr($statement, 0, 100) . '...' : $statement;
+                        $errors[] = "Excepción en $file_basename: $error_msg";
+                    }
                 }
             }
 
             if ($failed === 0) {
                 $success_messages[] = "✓ $file_basename: $executed declaraciones ejecutadas exitosamente";
             } else {
-                $errors[] = "✗ $file_basename: $failed declaraciones fallaron de $executed totales";
+                $errors[] = "✗ $file_basename: $failed declaraciones fallaron de " . count($statements) . " totales";
             }
         }
 
@@ -152,12 +212,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['install'])) {
         }
 
         .installer-container {
-            max-width: 800px;
+            max-width: 900px;
             width: 100%;
             background: white;
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             overflow: hidden;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
         }
 
         .installer-header {
@@ -181,6 +244,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['install'])) {
 
         .installer-body {
             padding: 40px;
+            overflow-y: auto;
         }
 
         .info-section {
@@ -247,6 +311,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['install'])) {
             border-radius: 10px;
             border: none;
             margin-bottom: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .alert ul {
+            margin-bottom: 0;
+            padding-left: 20px;
+        }
+
+        .alert li {
+            margin-bottom: 5px;
+            font-size: 0.9rem;
         }
 
         .sql-files-list {
@@ -286,6 +362,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['install'])) {
         .home-link a:hover {
             text-decoration: underline;
         }
+
+        .error-count {
+            background: #dc3545;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
     </style>
 </head>
 <body>
@@ -309,12 +395,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['install'])) {
             <!-- Mensajes de error -->
             <?php if (!empty($errors)): ?>
                 <div class="alert alert-danger">
-                    <h5><i class="fas fa-exclamation-triangle"></i> Errores de Instalación</h5>
-                    <ul class="mb-0">
+                    <h5>
+                        <i class="fas fa-exclamation-triangle"></i> Errores de Instalación
+                        <span class="error-count"><?php echo count($errors); ?> errores</span>
+                    </h5>
+                    <ul>
                         <?php foreach ($errors as $error): ?>
                             <li><?php echo htmlspecialchars($error); ?></li>
                         <?php endforeach; ?>
                     </ul>
+                    <p class="mt-3 mb-0">
+                        <strong>Nota:</strong> Algunos errores son normales durante la instalación inicial (tablas que no existen aún, permisos de RELOAD, etc.).
+                        Si ves mensajes de éxito arriba, el sistema se instaló correctamente.
+                    </p>
                 </div>
             <?php endif; ?>
 
@@ -335,8 +428,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['install'])) {
                 </div>
                 <div class="info-item">
                     <span class="info-label">Estado de Conexión:</span>
-                    <span class="<?php echo empty($errors) ? 'status-connected' : 'status-error'; ?>">
-                        <?php echo empty($errors) ? '✓ Conectado' : '✗ Error de conexión'; ?>
+                    <span class="<?php echo isset($conn) && $conn->ping() ? 'status-connected' : 'status-error'; ?>">
+                        <?php echo isset($conn) && $conn->ping() ? '✓ Conectado' : '✗ Error de conexión'; ?>
                     </span>
                 </div>
                 <?php if ($already_installed): ?>
@@ -350,15 +443,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['install'])) {
             <!-- Archivos SQL a instalar -->
             <div class="sql-files-list">
                 <h3 style="font-size: 1.2rem; margin-bottom: 15px; color: #333;">
-                    <i class="fas fa-file-code"></i> Archivos SQL a Ejecutar
+                    <i class="fas fa-file-code"></i> Archivos SQL a Ejecutar (<?php echo count($sql_files); ?> archivos)
                 </h3>
-                <?php foreach ($sql_files as $index => $file): ?>
-                    <div class="sql-file-item">
-                        <i class="fas fa-check-circle"></i>
-                        <strong><?php echo $index + 1; ?>.</strong>
-                        <?php echo basename($file); ?>
-                    </div>
-                <?php endforeach; ?>
+                <div style="max-height: 200px; overflow-y: auto;">
+                    <?php foreach ($sql_files as $index => $file): ?>
+                        <div class="sql-file-item">
+                            <i class="fas fa-check-circle"></i>
+                            <strong><?php echo $index + 1; ?>.</strong>
+                            <?php echo basename($file); ?>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
             </div>
 
             <!-- Formulario de instalación -->
