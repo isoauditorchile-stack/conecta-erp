@@ -10,9 +10,10 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-// Cargar configuración
-require_once '../includes/config.php';
-require_once '../includes/functions.php';
+// Cargar configuración con rutas absolutas
+$base_path = dirname(__DIR__);
+require_once $base_path . '/includes/config.php';
+require_once $base_path . '/includes/functions.php';
 
 // Obtener datos del usuario de forma segura
 $usuario_id = $_SESSION['user_id'];
