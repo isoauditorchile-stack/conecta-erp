@@ -378,5 +378,28 @@ function getModuleSubmodules($module_id, $user_id = null) {
     ", [$module_id, $user_id]);
 }
 
+/**
+ * Obtener conexión mysqli (para compatibilidad con módulos legacy)
+ */
+function getMysqliConnection() {
+    static $conn = null;
+
+    if ($conn === null) {
+        $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+
+        if ($conn->connect_error) {
+            error_log("MySQLi Connection Error: " . $conn->connect_error);
+            die("Error de conexión a la base de datos. Por favor, contacte al administrador.");
+        }
+
+        $conn->set_charset(DB_CHARSET);
+    }
+
+    return $conn;
+}
+
+// Variable global para conexión mysqli
+$conn = getMysqliConnection();
+
 // Iniciar sesión automáticamente
 initSession();
