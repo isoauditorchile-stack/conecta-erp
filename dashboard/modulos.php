@@ -12,10 +12,11 @@ if (!isset($_SESSION['user_id'])) {
 
 // Cargar configuración - buscar en múltiples ubicaciones posibles
 $possible_paths = [
+    $_SERVER['DOCUMENT_ROOT'] . '/includes/config.php', // public_html/includes (PRIORIDAD)
     __DIR__ . '/../includes/config.php',           // Ruta relativa desde dashboard
     dirname(__DIR__) . '/includes/config.php',     // Ruta desde directorio padre
-    $_SERVER['DOCUMENT_ROOT'] . '/includes/config.php', // Desde document root
     $_SERVER['DOCUMENT_ROOT'] . '/../includes/config.php', // Un nivel arriba de document root
+    '/home/conectae/public_html/includes/config.php', // Ruta absoluta hardcoded como fallback
 ];
 
 $config_loaded = false;
