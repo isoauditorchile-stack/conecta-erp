@@ -1,306 +1,350 @@
 <?php
-/**
- * CONECTA ERP - Página Principal Profesional
- */
+session_start();
 
-require_once __DIR__ . '/includes/config.php';
-require_once __DIR__ . '/includes/i18n.php';
-initSession();
-
-// Traducciones para la landing page
-$lang = currentLanguage();
-$t = [
-    'es' => [
-        'hero_title' => '🚀 CONECTA ERP',
-        'hero_subtitle' => 'Sistema ERP Empresarial Completo - Somos el Mejor ERP del Mundo',
-        'hero_description' => '14 Módulos • 106 Submódulos • Multi-país • Multi-moneda • Multi-idioma',
-        'view_plans' => 'Ver Planes',
-        'register_free' => 'Registrarse Gratis',
-        'register' => 'Registro',
-        'login' => 'Iniciar Sesión',
-        'plans_title' => 'Planes y Módulos',
-        'plans_subtitle' => 'Selecciona el plan que mejor se adapte a tu empresa. Todos los planes incluyen Multi-usuario, Multi-empresa, Multi-moneda y Multi-idioma.',
-        'per_month' => '/mes',
-        'starter' => 'Starter',
-        'professional' => 'Professional',
-        'enterprise' => 'Enterprise',
-        'custom' => 'Custom',
-        'most_popular' => 'Más Popular',
-        'ideal_for_small' => 'Ideal para pequeñas empresas',
-        'for_growing' => 'Para empresas en crecimiento',
-        'for_large' => 'Para grandes empresas',
-        'custom_needs' => 'Adaptado a tus necesidades',
-        'start_free' => 'Comenzar Gratis',
-        'start_now' => 'Comenzar Ahora',
-        'contact_sales' => 'Contactar Ventas',
-        'personalized' => 'Personalizado',
-    ],
-    'en' => [
-        'hero_title' => '🚀 CONECTA ERP',
-        'hero_subtitle' => 'Complete Enterprise ERP System - We Are the Best ERP in the World',
-        'hero_description' => '14 Modules • 106 Submodules • Multi-country • Multi-currency • Multi-language',
-        'view_plans' => 'View Plans',
-        'register_free' => 'Register Free',
-        'register' => 'Register',
-        'login' => 'Login',
-        'plans_title' => 'Plans and Modules',
-        'plans_subtitle' => 'Choose the plan that best fits your company. All plans include Multi-user, Multi-company, Multi-currency and Multi-language.',
-        'per_month' => '/month',
-        'starter' => 'Starter',
-        'professional' => 'Professional',
-        'enterprise' => 'Enterprise',
-        'custom' => 'Custom',
-        'most_popular' => 'Most Popular',
-        'ideal_for_small' => 'Ideal for small businesses',
-        'for_growing' => 'For growing companies',
-        'for_large' => 'For large enterprises',
-        'custom_needs' => 'Adapted to your needs',
-        'start_free' => 'Start Free',
-        'start_now' => 'Start Now',
-        'contact_sales' => 'Contact Sales',
-        'personalized' => 'Personalized',
-    ],
-    'pt' => [
-        'hero_title' => '🚀 CONECTA ERP',
-        'hero_subtitle' => 'Sistema ERP Empresarial Completo - Somos o Melhor ERP do Mundo',
-        'hero_description' => '14 Módulos • 106 Submódulos • Multi-país • Multi-moeda • Multi-idioma',
-        'view_plans' => 'Ver Planos',
-        'register_free' => 'Registrar Grátis',
-        'register' => 'Registro',
-        'login' => 'Entrar',
-        'plans_title' => 'Planos e Módulos',
-        'plans_subtitle' => 'Escolha o plano que melhor se adapta à sua empresa. Todos os planos incluem Multi-usuário, Multi-empresa, Multi-moeda e Multi-idioma.',
-        'per_month' => '/mês',
-        'starter' => 'Starter',
-        'professional' => 'Professional',
-        'enterprise' => 'Enterprise',
-        'custom' => 'Personalizado',
-        'most_popular' => 'Mais Popular',
-        'ideal_for_small' => 'Ideal para pequenas empresas',
-        'for_growing' => 'Para empresas em crescimento',
-        'for_large' => 'Para grandes empresas',
-        'custom_needs' => 'Adaptado às suas necessidades',
-        'start_free' => 'Começar Grátis',
-        'start_now' => 'Começar Agora',
-        'contact_sales' => 'Contatar Vendas',
-        'personalized' => 'Personalizado',
-    ],
-    'fr' => [
-        'hero_title' => '🚀 CONECTA ERP',
-        'hero_subtitle' => 'Système ERP d\'Entreprise Complet - Nous sommes le Meilleur ERP au Monde',
-        'hero_description' => '14 Modules • 106 Sous-modules • Multi-pays • Multi-devise • Multi-langue',
-        'view_plans' => 'Voir les Plans',
-        'register_free' => 'S\'inscrire Gratuitement',
-        'register' => 'Inscription',
-        'login' => 'Connexion',
-        'plans_title' => 'Plans et Modules',
-        'plans_subtitle' => 'Choisissez le plan qui convient le mieux à votre entreprise. Tous les plans incluent Multi-utilisateur, Multi-entreprise, Multi-devise et Multi-langue.',
-        'per_month' => '/mois',
-        'starter' => 'Starter',
-        'professional' => 'Professional',
-        'enterprise' => 'Enterprise',
-        'custom' => 'Personnalisé',
-        'most_popular' => 'Le Plus Populaire',
-        'ideal_for_small' => 'Idéal pour les petites entreprises',
-        'for_growing' => 'Pour les entreprises en croissance',
-        'for_large' => 'Pour les grandes entreprises',
-        'custom_needs' => 'Adapté à vos besoins',
-        'start_free' => 'Commencer Gratuitement',
-        'start_now' => 'Commencer Maintenant',
-        'contact_sales' => 'Contacter les Ventes',
-        'personalized' => 'Personnalisé',
-    ],
-    'de' => [
-        'hero_title' => '🚀 CONECTA ERP',
-        'hero_subtitle' => 'Vollständiges Unternehmens-ERP-System - Wir sind das Beste ERP der Welt',
-        'hero_description' => '14 Module • 106 Submodule • Multi-Land • Multi-Währung • Multi-Sprache',
-        'view_plans' => 'Pläne Ansehen',
-        'register_free' => 'Kostenlos Registrieren',
-        'register' => 'Registrieren',
-        'login' => 'Anmelden',
-        'plans_title' => 'Pläne und Module',
-        'plans_subtitle' => 'Wählen Sie den Plan, der am besten zu Ihrem Unternehmen passt. Alle Pläne beinhalten Multi-Benutzer, Multi-Unternehmen, Multi-Währung und Multi-Sprache.',
-        'per_month' => '/Monat',
-        'starter' => 'Starter',
-        'professional' => 'Professional',
-        'enterprise' => 'Enterprise',
-        'custom' => 'Individuell',
-        'most_popular' => 'Am Beliebtesten',
-        'ideal_for_small' => 'Ideal für kleine Unternehmen',
-        'for_growing' => 'Für wachsende Unternehmen',
-        'for_large' => 'Für große Unternehmen',
-        'custom_needs' => 'Angepasst an Ihre Bedürfnisse',
-        'start_free' => 'Kostenlos Starten',
-        'start_now' => 'Jetzt Starten',
-        'contact_sales' => 'Vertrieb Kontaktieren',
-        'personalized' => 'Individualisiert',
-    ],
-    'it' => [
-        'hero_title' => '🚀 CONECTA ERP',
-        'hero_subtitle' => 'Sistema ERP Aziendale Completo - Siamo il Miglior ERP al Mondo',
-        'hero_description' => '14 Moduli • 106 Sottomoduli • Multi-paese • Multi-valuta • Multi-lingua',
-        'view_plans' => 'Visualizza Piani',
-        'register_free' => 'Registrati Gratis',
-        'register' => 'Registrazione',
-        'login' => 'Accedi',
-        'plans_title' => 'Piani e Moduli',
-        'plans_subtitle' => 'Scegli il piano più adatto alla tua azienda. Tutti i piani includono Multi-utente, Multi-azienda, Multi-valuta e Multi-lingua.',
-        'per_month' => '/mese',
-        'starter' => 'Starter',
-        'professional' => 'Professional',
-        'enterprise' => 'Enterprise',
-        'custom' => 'Personalizzato',
-        'most_popular' => 'Più Popolare',
-        'ideal_for_small' => 'Ideale per piccole imprese',
-        'for_growing' => 'Per aziende in crescita',
-        'for_large' => 'Per grandi aziende',
-        'custom_needs' => 'Adattato alle tue esigenze',
-        'start_free' => 'Inizia Gratis',
-        'start_now' => 'Inizia Ora',
-        'contact_sales' => 'Contatta Vendite',
-        'personalized' => 'Personalizzato',
-    ],
-    'ru' => [
-        'hero_title' => '🚀 CONECTA ERP',
-        'hero_subtitle' => 'Полная корпоративная ERP-система - Мы лучшая ERP в мире',
-        'hero_description' => '14 модулей • 106 подмодулей • Мультистрана • Мультивалюта • Мультиязык',
-        'view_plans' => 'Посмотреть Планы',
-        'register_free' => 'Зарегистрироваться Бесплатно',
-        'register' => 'Регистрация',
-        'login' => 'Войти',
-        'plans_title' => 'Планы и Модули',
-        'plans_subtitle' => 'Выберите план, который лучше всего подходит вашей компании. Все планы включают Мультипользователь, Мультикомпания, Мультивалюта и Мультиязык.',
-        'per_month' => '/месяц',
-        'starter' => 'Starter',
-        'professional' => 'Professional',
-        'enterprise' => 'Enterprise',
-        'custom' => 'Индивидуальный',
-        'most_popular' => 'Самый Популярный',
-        'ideal_for_small' => 'Идеально для малого бизнеса',
-        'for_growing' => 'Для растущих компаний',
-        'for_large' => 'Для крупных предприятий',
-        'custom_needs' => 'Адаптировано под ваши нужды',
-        'start_free' => 'Начать Бесплатно',
-        'start_now' => 'Начать Сейчас',
-        'contact_sales' => 'Связаться с Отделом Продаж',
-        'personalized' => 'Персонализированный',
-    ],
-    'zh' => [
-        'hero_title' => '🚀 CONECTA ERP',
-        'hero_subtitle' => '完整的企业ERP系统 - 我们是世界上最好的ERP',
-        'hero_description' => '14个模块 • 106个子模块 • 多国家 • 多货币 • 多语言',
-        'view_plans' => '查看计划',
-        'register_free' => '免费注册',
-        'register' => '注册',
-        'login' => '登录',
-        'plans_title' => '计划和模块',
-        'plans_subtitle' => '选择最适合您公司的计划。所有计划包括多用户、多公司、多货币和多语言。',
-        'per_month' => '/月',
-        'starter' => 'Starter',
-        'professional' => 'Professional',
-        'enterprise' => 'Enterprise',
-        'custom' => '定制',
-        'most_popular' => '最受欢迎',
-        'ideal_for_small' => '适合小型企业',
-        'for_growing' => '适合成长型企业',
-        'for_large' => '适合大型企业',
-        'custom_needs' => '适应您的需求',
-        'start_free' => '免费开始',
-        'start_now' => '立即开始',
-        'contact_sales' => '联系销售',
-        'personalized' => '个性化',
-    ],
-];
-$tr = $t[$lang] ?? $t['es']; // Fallback to Spanish
-
-// Si ya tiene sesión, redirigir
+// Si ya está autenticado, redirigir al dashboard
 if (isset($_SESSION['user_id'])) {
-    if ($_SESSION['email'] === 'auditorexchile@gmail.com') {
-        header('Location: /admin/panel_super_admin.php');
-    } else {
-        header('Location: /user/dashboard_user.php');
-    }
-    exit;
+    $redirect = ($_SESSION['es_super_admin'] == 1) ? 'admin/dashboard_admin.php' : 'user/dashboard_user.php';
+    header("Location: $redirect");
+    exit();
 }
 
-$error = '';
-$success = '';
+require_once 'includes/config.php';
 
-// Procesar registro
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
-    $firstname = trim($_POST['firstname']);
-    $lastname = trim($_POST['lastname']);
-    $email = strtolower(trim($_POST['email']));
-    $password = $_POST['password'];
-    $company_name = trim($_POST['company_name']);
-    $phone = trim($_POST['phone']);
-    $country = $_POST['country'];
-    $tax_id = trim($_POST['tax_id']);
+$errors = [];
+$success = false;
+$login_error = '';
 
-    try {
-        $db = Database::getInstance();
+// Procesar LOGIN
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
+    $email_or_username = trim($_POST['email_or_username'] ?? '');
+    $password = $_POST['password'] ?? '';
 
-        // Verificar si el email ya existe
-        $existing = $db->fetchOne("SELECT id FROM users WHERE email = ?", [$email]);
-        if ($existing) {
-            $error = 'Este email ya está registrado';
-        } else {
-            $is_super_admin = ($email === 'auditorexchile@gmail.com');
-            $status = $is_super_admin ? 'active' : 'pending_approval';
+    if (empty($email_or_username) || empty($password)) {
+        $login_error = 'Por favor ingresa tus credenciales';
+    } else {
+        $stmt = $conn->prepare("SELECT u.*, e.nombre_empresa, e.estado as empresa_estado
+                                FROM usuarios u
+                                LEFT JOIN empresas e ON u.empresa_id = e.id
+                                WHERE u.email = ? OR u.username = ?");
+        $stmt->bind_param("ss", $email_or_username, $email_or_username);
+        $stmt->execute();
+        $result = $stmt->get_result();
 
-            $db->getConnection()->beginTransaction();
+        if ($result->num_rows === 1) {
+            $user = $result->fetch_assoc();
 
-            // Crear empresa (sin owner_user_id por ahora)
-            $company_id = $db->insert(
-                "INSERT INTO companies (company_name, legal_name, tax_id, country_id, owner_user_id, created_at) VALUES (?, ?, ?, ?, NULL, NOW())",
-                [$company_name, $company_name, $tax_id, 1]
-            );
+            if (password_verify($password, $user['password'])) {
+                if ($user['estado'] !== 'activo') {
+                    $login_error = 'Tu cuenta está ' . $user['estado'];
+                } elseif ($user['es_super_admin'] == 1) {
+                    // SUPER ADMIN
+                    $_SESSION['user_id'] = $user['id'];
+                    $_SESSION['username'] = $user['username'];
+                    $_SESSION['email'] = $user['email'];
+                    $_SESSION['nombre'] = $user['nombre'];
+                    $_SESSION['apellido'] = $user['apellido'];
+                    $_SESSION['empresa_id'] = $user['empresa_id'];
+                    $_SESSION['es_admin'] = 1;
+                    $_SESSION['es_super_admin'] = 1;
+                    $_SESSION['idioma_preferido'] = $user['idioma_preferido'];
+                    $_SESSION['en_periodo_prueba'] = 0;
 
-            // Crear usuario
-            $user_id = $db->insert(
-                "INSERT INTO users (firstname, lastname, email, username, password, company_id, phone, country, tax_id, status, is_admin, created_at)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())",
-                [
-                    $firstname,
-                    $lastname,
-                    $email,
-                    $email,
-                    password_hash($password, PASSWORD_BCRYPT),
-                    $company_id,
-                    $phone,
-                    $country,
-                    $tax_id,
-                    $status,
-                    $is_super_admin ? 1 : 0
-                ]
-            );
+                    header("Location: admin/dashboard_admin.php");
+                    exit();
+                } else {
+                    // Usuario normal
+                    if ($user['en_periodo_prueba'] == 1) {
+                        $fecha_fin_trial = strtotime($user['fecha_fin_trial']);
+                        $hoy = time();
 
-            // Actualizar empresa con el owner_user_id
-            $db->update(
-                "UPDATE companies SET owner_user_id = ? WHERE id = ?",
-                [$user_id, $company_id]
-            );
+                        if ($hoy > $fecha_fin_trial) {
+                            $login_error = 'Tu periodo de prueba ha expirado';
+                        } else {
+                            $dias_restantes = ceil(($fecha_fin_trial - $hoy) / 86400);
+                            $_SESSION['user_id'] = $user['id'];
+                            $_SESSION['username'] = $user['username'];
+                            $_SESSION['email'] = $user['email'];
+                            $_SESSION['nombre'] = $user['nombre'];
+                            $_SESSION['apellido'] = $user['apellido'];
+                            $_SESSION['empresa_id'] = $user['empresa_id'];
+                            $_SESSION['nombre_empresa'] = $user['nombre_empresa'];
+                            $_SESSION['es_admin'] = $user['es_admin'];
+                            $_SESSION['es_super_admin'] = 0;
+                            $_SESSION['idioma_preferido'] = $user['idioma_preferido'];
+                            $_SESSION['en_periodo_prueba'] = 1;
+                            $_SESSION['dias_restantes_trial'] = $dias_restantes;
 
-            $db->getConnection()->commit();
+                            header("Location: user/dashboard_user.php");
+                            exit();
+                        }
+                    } elseif ($user['suscripcion_activa'] == 1) {
+                        $_SESSION['user_id'] = $user['id'];
+                        $_SESSION['username'] = $user['username'];
+                        $_SESSION['email'] = $user['email'];
+                        $_SESSION['nombre'] = $user['nombre'];
+                        $_SESSION['apellido'] = $user['apellido'];
+                        $_SESSION['empresa_id'] = $user['empresa_id'];
+                        $_SESSION['nombre_empresa'] = $user['nombre_empresa'];
+                        $_SESSION['es_admin'] = $user['es_admin'];
+                        $_SESSION['idioma_preferido'] = $user['idioma_preferido'];
+                        $_SESSION['en_periodo_prueba'] = 0;
 
-            if ($is_super_admin) {
-                $_SESSION['user_id'] = $user_id;
-                $_SESSION['email'] = $email;
-                $_SESSION['is_admin'] = 1;
-                $_SESSION['username'] = $email;
-                header('Location: /admin/panel_super_admin.php');
-                exit;
+                        header("Location: user/dashboard_user.php");
+                        exit();
+                    } else {
+                        $login_error = 'Tu suscripción no está activa';
+                    }
+                }
             } else {
-                $success = '¡Registro exitoso! Tu cuenta está pendiente de aprobación. Te notificaremos por email.';
+                $login_error = 'Credenciales incorrectas';
             }
+        } else {
+            $login_error = 'Credenciales incorrectas';
         }
-    } catch (Exception $e) {
-        if ($db && $db->getConnection()->inTransaction()) {
-            $db->getConnection()->rollBack();
-        }
-        $error = 'Error al registrar. Por favor, intenta nuevamente.';
-        error_log("Registration error: " . $e->getMessage());
+        $stmt->close();
     }
+}
+
+// Procesar REGISTRO
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
+    $required_fields = ['nombre', 'apellido', 'email', 'username', 'password', 'confirm_password', 'nombre_empresa', 'razon_social', 'rut_empresa', 'pais_id', 'idioma_preferido'];
+
+    foreach ($required_fields as $field) {
+        if (empty($_POST[$field])) {
+            $errors[] = "El campo " . str_replace('_', ' ', $field) . " es obligatorio";
+        }
+    }
+
+    if (!empty($_POST['email']) && !filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) {
+        $errors[] = "El email no es válido";
+    }
+
+    if (!empty($_POST['password']) && strlen($_POST['password']) < 8) {
+        $errors[] = "La contraseña debe tener al menos 8 caracteres";
+    }
+
+    if ($_POST['password'] !== $_POST['confirm_password']) {
+        $errors[] = "Las contraseñas no coinciden";
+    }
+
+    // Validar RUT si es Chile
+    if ($_POST['pais_id'] == 1 && !empty($_POST['rut_empresa'])) {
+        if (!validarRutChileno($_POST['rut_empresa'])) {
+            $errors[] = "El RUT de la empresa no es válido";
+        }
+    }
+
+    // Verificar email reservado del super admin
+    if (empty($errors)) {
+        if (strtolower($_POST['email']) === strtolower(SUPER_ADMIN_EMAIL)) {
+            $errors[] = "Este email está reservado para el administrador del sistema";
+        }
+    }
+
+    // Verificar username reservado del super admin
+    if (empty($errors)) {
+        if (strtolower($_POST['username']) === strtolower(SUPER_ADMIN_USERNAME)) {
+            $errors[] = "Este nombre de usuario está reservado";
+        }
+    }
+
+    // Verificar email único
+    if (empty($errors)) {
+        $stmt = $conn->prepare("SELECT id FROM usuarios WHERE email = ?");
+        $stmt->bind_param("s", $_POST['email']);
+        $stmt->execute();
+        if ($stmt->get_result()->num_rows > 0) {
+            $errors[] = "El email ya está registrado";
+        }
+        $stmt->close();
+    }
+
+    // Verificar username único
+    if (empty($errors)) {
+        $stmt = $conn->prepare("SELECT id FROM usuarios WHERE username = ?");
+        $stmt->bind_param("s", $_POST['username']);
+        $stmt->execute();
+        if ($stmt->get_result()->num_rows > 0) {
+            $errors[] = "El nombre de usuario ya está en uso";
+        }
+        $stmt->close();
+    }
+
+    // Verificar RUT empresa único
+    if (empty($errors)) {
+        $stmt = $conn->prepare("SELECT id FROM empresas WHERE rut = ?");
+        $stmt->bind_param("s", $_POST['rut_empresa']);
+        $stmt->execute();
+        if ($stmt->get_result()->num_rows > 0) {
+            $errors[] = "El RUT de la empresa ya está registrado";
+        }
+        $stmt->close();
+    }
+
+    // Si no hay errores, registrar
+    if (empty($errors)) {
+        $conn->begin_transaction();
+
+        try {
+            // 1. Crear empresa - Preparar variables
+            $nombre_empresa = $_POST['nombre_empresa'];
+            $razon_social = $_POST['razon_social'];
+            $rut_empresa = $_POST['rut_empresa'];
+            $pais_id = $_POST['pais_id'];
+            $direccion = $_POST['direccion'] ?? null;
+            $ciudad = $_POST['ciudad'] ?? null;
+            $telefono_empresa = $_POST['telefono_empresa'] ?? null;
+            $email_empresa = $_POST['email'];
+
+            $stmt = $conn->prepare("INSERT INTO empresas (nombre_empresa, razon_social, rut, pais_id, direccion, ciudad, telefono, email, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'activo')");
+
+            if (!$stmt) {
+                throw new Exception("Error al preparar consulta empresa: " . $conn->error);
+            }
+
+            $stmt->bind_param("sssissss",
+                $nombre_empresa,
+                $razon_social,
+                $rut_empresa,
+                $pais_id,
+                $direccion,
+                $ciudad,
+                $telefono_empresa,
+                $email_empresa
+            );
+
+            if (!$stmt->execute()) {
+                throw new Exception("Error al crear empresa: " . $stmt->error);
+            }
+
+            $empresa_id = $conn->insert_id;
+            $stmt->close();
+
+            // 2. Crear usuario - Preparar variables
+            $nombre = $_POST['nombre'];
+            $apellido = $_POST['apellido'];
+            $email = $_POST['email'];
+            $username = $_POST['username'];
+            $password_hash = password_hash($_POST['password'], PASSWORD_BCRYPT);
+            $rut_personal = $_POST['rut'] ?? null;
+            $telefono_personal = $_POST['telefono'] ?? null;
+            $idioma_preferido = $_POST['idioma_preferido'];
+            $fecha_inicio_trial = date('Y-m-d H:i:s');
+            $fecha_fin_trial = date('Y-m-d H:i:s', strtotime('+14 days'));
+            $plan_id = 1;
+
+            $stmt = $conn->prepare("INSERT INTO usuarios (empresa_id, nombre, apellido, email, username, password, rut, telefono, idioma_preferido, plan_id, es_admin, es_super_admin, estado, en_periodo_prueba, fecha_inicio_trial, fecha_fin_trial, suscripcion_activa) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 'activo', 1, ?, ?, 1)");
+
+            if (!$stmt) {
+                throw new Exception("Error al preparar consulta usuario: " . $conn->error);
+            }
+
+            $stmt->bind_param("issssssssiss",
+                $empresa_id,
+                $nombre,
+                $apellido,
+                $email,
+                $username,
+                $password_hash,
+                $rut_personal,
+                $telefono_personal,
+                $idioma_preferido,
+                $plan_id,
+                $fecha_inicio_trial,
+                $fecha_fin_trial
+            );
+
+            if (!$stmt->execute()) {
+                throw new Exception("Error al crear usuario: " . $stmt->error);
+            }
+
+            $usuario_id = $conn->insert_id;
+            $stmt->close();
+
+            // 3. Crear suscripción
+            $stmt = $conn->prepare("INSERT INTO suscripciones (usuario_id, empresa_id, plan_id, estado, fecha_inicio, fecha_fin, es_trial, auto_renovar, monto_mensual) VALUES (?, ?, ?, 'trial', ?, ?, 1, 1, 0.00)");
+
+            if (!$stmt) {
+                throw new Exception("Error al preparar consulta suscripción: " . $conn->error);
+            }
+
+            $stmt->bind_param("iiiss",
+                $usuario_id,
+                $empresa_id,
+                $plan_id,
+                $fecha_inicio_trial,
+                $fecha_fin_trial
+            );
+
+            if (!$stmt->execute()) {
+                throw new Exception("Error al crear suscripción: " . $stmt->error);
+            }
+
+            $stmt->close();
+
+            // 4. Asignar rol
+            $rol_usuario = 3;
+            $stmt = $conn->prepare("INSERT INTO usuario_roles (usuario_id, rol_id) VALUES (?, ?)");
+
+            if (!$stmt) {
+                throw new Exception("Error al preparar consulta rol: " . $conn->error);
+            }
+
+            $stmt->bind_param("ii", $usuario_id, $rol_usuario);
+
+            if (!$stmt->execute()) {
+                throw new Exception("Error al asignar rol: " . $stmt->error);
+            }
+
+            $stmt->close();
+
+            $conn->commit();
+
+            // Auto-login
+            $_SESSION['user_id'] = $usuario_id;
+            $_SESSION['username'] = $username;
+            $_SESSION['email'] = $email;
+            $_SESSION['nombre'] = $nombre;
+            $_SESSION['apellido'] = $apellido;
+            $_SESSION['empresa_id'] = $empresa_id;
+            $_SESSION['es_admin'] = 0;
+            $_SESSION['es_super_admin'] = 0;
+            $_SESSION['idioma_preferido'] = $idioma_preferido;
+            $_SESSION['en_periodo_prueba'] = 1;
+            $_SESSION['dias_restantes_trial'] = 14;
+
+            header("Location: user/dashboard_user.php?welcome=1");
+            exit();
+
+        } catch (Exception $e) {
+            $conn->rollback();
+            $errors[] = "Error al crear la cuenta: " . $e->getMessage();
+        }
+    }
+}
+
+// Obtener países e idiomas
+$paises = $conn->query("SELECT * FROM paises WHERE activo = 1 ORDER BY nombre");
+$idiomas = $conn->query("SELECT * FROM idiomas WHERE activo = 1 ORDER BY nombre");
+
+// Función validar RUT
+function validarRutChileno($rut) {
+    $rut = preg_replace('/[^0-9kK]/', '', $rut);
+    if (strlen($rut) < 2) return false;
+    $dv = strtoupper(substr($rut, -1));
+    $numero = intval(substr($rut, 0, -1));
+    $suma = 0;
+    $multiplo = 2;
+    while ($numero > 0) {
+        $suma += ($numero % 10) * $multiplo;
+        $numero = intval($numero / 10);
+        $multiplo = $multiplo === 7 ? 2 : $multiplo + 1;
+    }
+    $dvEsperado = 11 - ($suma % 11);
+    if ($dvEsperado === 11) $dvEsperado = '0';
+    else if ($dvEsperado === 10) $dvEsperado = 'K';
+    else $dvEsperado = strval($dvEsperado);
+    return $dv === $dvEsperado;
 }
 ?>
 <!DOCTYPE html>
@@ -308,155 +352,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CONECTA ERP - Sistema ERP Profesional | Competimos con SAP y Softland</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <title>CONECTA ERP - Sistema de Gestión Empresarial Completo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- RUT Validator CSS -->
-    <link rel="stylesheet" href="/assets/css/rut-validator.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        :root {
-            --primary: #667eea;
-            --primary-dark: #5568d3;
-            --secondary: #764ba2;
-            --accent: #f093fb;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --error: #ef4444;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background: #0f172a;
-            color: #f1f5f9;
-            line-height: 1.6;
-        }
-
-        /* Navbar */
-        .navbar {
-            position: fixed;
-            top: 0;
-            width: 100%;
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 1rem 5%;
-            z-index: 1000;
-            transition: all 0.3s;
-        }
-
-        .navbar-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: white;
-            text-decoration: none;
-        }
-
-        .logo i {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            padding: 0.5rem;
-            border-radius: 10px;
-        }
-
-        .nav-links {
-            display: flex;
-            align-items: center;
-            gap: 2rem;
-        }
-
-        .nav-links a {
-            color: #cbd5e1;
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.3s;
-        }
-
-        .nav-links a:hover {
-            color: white;
-        }
-
-        .nav-btn {
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.3s;
-        }
-
-        .btn-login {
-            color: white;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .btn-login:hover {
-            border-color: var(--primary);
-            background: rgba(102, 126, 234, 0.1);
-        }
-
-        .btn-register {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-register:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-        }
-
-        .lang-selector {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 500;
-            font-size: 0.95rem;
-            transition: all 0.3s ease;
-            outline: none;
-        }
-
-        .lang-selector:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: var(--primary);
-        }
-
-        .lang-selector:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
-        }
-
-        .lang-selector option {
-            background: #1e293b;
-            color: white;
-            padding: 0.5rem;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
         }
 
         /* Hero Section */
         .hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 8rem 5% 4rem;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            color: white;
             position: relative;
             overflow: hidden;
         }
@@ -464,887 +382,949 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
         .hero::before {
             content: '';
             position: absolute;
-            width: 600px;
-            height: 600px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(102, 126, 234, 0.2), transparent);
-            top: -200px;
-            right: -200px;
-            animation: pulse 8s infinite;
+            width: 200%;
+            height: 200%;
+            background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="2" fill="rgba(255,255,255,0.1)"/></svg>');
+            animation: drift 30s linear infinite;
         }
 
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.5; }
-            50% { transform: scale(1.1); opacity: 0.7; }
+        @keyframes drift {
+            from { transform: translate(0, 0); }
+            to { transform: translate(-50%, -50%); }
         }
 
         .hero-content {
-            max-width: 1200px;
+            position: relative;
+            z-index: 2;
             text-align: center;
-            z-index: 1;
+            max-width: 900px;
+            padding: 20px;
         }
 
         .hero h1 {
             font-size: 4rem;
-            font-weight: 900;
-            margin-bottom: 1.5rem;
-            background: linear-gradient(135deg, white, #cbd5e1);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
-        .hero p {
+        .hero .subtitle {
             font-size: 1.5rem;
-            color: #cbd5e1;
-            margin-bottom: 3rem;
-            max-width: 800px;
-            margin-left: auto;
-            margin-right: auto;
+            margin-bottom: 2rem;
+            opacity: 0.95;
         }
 
-        .hero-buttons {
+        .hero .stats {
             display: flex;
-            gap: 1.5rem;
             justify-content: center;
+            gap: 3rem;
+            margin: 3rem 0;
             flex-wrap: wrap;
         }
 
-        .btn {
-            padding: 1rem 2.5rem;
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: 1.1rem;
-            text-decoration: none;
-            transition: all 0.3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.75rem;
+        .stat-item {
+            text-align: center;
         }
 
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 800;
+            display: block;
         }
 
-        .btn-primary:hover {
+        .stat-label {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-hero {
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-login {
+            background: white;
+            color: #667eea;
+        }
+
+        .btn-login:hover {
             transform: translateY(-3px);
-            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.6);
+            box-shadow: 0 10px 25px rgba(255,255,255,0.3);
         }
 
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
+        .btn-register {
+            background: rgba(255,255,255,0.2);
             color: white;
-            border: 2px solid rgba(255, 255, 255, 0.2);
+            border: 2px solid white;
         }
 
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: var(--primary);
+        .btn-register:hover {
+            background: white;
+            color: #667eea;
+            transform: translateY(-3px);
         }
 
-        /* Sections */
-        .section {
-            padding: 6rem 5%;
-            max-width: 1400px;
-            margin: 0 auto;
+        /* Modales personalizados */
+        .modal-content {
+            border-radius: 20px;
+            border: none;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 20px 20px 0 0;
+            padding: 30px;
+        }
+
+        .modal-header .modal-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .modal-header .btn-close {
+            filter: brightness(0) invert(1);
+        }
+
+        .modal-body {
+            padding: 30px;
+            max-height: 70vh;
+            overflow-y: auto;
         }
 
         .section-title {
-            text-align: center;
-            font-size: 3rem;
-            font-weight: 800;
-            margin-bottom: 1rem;
-        }
-
-        .section-subtitle {
-            text-align: center;
-            color: #cbd5e1;
             font-size: 1.2rem;
-            max-width: 700px;
-            margin: 0 auto 4rem;
-        }
-
-        /* Registration Section */
-        .registration-section {
-            background: rgba(30, 41, 59, 0.5);
-            padding: 6rem 5%;
-        }
-
-        .registration-container {
-            max-width: 600px;
-            margin: 0 auto;
-            background: rgba(15, 23, 42, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 3rem;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
             font-weight: 600;
-            color: #f1f5f9;
-        }
-
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 1rem;
-            background: rgba(30, 41, 59, 0.8);
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            color: white;
-            font-size: 1rem;
-            transition: all 0.3s;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .alert {
-            padding: 1rem;
-            border-radius: 10px;
-            margin-bottom: 1.5rem;
+            color: #667eea;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 10px;
         }
 
-        .alert-error {
-            background: rgba(239, 68, 68, 0.1);
-            border: 2px solid var(--error);
-            color: #fecaca;
+        .form-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
         }
 
-        .alert-success {
-            background: rgba(16, 185, 129, 0.1);
-            border: 2px solid var(--success);
-            color: #a7f3d0;
+        .form-control, .form-select {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
         }
 
-        /* Footer */
-        .footer {
-            background: rgba(15, 23, 42, 0.95);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 4rem 5% 2rem;
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
         }
 
-        .footer-container {
+        .input-group-text {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-right: none;
+        }
+
+        .input-group .form-control {
+            border-left: none;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 10px;
+            width: 100%;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .password-strength {
+            height: 5px;
+            border-radius: 3px;
+            margin-top: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .strength-weak { background: #dc3545; width: 33%; }
+        .strength-medium { background: #ffc107; width: 66%; }
+        .strength-strong { background: #28a745; width: 100%; }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero .subtitle {
+                font-size: 1.2rem;
+            }
+
+            .stat-number {
+                font-size: 2rem;
+            }
+        }
+
+        /* Sección de Planes */
+        .pricing-section {
+            padding: 80px 20px;
+            background: #f8f9fa;
+        }
+
+        .pricing-title {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .pricing-title h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #2d3748;
+            margin-bottom: 15px;
+        }
+
+        .pricing-title p {
+            font-size: 1.2rem;
+            color: #718096;
+        }
+
+        .pricing-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
             max-width: 1400px;
             margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 3rem;
-            margin-bottom: 3rem;
         }
 
-        .footer-section h3 {
-            margin-bottom: 1.5rem;
-            font-size: 1.2rem;
-        }
-
-        .footer-section ul {
-            list-style: none;
-        }
-
-        .footer-section li {
-            margin-bottom: 0.75rem;
-        }
-
-        .footer-section a {
-            color: #cbd5e1;
-            text-decoration: none;
-            transition: color 0.3s;
-        }
-
-        .footer-section a:hover {
-            color: var(--primary);
-        }
-
-        .footer-bottom {
-            text-align: center;
-            padding-top: 2rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            color: #94a3b8;
-        }
-
-        .social-links {
-            display: flex;
-            gap: 1rem;
-        }
-
-        .social-links a {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.05);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s;
-        }
-
-        .social-links a:hover {
-            background: var(--primary);
-            transform: translateY(-3px);
-        }
-
-        /* Pricing Cards */
         .pricing-card {
-            background: rgba(30, 41, 59, 0.8);
-            border: 2px solid rgba(255, 255, 255, 0.1);
+            background: white;
             border-radius: 20px;
-            padding: 2.5rem;
-            transition: all 0.4s ease;
+            padding: 40px 30px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
             position: relative;
-            overflow: hidden;
+            text-align: center;
         }
 
         .pricing-card:hover {
             transform: translateY(-10px);
-            border-color: var(--primary);
-            box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
         }
 
-        .pricing-card-featured {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15));
-            border: 2px solid var(--primary);
+        .pricing-card.popular {
+            border: 3px solid #667eea;
             transform: scale(1.05);
         }
 
-        .pricing-card-featured:hover {
-            transform: scale(1.08) translateY(-10px);
-        }
-
-        .pricing-badge {
+        .pricing-card.popular::before {
+            content: '⭐ MÁS POPULAR';
             position: absolute;
-            top: 20px;
-            right: 20px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 0.5rem 1rem;
+            padding: 5px 20px;
             border-radius: 20px;
-            font-size: 0.85rem;
+            font-size: 0.875rem;
             font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
-        .pricing-header {
-            text-align: center;
-            margin-bottom: 2rem;
-            padding-bottom: 2rem;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .pricing-header h3 {
+        .plan-name {
             font-size: 1.8rem;
-            margin: 1rem 0;
-            color: white;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 10px;
         }
 
-        .pricing-price {
-            margin: 1rem 0;
+        .plan-price {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #667eea;
+            margin-bottom: 10px;
         }
 
-        .pricing-features {
-            list-style: none;
-            padding: 0;
-            margin: 0;
+        .plan-price small {
+            font-size: 1rem;
+            color: #718096;
+            font-weight: normal;
         }
 
-        .pricing-features li {
-            padding: 0.75rem 0;
-            color: #cbd5e1;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
+        .plan-description {
+            color: #718096;
+            margin-bottom: 30px;
             font-size: 0.95rem;
         }
 
-        .pricing-features li i {
+        .plan-features {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 30px 0;
+            text-align: left;
+        }
+
+        .plan-features li {
+            padding: 10px 0;
+            color: #4a5568;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .plan-features li i {
+            color: #48bb78;
             font-size: 1.2rem;
-            color: var(--success);
         }
 
-        .pricing-features li i.fa-times-circle {
-            color: #64748b;
-        }
-
-        /* Module Cards */
-        .module-card {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            padding: 2rem;
-            text-align: center;
+        .plan-btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
             transition: all 0.3s ease;
         }
 
-        .module-card:hover {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: var(--primary);
-            transform: translateY(-5px);
+        .plan-btn.btn-basic {
+            background: #e2e8f0;
+            color: #2d3748;
         }
 
-        .module-card h4 {
-            color: white;
-            font-size: 1.1rem;
-            margin-bottom: 0.5rem;
+        .plan-btn.btn-basic:hover {
+            background: #cbd5e0;
         }
 
-        .module-card h4 i {
-            color: var(--primary);
-            margin-right: 0.5rem;
-        }
-
-        .module-card p {
-            color: #94a3b8;
-            font-size: 0.9rem;
-        }
-
-        /* Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 10000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(10px);
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .modal-content {
-            background: #1e293b;
-            margin: 3% auto;
-            padding: 0;
-            border-radius: 20px;
-            max-width: 600px;
-            width: 90%;
-            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6);
-            animation: slideDown 0.4s ease;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        @keyframes slideDown {
-            from {
-                transform: translateY(-50px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        .modal-header {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            padding: 2rem;
-            border-radius: 20px 20px 0 0;
-        }
-
-        .modal-header h2 {
-            margin: 0 0 0.5rem 0;
-            font-size: 1.8rem;
+        .plan-btn.btn-professional {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
         }
 
-        .modal-header p {
-            margin: 0;
-            opacity: 0.95;
-            font-size: 0.95rem;
+        .plan-btn.btn-professional:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
         }
 
-        .modal-header a {
+        .plan-btn.btn-enterprise {
+            background: #2d3748;
             color: white;
-            text-decoration: underline;
         }
 
-        .modal-close {
-            position: absolute;
-            right: 20px;
-            top: 20px;
+        .plan-btn.btn-enterprise:hover {
+            background: #1a202c;
+        }
+
+        .plan-btn.btn-custom {
+            background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
             color: white;
-            font-size: 35px;
-            font-weight: bold;
-            cursor: pointer;
-            z-index: 1;
-            transition: all 0.3s;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
         }
 
-        .modal-close:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: rotate(90deg);
-        }
-
-        .modal .registration-container {
-            padding: 2rem;
-            background: #1e293b;
+        .plan-btn.btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(237, 137, 54, 0.4);
         }
 
         @media (max-width: 768px) {
-            .hero h1 { font-size: 2.5rem; }
-            .hero p { font-size: 1.2rem; }
-            .nav-links { display: none; }
-            .pricing-card-featured {
-                transform: scale(1);
+            .pricing-cards {
+                grid-template-columns: 1fr;
             }
-            .pricing-card-featured:hover {
-                transform: translateY(-10px);
+
+            .pricing-card.popular {
+                transform: scale(1);
             }
         }
     </style>
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar">
-        <div class="navbar-container">
-            <a href="/" class="logo">
-                <i class="fas fa-network-wired"></i>
-                <span>CONECTA ERP</span>
-            </a>
-            <div class="nav-links">
-                <!-- Language Selector -->
-                <select class="lang-selector" onchange="changeLanguage(this.value)">
-                    <option value="es" <?php echo currentLanguage() === 'es' ? 'selected' : ''; ?>>🇪🇸 Español</option>
-                    <option value="en" <?php echo currentLanguage() === 'en' ? 'selected' : ''; ?>>🇬🇧 English</option>
-                    <option value="pt" <?php echo currentLanguage() === 'pt' ? 'selected' : ''; ?>>🇵🇹 Português</option>
-                    <option value="fr" <?php echo currentLanguage() === 'fr' ? 'selected' : ''; ?>>🇫🇷 Français</option>
-                    <option value="de" <?php echo currentLanguage() === 'de' ? 'selected' : ''; ?>>🇩🇪 Deutsch</option>
-                    <option value="it" <?php echo currentLanguage() === 'it' ? 'selected' : ''; ?>>🇮🇹 Italiano</option>
-                    <option value="ru" <?php echo currentLanguage() === 'ru' ? 'selected' : ''; ?>>🇷🇺 Русский</option>
-                    <option value="zh" <?php echo currentLanguage() === 'zh' ? 'selected' : ''; ?>>🇨🇳 中文</option>
-                </select>
-                <a href="javascript:void(0)" onclick="openModal()"><?php echo $tr['register']; ?></a>
-                <a href="login.php" class="nav-btn btn-login"><?php echo $tr['login']; ?></a>
-                <a href="javascript:void(0)" onclick="openModal()" class="nav-btn btn-register"><?php echo $tr['register']; ?></a>
-            </div>
-        </div>
-    </nav>
-
     <!-- Hero Section -->
-    <section class="hero">
+    <div class="hero">
         <div class="hero-content">
-            <h1><?php echo $tr['hero_title']; ?></h1>
-            <p><?php echo $tr['hero_subtitle']; ?></p>
-            <p style="font-size: 1.1rem; margin-bottom: 2rem;"><?php echo $tr['hero_description']; ?></p>
-            <div class="hero-buttons">
-                <a href="#planes" class="btn btn-primary">
-                    <?php echo $tr['view_plans']; ?> <i class="fas fa-arrow-right"></i>
-                </a>
-                <a href="javascript:void(0)" onclick="openModal()" class="btn btn-secondary">
-                    <i class="fas fa-user-plus"></i> <?php echo $tr['register_free']; ?>
-                </a>
-            </div>
-        </div>
-    </section>
+            <h1><i class="fas fa-rocket"></i> CONECTA ERP</h1>
+            <p class="subtitle">Sistema de Gestión Empresarial Completo para LATAM</p>
 
-    <!-- Pricing Plans Section -->
-    <section id="planes" style="padding: 6rem 5%; background: #1e293b;">
-        <div style="max-width: 1400px; margin: 0 auto;">
-            <div class="section-title" style="color: white;"><?php echo $tr['plans_title']; ?></div>
-            <div class="section-subtitle" style="color: #94a3b8; max-width: 800px; margin: 0 auto 4rem;">
-                <?php echo $tr['plans_subtitle']; ?>
-            </div>
-
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
-                <!-- Plan Starter -->
-                <div class="pricing-card">
-                    <div class="pricing-header">
-                        <i class="fas fa-rocket" style="font-size: 2.5rem; color: var(--primary); margin-bottom: 1rem;"></i>
-                        <h3><?php echo $tr['starter']; ?></h3>
-                        <div class="pricing-price">
-                            <span style="font-size: 3rem; font-weight: 800;">$299</span>
-                            <span style="font-size: 1.2rem; color: #94a3b8;"><?php echo $tr['per_month']; ?></span>
-                        </div>
-                        <p style="color: #94a3b8; margin-top: 1rem;"><?php echo $tr['ideal_for_small']; ?></p>
-                    </div>
-                    <ul class="pricing-features">
-                        <li><i class="fas fa-check-circle"></i> <strong>Administración Central</strong></li>
-                        <li><i class="fas fa-check-circle"></i> <strong>Gestión de Entidades</strong> (Clientes, Proveedores)</li>
-                        <li><i class="fas fa-check-circle"></i> <strong>Finanzas Básicas</strong> (Contabilidad, Bancos)</li>
-                        <li><i class="fas fa-check-circle"></i> <strong>Ventas</strong> (CRM, Cotizaciones, POS)</li>
-                        <li><i class="fas fa-check-circle"></i> Dashboard principal</li>
-                        <li style="color: #64748b;"><i class="fas fa-times-circle"></i> Materiales e Inventario</li>
-                        <li style="color: #64748b;"><i class="fas fa-times-circle"></i> Producción</li>
-                        <li style="color: #64748b;"><i class="fas fa-times-circle"></i> RRHH avanzado</li>
-                    </ul>
-                    <a href="javascript:void(0)" onclick="openModal()" class="btn btn-secondary" style="width: 100%; justify-content: center; margin-top: 2rem;">
-                        <?php echo $tr['start_free']; ?>
-                    </a>
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-number">14</span>
+                    <span class="stat-label">Módulos</span>
                 </div>
-
-                <!-- Plan Professional -->
-                <div class="pricing-card pricing-card-featured">
-                    <div class="pricing-badge"><?php echo $tr['most_popular']; ?></div>
-                    <div class="pricing-header">
-                        <i class="fas fa-briefcase" style="font-size: 2.5rem; color: var(--primary); margin-bottom: 1rem;"></i>
-                        <h3><?php echo $tr['professional']; ?></h3>
-                        <div class="pricing-price">
-                            <span style="font-size: 3rem; font-weight: 800;">$699</span>
-                            <span style="font-size: 1.2rem; color: #94a3b8;"><?php echo $tr['per_month']; ?></span>
-                        </div>
-                        <p style="color: #94a3b8; margin-top: 1rem;"><?php echo $tr['for_growing']; ?></p>
-                    </div>
-                    <ul class="pricing-features">
-                        <li><i class="fas fa-check-circle"></i> <strong>Todo en Starter</strong></li>
-                        <li><i class="fas fa-check-circle"></i> <strong>Materiales</strong> (Inventario, Compras, Warehouses)</li>
-                        <li><i class="fas fa-check-circle"></i> <strong>RRHH Completo</strong> (Nómina, Previred, Relojes)</li>
-                        <li><i class="fas fa-check-circle"></i> <strong>Controlling</strong> (Costos, Presupuestos)</li>
-                        <li><i class="fas fa-check-circle"></i> <strong>CRM Avanzado</strong></li>
-                        <li><i class="fas fa-check-circle"></i> <strong>Integración SII</strong> (DTEs, Facturación electrónica)</li>
-                        <li style="color: #64748b;"><i class="fas fa-times-circle"></i> Producción</li>
-                        <li style="color: #64748b;"><i class="fas fa-times-circle"></i> SCM</li>
-                    </ul>
-                    <a href="javascript:void(0)" onclick="openModal()" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 2rem;">
-                        <?php echo $tr['start_now']; ?>
-                    </a>
+                <div class="stat-item">
+                    <span class="stat-number">106</span>
+                    <span class="stat-label">Submódulos</span>
                 </div>
-
-                <!-- Plan Enterprise -->
-                <div class="pricing-card">
-                    <div class="pricing-header">
-                        <i class="fas fa-building" style="font-size: 2.5rem; color: var(--primary); margin-bottom: 1rem;"></i>
-                        <h3><?php echo $tr['enterprise']; ?></h3>
-                        <div class="pricing-price">
-                            <span style="font-size: 3rem; font-weight: 800;">$1,499</span>
-                            <span style="font-size: 1.2rem; color: #94a3b8;"><?php echo $tr['per_month']; ?></span>
-                        </div>
-                        <p style="color: #94a3b8; margin-top: 1rem;"><?php echo $tr['for_large']; ?></p>
-                    </div>
-                    <ul class="pricing-features">
-                        <li><i class="fas fa-check-circle"></i> <strong>Todo en Professional</strong></li>
-                        <li><i class="fas fa-check-circle"></i> <strong>Producción</strong> (MRP, BOM, Ruteo, QA)</li>
-                        <li><i class="fas fa-check-circle"></i> <strong>SCM</strong> (Supply Chain Management)</li>
-                        <li><i class="fas fa-check-circle"></i> <strong>Fidelización</strong> (Loyalty, Promociones)</li>
-                        <li><i class="fas fa-check-circle"></i> <strong>Business Intelligence</strong> (15 submódulos)</li>
-                        <li><i class="fas fa-check-circle"></i> API y Webhooks</li>
-                        <li><i class="fas fa-check-circle"></i> Soporte prioritario 24/7</li>
-                        <li><i class="fas fa-check-circle"></i> Usuarios ilimitados</li>
-                    </ul>
-                    <a href="javascript:void(0)" onclick="openModal()" class="btn btn-secondary" style="width: 100%; justify-content: center; margin-top: 2rem;">
-                        <?php echo $tr['start_now']; ?>
-                    </a>
+                <div class="stat-item">
+                    <span class="stat-number">8</span>
+                    <span class="stat-label">Idiomas</span>
                 </div>
-
-                <!-- Plan Custom -->
-                <div class="pricing-card">
-                    <div class="pricing-header">
-                        <i class="fas fa-crown" style="font-size: 2.5rem; color: #f59e0b; margin-bottom: 1rem;"></i>
-                        <h3><?php echo $tr['custom']; ?></h3>
-                        <div class="pricing-price">
-                            <span style="font-size: 2rem; font-weight: 800;"><?php echo $tr['personalized']; ?></span>
-                        </div>
-                        <p style="color: #94a3b8; margin-top: 1rem;"><?php echo $tr['custom_needs']; ?></p>
-                    </div>
-                    <ul class="pricing-features">
-                        <li><i class="fas fa-check-circle"></i> <strong>Todos los módulos</strong></li>
-                        <li><i class="fas fa-check-circle"></i> Módulos personalizados</li>
-                        <li><i class="fas fa-check-circle"></i> Integraciones a medida</li>
-                        <li><i class="fas fa-check-circle"></i> Instalación on-premise</li>
-                        <li><i class="fas fa-check-circle"></i> Capacitación personalizada</li>
-                        <li><i class="fas fa-check-circle"></i> Soporte dedicado</li>
-                        <li><i class="fas fa-check-circle"></i> SLA garantizado</li>
-                        <li><i class="fas fa-check-circle"></i> Account Manager</li>
-                    </ul>
-                    <a href="javascript:void(0)" onclick="openModal()" class="btn btn-secondary" style="width: 100%; justify-content: center; margin-top: 2rem; background: #f59e0b; border-color: #f59e0b;">
-                        <?php echo $tr['contact_sales']; ?>
-                    </a>
+                <div class="stat-item">
+                    <span class="stat-number">9</span>
+                    <span class="stat-label">Países</span>
                 </div>
             </div>
-        </div>
-    </section>
 
-    <!-- Registration Modal (Hidden by default) -->
-    <div id="registroModal" class="modal">
-        <div class="modal-content">
-            <span class="modal-close" onclick="closeModal()">&times;</span>
-            <div class="modal-header">
-                <h2>Registro de Cuenta</h2>
-                <p>Completa el formulario para crear tu cuenta. Si ya tienes una cuenta, <a href="login.php" style="color: var(--primary);">inicia sesión aquí</a>.</p>
-            </div>
-
-            <div class="registration-container">
-            <?php if ($error): ?>
-            <div class="alert alert-error">
-                <i class="fas fa-exclamation-circle"></i>
-                <?php echo htmlspecialchars($error); ?>
-            </div>
-            <?php endif; ?>
-
-            <?php if ($success): ?>
-            <div class="alert alert-success">
-                <i class="fas fa-check-circle"></i>
-                <?php echo htmlspecialchars($success); ?>
-            </div>
-            <?php endif; ?>
-
-            <form method="POST">
-                <div class="form-group">
-                    <label>Nombre</label>
-                    <input type="text" name="firstname" required placeholder="Juan">
-                </div>
-
-                <div class="form-group">
-                    <label>Apellido</label>
-                    <input type="text" name="lastname" required placeholder="Pérez">
-                </div>
-
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" name="email" required placeholder="juan@empresa.com">
-                </div>
-
-                <div class="form-group">
-                    <label>Contraseña</label>
-                    <div style="position: relative;">
-                        <input type="password" id="password" name="password" required placeholder="••••••••" minlength="6">
-                        <button type="button" onclick="togglePassword()" style="position: absolute; right: 70px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--primary); cursor: pointer; font-size: 1.2rem;">
-                            <i id="eyeIcon" class="fas fa-eye"></i>
-                        </button>
-                        <button type="button" onclick="generatePassword()" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: var(--primary); border: none; color: white; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600;">
-                            <i class="fas fa-key"></i> Generar
-                        </button>
-                    </div>
-                    <small style="color: #94a3b8; font-size: 0.85rem; margin-top: 0.5rem; display: block;">Mínimo 6 caracteres. Se recomienda usar el generador.</small>
-                </div>
-
-                <div class="form-group">
-                    <label>Nombre de la Empresa</label>
-                    <input type="text" name="company_name" required placeholder="Mi Empresa S.A.">
-                </div>
-
-                <div class="form-group">
-                    <label>País</label>
-                    <select name="country" id="country" required onchange="updateTaxIdPlaceholder()">
-                        <option value="CL">🇨🇱 Chile</option>
-                        <option value="AR">🇦🇷 Argentina</option>
-                        <option value="PE">🇵🇪 Perú</option>
-                        <option value="CO">🇨🇴 Colombia</option>
-                        <option value="MX">🇲🇽 México</option>
-                        <option value="BR">🇧🇷 Brasil</option>
-                        <option value="US">🇺🇸 Estados Unidos</option>
-                        <option value="ES">🇪🇸 España</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label id="taxIdLabel">RUT Empresa</label>
-                    <input type="text" id="tax_id" name="tax_id" required placeholder="15.895.771-k" maxlength="20">
-                    <small id="taxIdHint" style="color: #94a3b8; font-size: 0.85rem; margin-top: 0.5rem; display: block;">
-                        Formato: XX.XXX.XXX-X (ej: 15.895.771-k)
-                    </small>
-                </div>
-
-                <div class="form-group">
-                    <label>Teléfono</label>
-                    <input type="tel" name="phone" required placeholder="+56 9 1234 5678">
-                </div>
-
-                <button type="submit" name="register" class="btn btn-primary" style="width: 100%; justify-content: center;">
-                    Crear Cuenta <i class="fas fa-arrow-right"></i>
+            <div class="cta-buttons">
+                <button class="btn-hero btn-login" data-bs-toggle="modal" data-bs-target="#loginModal">
+                    <i class="fas fa-sign-in-alt"></i> INICIAR SESIÓN
                 </button>
+                <button class="btn-hero btn-register" data-bs-toggle="modal" data-bs-target="#registerModal">
+                    <i class="fas fa-user-plus"></i> REGISTRARSE GRATIS
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- Sección de Planes de Pricing -->
+    <section class="pricing-section" id="planes">
+        <div class="container">
+            <div class="pricing-title">
+                <h2>Planes y Precios</h2>
+                <p>Elige el plan perfecto para tu empresa. Todos incluyen 14 días de prueba gratis.</p>
+            </div>
 
-                <p style="text-align: center; margin-top: 1.5rem; color: #94a3b8; font-size: 0.9rem;">
-                    Al registrarte, aceptas nuestros <a href="#" style="color: var(--primary);">Términos y Condiciones</a>
-                </p>
-            </form>
+            <div class="pricing-cards">
+                <!-- Plan Básico -->
+                <div class="pricing-card">
+                    <div class="plan-name">Básico</div>
+                    <div class="plan-price">
+                        $49,990 <small>/mes</small>
+                    </div>
+                    <div class="plan-description">
+                        Ideal para pequeñas empresas que están comenzando
+                    </div>
+                    <ul class="plan-features">
+                        <li><i class="fas fa-check-circle"></i> Hasta 5 usuarios</li>
+                        <li><i class="fas fa-check-circle"></i> 1 empresa</li>
+                        <li><i class="fas fa-building"></i> <strong>Módulo Contabilidad</strong></li>
+                        <li style="font-size: 0.85em; margin-left: 20px;">• Plan de cuentas • Asientos contables</li>
+                        <li style="font-size: 0.85em; margin-left: 20px;">• Libro mayor • Balances</li>
+                        <li><i class="fas fa-shopping-cart"></i> <strong>Módulo Ventas</strong></li>
+                        <li style="font-size: 0.85em; margin-left: 20px;">• Cotizaciones • Facturas • Clientes</li>
+                        <li style="font-size: 0.85em; margin-left: 20px;">• Punto de venta (POS)</li>
+                        <li><i class="fas fa-users"></i> <strong>Módulo RRHH</strong></li>
+                        <li style="font-size: 0.85em; margin-left: 20px;">• Empleados • Nómina • Asistencia</li>
+                        <li style="font-size: 0.85em; margin-left: 20px;">• Liquidaciones • Contratos</li>
+                        <li><i class="fas fa-headset"></i> Soporte por email</li>
+                        <li><i class="fas fa-sync"></i> Actualizaciones incluidas</li>
+                    </ul>
+                    <button class="plan-btn btn-basic" data-bs-toggle="modal" data-bs-target="#registerModal">
+                        Empezar Gratis
+                    </button>
+                </div>
+
+                <!-- Plan Profesional (Popular) -->
+                <div class="pricing-card popular">
+                    <div class="plan-name">Profesional <span style="background: #ffd700; color: #000; padding: 2px 8px; border-radius: 12px; font-size: 0.7em; margin-left: 5px;">POPULAR</span></div>
+                    <div class="plan-price">
+                        $99,990 <small>/mes</small>
+                    </div>
+                    <div class="plan-description">
+                        Para empresas en crecimiento que necesitan más poder
+                    </div>
+                    <ul class="plan-features">
+                        <li><i class="fas fa-check-circle"></i> Hasta 25 usuarios</li>
+                        <li><i class="fas fa-check-circle"></i> 3 empresas</li>
+                        <li><i class="fas fa-check-double"></i> <strong>TODO del plan Básico +</strong></li>
+                        <li><i class="fas fa-boxes"></i> <strong>Módulo Inventario</strong></li>
+                        <li style="font-size: 0.85em; margin-left: 20px;">• Productos • Almacenes • Stock</li>
+                        <li><i class="fas fa-truck"></i> <strong>Módulo Compras</strong></li>
+                        <li style="font-size: 0.85em; margin-left: 20px;">• Proveedores • Órdenes de compra</li>
+                        <li><i class="fas fa-industry"></i> <strong>Módulo Producción</strong></li>
+                        <li style="font-size: 0.85em; margin-left: 20px;">• Órdenes fabricación • BOM • Calidad</li>
+                        <li><i class="fas fa-project-diagram"></i> <strong>Módulo Proyectos</strong></li>
+                        <li style="font-size: 0.85em; margin-left: 20px;">• Gestión proyectos • Tareas • Hitos</li>
+                        <li><i class="fas fa-file-invoice-dollar"></i> <strong>Integración SII</strong></li>
+                        <li style="font-size: 0.85em; margin-left: 20px;">• Folios automáticos • Facturación electrónica</li>
+                        <li><i class="fas fa-hand-holding-usd"></i> <strong>Integración Previred</strong></li>
+                        <li style="font-size: 0.85em; margin-left: 20px;">• Cálculo automático cotizaciones</li>
+                        <li><i class="fas fa-headphones-alt"></i> Soporte prioritario</li>
+                        <li><i class="fas fa-chart-line"></i> Reportes avanzados</li>
+                    </ul>
+                    <button class="plan-btn btn-professional" data-bs-toggle="modal" data-bs-target="#registerModal">
+                        Empezar Gratis
+                    </button>
+                </div>
+
+                <!-- Plan Empresarial -->
+                <div class="pricing-card">
+                    <div class="plan-name">Empresarial</div>
+                    <div class="plan-price">
+                        $199,990 <small>/mes</small>
+                    </div>
+                    <div class="plan-description">
+                        Para grandes empresas con necesidades avanzadas
+                    </div>
+                    <ul class="plan-features">
+                        <li><i class="fas fa-infinity"></i> Usuarios ilimitados</li>
+                        <li><i class="fas fa-infinity"></i> Empresas ilimitadas</li>
+                        <li><i class="fas fa-check-double"></i> <strong>TODO del plan Profesional +</strong></li>
+                        <li><i class="fas fa-chart-pie"></i> <strong>Business Intelligence (BI)</strong></li>
+                        <li style="font-size: 0.85em; margin-left: 20px;">• Dashboards • KPIs • Análisis avanzado</li>
+                        <li><i class="fas fa-shield-alt"></i> <strong>Módulo Controlling</strong></li>
+                        <li style="font-size: 0.85em; margin-left: 20px;">• Centros de costo • Presupuestos</li>
+                        <li><i class="fas fa-handshake"></i> <strong>Módulo CRM</strong></li>
+                        <li style="font-size: 0.85em; margin-left: 20px;">• Oportunidades • Pipeline • Campañas</li>
+                        <li><i class="fas fa-network-wired"></i> <strong>SCM (Supply Chain)</strong></li>
+                        <li style="font-size: 0.85em; margin-left: 20px;">• Logística • Distribución • Trazabilidad</li>
+                        <li><i class="fas fa-store"></i> <strong>E-Commerce</strong></li>
+                        <li style="font-size: 0.85em; margin-left: 20px;">• Tienda online • Carrito • Pagos</li>
+                        <li><i class="fas fa-gift"></i> <strong>Fidelización</strong></li>
+                        <li style="font-size: 0.85em; margin-left: 20px;">• Puntos • Recompensas • Loyalty</li>
+                        <li><i class="fas fa-plug"></i> <strong>API REST Completa</strong></li>
+                        <li><i class="fas fa-graduation-cap"></i> Capacitación incluida</li>
+                        <li><i class="fas fa-headset"></i> Soporte 24/7</li>
+                    </ul>
+                    <button class="plan-btn btn-enterprise" data-bs-toggle="modal" data-bs-target="#registerModal">
+                        Empezar Gratis
+                    </button>
+                </div>
+
+                <!-- Plan Personalizado -->
+                <div class="pricing-card">
+                    <div class="plan-name">Personalizado</div>
+                    <div class="plan-price">
+                        Cotizar
+                    </div>
+                    <div class="plan-description">
+                        Soluciones diseñadas específicamente para tu negocio
+                    </div>
+                    <ul class="plan-features">
+                        <li><i class="fas fa-check-circle"></i> Todo de Empresarial</li>
+                        <li><i class="fas fa-check-circle"></i> Desarrollo a medida</li>
+                        <li><i class="fas fa-check-circle"></i> Módulos personalizados</li>
+                        <li><i class="fas fa-check-circle"></i> Servidor dedicado</li>
+                        <li><i class="fas fa-check-circle"></i> Gerente de cuenta</li>
+                        <li><i class="fas fa-check-circle"></i> SLA garantizado</li>
+                    </ul>
+                    <button class="plan-btn btn-custom" data-bs-toggle="modal" data-bs-target="#registerModal">
+                        Contactar Ventas
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- Modal LOGIN -->
+    <div class="modal fade" id="loginModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-sign-in-alt"></i> Iniciar Sesión</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <?php if (!empty($login_error)): ?>
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle"></i> <?php echo htmlspecialchars($login_error); ?>
+                        </div>
+                    <?php endif; ?>
+
+                    <form method="POST" action="">
+                        <div class="mb-3">
+                            <label class="form-label">Email o Usuario</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                <input type="text" name="email_or_username" class="form-control" required autofocus>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Contraseña</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <input type="password" name="password" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <button type="submit" name="login" class="btn-submit">
+                            <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+                        </button>
+
+                        <div class="text-center mt-3">
+                            <small>
+                                <a href="#" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#forgotPasswordModal">¿Olvidaste tu contraseña?</a>
+                            </small>
+                        </div>
+
+                        <div class="text-center mt-2">
+                            <small>¿No tienes cuenta? <a href="#" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#registerModal">Regístrate gratis</a></small>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="footer-container">
-            <div class="footer-section">
-                <h3><i class="fas fa-network-wired"></i> CONECTA ERP</h3>
-                <p style="color: #94a3b8; margin-bottom: 1rem;">Sistema ERP profesional para empresas modernas. Compite con SAP y Softland.</p>
-                <div class="social-links">
-                    <a href="#"><i class="fab fa-linkedin"></i></a>
-                    <a href="#"><i class="fab fa-twitter"></i></a>
-                    <a href="#"><i class="fab fa-facebook"></i></a>
-                    <a href="#"><i class="fab fa-instagram"></i></a>
+    <!-- Modal REGISTRO -->
+    <div class="modal fade" id="registerModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-user-plus"></i> Registro - 14 Días de Prueba Gratis</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <?php if (!empty($errors)): ?>
+                        <div class="alert alert-danger">
+                            <h6><i class="fas fa-exclamation-triangle"></i> Errores:</h6>
+                            <ul class="mb-0">
+                                <?php foreach ($errors as $error): ?>
+                                    <li><?php echo htmlspecialchars($error); ?></li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </div>
+                    <?php endif; ?>
+
+                    <form method="POST" action="" id="registerForm">
+                        <!-- Configuración Inicial -->
+                        <div class="section-title">
+                            <i class="fas fa-globe"></i> Configuración Inicial
+                        </div>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">País <span class="text-danger">*</span></label>
+                                <select name="pais_id" id="pais_id" class="form-select" required>
+                                    <option value="">Seleccione un país</option>
+                                    <?php
+                                    $paises->data_seek(0);
+                                    while ($pais = $paises->fetch_assoc()): ?>
+                                        <option value="<?php echo $pais['id']; ?>"
+                                                data-tipo-doc="<?php echo htmlspecialchars($pais['tipo_documento']); ?>"
+                                                data-formato="<?php echo htmlspecialchars($pais['formato_documento']); ?>">
+                                            <?php echo htmlspecialchars($pais['nombre']); ?>
+                                        </option>
+                                    <?php endwhile; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Idioma Preferido <span class="text-danger">*</span></label>
+                                <select name="idioma_preferido" class="form-select" required>
+                                    <?php
+                                    $idiomas->data_seek(0);
+                                    while ($idioma = $idiomas->fetch_assoc()): ?>
+                                        <option value="<?php echo $idioma['codigo']; ?>">
+                                            <?php echo htmlspecialchars($idioma['nombre_nativo']); ?> (<?php echo htmlspecialchars($idioma['nombre']); ?>)
+                                        </option>
+                                    <?php endwhile; ?>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Datos de la Empresa -->
+                        <div class="section-title">
+                            <i class="fas fa-building"></i> Datos de la Empresa
+                        </div>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Nombre de la Empresa <span class="text-danger">*</span></label>
+                                <input type="text" name="nombre_empresa" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Razón Social <span class="text-danger">*</span></label>
+                                <input type="text" name="razon_social" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label"><span id="doc_tipo_empresa">RUT</span> Empresa <span class="text-danger">*</span></label>
+                                <input type="text" name="rut_empresa" id="rut_empresa" class="form-control" required>
+                                <small class="text-muted" id="doc_ejemplo_empresa">Ejemplo: 12.345.678-9</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Email Empresa <span class="text-danger">*</span></label>
+                                <input type="email" name="email" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label">Dirección</label>
+                                <input type="text" name="direccion" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Ciudad</label>
+                                <input type="text" name="ciudad" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Teléfono Empresa</label>
+                                <input type="tel" name="telefono_empresa" class="form-control">
+                            </div>
+                        </div>
+
+                        <!-- Datos del Usuario Administrador -->
+                        <div class="section-title">
+                            <i class="fas fa-user-tie"></i> Datos del Usuario Administrador
+                        </div>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                                <input type="text" name="nombre" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Apellido <span class="text-danger">*</span></label>
+                                <input type="text" name="apellido" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label"><span id="doc_tipo_personal">RUT</span> Personal</label>
+                                <input type="text" name="rut" id="rut_personal" class="form-control">
+                                <small class="text-muted" id="doc_ejemplo_personal">Ejemplo: 12.345.678-9</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Teléfono Personal</label>
+                                <input type="tel" name="telefono" class="form-control">
+                            </div>
+                        </div>
+
+                        <!-- Credenciales de Acceso -->
+                        <div class="section-title">
+                            <i class="fas fa-key"></i> Credenciales de Acceso
+                        </div>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-12">
+                                <label class="form-label">Nombre de Usuario <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                    <input type="text" name="username" class="form-control" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Contraseña <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                    <input type="password" name="password" id="password" class="form-control" required minlength="8">
+                                </div>
+                                <div class="password-strength" id="password-strength"></div>
+                                <small class="text-muted">Mínimo 8 caracteres</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Confirmar Contraseña <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                    <input type="password" name="confirm_password" id="confirm_password" class="form-control" required minlength="8">
+                                </div>
+                                <div id="password-match"></div>
+                            </div>
+                        </div>
+
+                        <button type="submit" name="register" class="btn-submit">
+                            <i class="fas fa-rocket"></i> Crear Cuenta y Comenzar Prueba Gratis (14 Días)
+                        </button>
+
+                        <div class="text-center mt-3">
+                            <small>¿Ya tienes cuenta? <a href="#" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#loginModal">Inicia sesión</a></small>
+                        </div>
+                    </form>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <div class="footer-section">
-                <h3>Producto</h3>
-                <ul>
-                    <li><a href="#">Características</a></li>
-                    <li><a href="#">Módulos</a></li>
-                    <li><a href="#">Precios</a></li>
-                    <li><a href="#">Demo</a></li>
-                </ul>
-            </div>
+    <!-- Modal OLVIDÉ MI CONTRASEÑA -->
+    <div class="modal fade" id="forgotPasswordModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-key"></i> Recuperar Contraseña</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-4">
+                        Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.
+                    </p>
 
-            <div class="footer-section">
-                <h3>Soporte</h3>
-                <ul>
-                    <li><a href="#">Documentación</a></li>
-                    <li><a href="#">Centro de Ayuda</a></li>
-                    <li><a href="#">API</a></li>
-                    <li><a href="#">Contacto</a></li>
-                </ul>
-            </div>
+                    <form method="POST" action="reset_password.php" id="forgotPasswordForm">
+                        <div class="mb-3">
+                            <label class="form-label">Correo Electrónico</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                <input type="email" name="email" class="form-control" placeholder="tu@email.com" required autofocus>
+                            </div>
+                            <small class="text-muted">Te enviaremos un correo con instrucciones para restablecer tu contraseña.</small>
+                        </div>
 
-            <div class="footer-section">
-                <h3>Empresa</h3>
-                <ul>
-                    <li><a href="#">Nosotros</a></li>
-                    <li><a href="#">Blog</a></li>
-                    <li><a href="#">Casos de Éxito</a></li>
-                    <li><a href="#">Trabaja con Nosotros</a></li>
-                </ul>
+                        <button type="submit" name="send_reset_link" class="btn-submit">
+                            <i class="fas fa-paper-plane"></i> Enviar Enlace de Recuperación
+                        </button>
+
+                        <div class="text-center mt-3">
+                            <small><a href="#" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#loginModal">Volver al inicio de sesión</a></small>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
+    </div>
 
-        <div class="footer-bottom">
-            <p>&copy; 2024 CONECTA ERP. Todos los derechos reservados. | Sistema de Producción v2.0.0</p>
-            <p style="margin-top: 0.5rem;">Admin: auditorexchile@gmail.com</p>
-        </div>
-    </footer>
-
-    <!-- RUT Validator JS Library -->
-    <script src="/assets/js/rut-validator.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Modal Functions
-        function openModal() {
-            document.getElementById('registroModal').style.display = 'block';
-            document.body.style.overflow = 'hidden'; // Prevent scrolling
-        }
-
-        function closeModal() {
-            document.getElementById('registroModal').style.display = 'none';
-            document.body.style.overflow = 'auto'; // Restore scrolling
-        }
-
-        // Close modal when clicking outside of it
-        window.onclick = function(event) {
-            const modal = document.getElementById('registroModal');
-            if (event.target == modal) {
-                closeModal();
-            }
-        }
-
-        // Close modal on ESC key
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                closeModal();
-            }
-        });
-
-        // Auto-open modal if there's an error or success message
-        <?php if ($error || $success): ?>
-        window.addEventListener('DOMContentLoaded', function() {
-            openModal();
-        });
+        // Auto-abrir modales si hay errores
+        <?php if (!empty($login_error)): ?>
+            new bootstrap.Modal(document.getElementById('loginModal')).show();
+        <?php endif; ?>
+        <?php if (!empty($errors)): ?>
+            new bootstrap.Modal(document.getElementById('registerModal')).show();
         <?php endif; ?>
 
-        // Language Selector
-        function changeLanguage(lang) {
-            // Redirect to same page with language parameter
-            window.location.href = '?lang=' + lang;
+        // RUT Validator y Formatter
+        function limpiarRut(rut) {
+            return rut.replace(/[^0-9kK]/g, '');
         }
 
-        function generatePassword() {
-            const length = 16;
-            const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?";
-            let password = "";
+        function formatearRut(rut) {
+            rut = limpiarRut(rut);
+            if (rut.length < 2) return rut;
+            let dv = rut.slice(-1);
+            let numero = rut.slice(0, -1);
+            numero = numero.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            return numero + '-' + dv;
+        }
 
-            // Asegurar al menos un carácter de cada tipo
-            const lower = "abcdefghijklmnopqrstuvwxyz";
-            const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-            const numbers = "0123456789";
-            const special = "!@#$%^&*()_+-=";
-
-            password += lower[Math.floor(Math.random() * lower.length)];
-            password += upper[Math.floor(Math.random() * upper.length)];
-            password += numbers[Math.floor(Math.random() * numbers.length)];
-            password += special[Math.floor(Math.random() * special.length)];
-
-            // Completar el resto de la contraseña
-            for (let i = password.length; i < length; i++) {
-                password += charset[Math.floor(Math.random() * charset.length)];
+        function validarRutChileno(rut) {
+            rut = limpiarRut(rut);
+            if (rut.length < 2) return false;
+            let dv = rut.slice(-1).toUpperCase();
+            let numero = parseInt(rut.slice(0, -1));
+            let suma = 0;
+            let multiplo = 2;
+            while (numero > 0) {
+                suma += (numero % 10) * multiplo;
+                numero = Math.floor(numero / 10);
+                multiplo = multiplo === 7 ? 2 : multiplo + 1;
             }
-
-            // Mezclar los caracteres
-            password = password.split('').sort(() => Math.random() - 0.5).join('');
-
-            // Establecer la contraseña y mostrarla
-            const passwordInput = document.getElementById('password');
-            passwordInput.type = 'text';
-            passwordInput.value = password;
-
-            // Cambiar icono a visible
-            document.getElementById('eyeIcon').classList.remove('fa-eye');
-            document.getElementById('eyeIcon').classList.add('fa-eye-slash');
-
-            // Copiar al portapapeles
-            navigator.clipboard.writeText(password).then(() => {
-                // Mostrar notificación
-                const notification = document.createElement('div');
-                notification.textContent = '✓ Contraseña generada y copiada al portapapeles';
-                notification.style.cssText = 'position: fixed; top: 20px; right: 20px; background: linear-gradient(135deg, var(--success), #059669); color: white; padding: 1rem 2rem; border-radius: 10px; z-index: 10000; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.3);';
-                document.body.appendChild(notification);
-
-                setTimeout(() => {
-                    notification.style.transition = 'opacity 0.5s';
-                    notification.style.opacity = '0';
-                    setTimeout(() => notification.remove(), 500);
-                }, 3000);
-            });
+            let dvEsperado = 11 - (suma % 11);
+            if (dvEsperado === 11) dvEsperado = '0';
+            else if (dvEsperado === 10) dvEsperado = 'K';
+            else dvEsperado = dvEsperado.toString();
+            return dv === dvEsperado;
         }
 
-        function togglePassword() {
-            const passwordInput = document.getElementById('password');
-            const eyeIcon = document.getElementById('eyeIcon');
+        // Auto-formato RUT
+        document.getElementById('rut_empresa').addEventListener('input', function(e) {
+            let paisId = document.getElementById('pais_id').value;
+            if (paisId == 1) {
+                let cursorPos = e.target.selectionStart;
+                let oldLength = e.target.value.length;
+                e.target.value = formatearRut(e.target.value);
+                let newLength = e.target.value.length;
+                e.target.setSelectionRange(cursorPos + (newLength - oldLength), cursorPos + (newLength - oldLength));
+            }
+        });
 
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                eyeIcon.classList.remove('fa-eye');
-                eyeIcon.classList.add('fa-eye-slash');
+        document.getElementById('rut_personal').addEventListener('input', function(e) {
+            let paisId = document.getElementById('pais_id').value;
+            if (paisId == 1) {
+                let cursorPos = e.target.selectionStart;
+                let oldLength = e.target.value.length;
+                e.target.value = formatearRut(e.target.value);
+                let newLength = e.target.value.length;
+                e.target.setSelectionRange(cursorPos + (newLength - oldLength), cursorPos + (newLength - oldLength));
+            }
+        });
+
+        // Cambio dinámico de tipo documento
+        document.getElementById('pais_id').addEventListener('change', function() {
+            let selectedOption = this.options[this.selectedIndex];
+            let tipoDoc = selectedOption.dataset.tipoDoc || 'RUT';
+            let formato = selectedOption.dataset.formato || '##.###.###-#';
+
+            document.getElementById('doc_tipo_empresa').textContent = tipoDoc;
+            document.getElementById('doc_tipo_personal').textContent = tipoDoc;
+            document.getElementById('doc_ejemplo_empresa').textContent = 'Ejemplo: ' + formato;
+            document.getElementById('doc_ejemplo_personal').textContent = 'Ejemplo: ' + formato;
+        });
+
+        // Password strength
+        document.getElementById('password').addEventListener('input', function() {
+            let password = this.value;
+            let strength = document.getElementById('password-strength');
+            if (password.length === 0) {
+                strength.className = 'password-strength';
+                return;
+            }
+            let score = 0;
+            if (password.length >= 8) score++;
+            if (password.length >= 12) score++;
+            if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score++;
+            if (/\d/.test(password)) score++;
+            if (/[^a-zA-Z0-9]/.test(password)) score++;
+
+            if (score <= 2) {
+                strength.className = 'password-strength strength-weak';
+            } else if (score <= 4) {
+                strength.className = 'password-strength strength-medium';
             } else {
-                passwordInput.type = 'password';
-                eyeIcon.classList.remove('fa-eye-slash');
-                eyeIcon.classList.add('fa-eye');
+                strength.className = 'password-strength strength-strong';
             }
-        }
+        });
 
-        // Initialize RUT Validator (now using global library)
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize RUT validation on the tax_id input
-            RUTValidator.init('#tax_id', '#country');
+        // Password match
+        document.getElementById('confirm_password').addEventListener('input', function() {
+            let password = document.getElementById('password').value;
+            let confirmPassword = this.value;
+            let message = document.getElementById('password-match');
+            if (confirmPassword.length === 0) {
+                message.innerHTML = '';
+                return;
+            }
+            if (password === confirmPassword) {
+                message.innerHTML = '<small class="text-success"><i class="fas fa-check"></i> Las contraseñas coinciden</small>';
+            } else {
+                message.innerHTML = '<small class="text-danger"><i class="fas fa-times"></i> Las contraseñas no coinciden</small>';
+            }
+        });
+
+        // Validación antes de enviar
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            let paisId = document.getElementById('pais_id').value;
+            if (paisId == 1) {
+                let rutEmpresa = document.getElementById('rut_empresa').value;
+                if (!validarRutChileno(rutEmpresa)) {
+                    e.preventDefault();
+                    alert('El RUT de la empresa no es válido');
+                    return false;
+                }
+            }
+            let password = document.getElementById('password').value;
+            let confirmPassword = document.getElementById('confirm_password').value;
+            if (password !== confirmPassword) {
+                e.preventDefault();
+                alert('Las contraseñas no coinciden');
+                return false;
+            }
         });
     </script>
+
+    <!-- Footer Profesional -->
+    <?php include 'user/includes/footer.php'; ?>
+
 </body>
 </html>
