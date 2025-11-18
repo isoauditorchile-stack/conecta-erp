@@ -19,6 +19,309 @@ $usuario_id = $_SESSION['user_id'];
 $usuario_nombre = $_SESSION['nombre'] . ' ' . $_SESSION['apellido'];
 $empresa_id = $_SESSION['empresa_id'] ?? 1;
 
+// Obtener conexión a la base de datos
+$db = Database::getInstance();
+$pdo = getDB();
+
+// ============================================
+// CONSULTAS SQL PARA OBTENER DATOS REALES
+// ============================================
+
+// 1. VENTAS DEL MES ACTUAL
+try {
+    $stmt = $pdo->prepare("
+        SELECT
+            COALESCE(SUM(total), 0) as total_ventas,
+            COUNT(*) as num_facturas
+        FROM facturas
+        WHERE MONTH(fecha_emision) = MONTH(CURRENT_DATE())
+        AND YEAR(fecha_emision) = YEAR(CURRENT_DATE())
+        AND empresa_id = ?
+        AND estado IN ('emitida', 'pagada')
+    ");
+    $stmt->execute([$empresa_id]);
+    $ventas_mes = $stmt->fetch();
+} catch (PDOException $e) {
+    $ventas_mes = ['total_ventas' => 0, 'num_facturas' => 0];
+}
+
+// Calcular variación vs mes anterior
+try {
+    $stmt = $pdo->prepare("
+        SELECT COALESCE(SUM(total), 0) as total_anterior
+        FROM facturas
+        WHERE MONTH(fecha_emision) = MONTH(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
+        AND YEAR(fecha_emision) = YEAR(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
+        AND empresa_id = ?
+        AND estado IN ('emitida', 'pagada')
+    ");
+    $stmt->execute([$empresa_id]);
+    $ventas_anterior = $stmt->fetch();
+
+    $variacion_ventas = 0;
+    if ($ventas_anterior['total_anterior'] > 0) {
+        $variacion_ventas = (($ventas_mes['total_ventas'] - $ventas_anterior['total_anterior']) / $ventas_anterior['total_anterior']) * 100;
+    }
+} catch (PDOException $e) {
+    $variacion_ventas = 0;
+}
+
+// 2. CLIENTES ACTIVOS
+try {
+    $stmt = $pdo->prepare("
+        SELECT COUNT(DISTINCT id) as total_clientes
+        FROM clientes
+        WHERE estado = 'activo'
+        AND empresa_id = ?
+    ");
+    $stmt->execute([$empresa_id]);
+    $clientes = $stmt->fetch();
+} catch (PDOException $e) {
+    $clientes = ['total_clientes' => 0];
+}
+
+// Variación clientes (últimos 30 días)
+try {
+    $stmt = $pdo->prepare("
+        SELECT COUNT(*) as nuevos_clientes
+        FROM clientes
+        WHERE fecha_registro >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
+        AND empresa_id = ?
+    ");
+    $stmt->execute([$empresa_id]);
+    $nuevos = $stmt->fetch();
+    $variacion_clientes = $clientes['total_clientes'] > 0 ?
+        ($nuevos['nuevos_clientes'] / $clientes['total_clientes']) * 100 : 0;
+} catch (PDOException $e) {
+    $variacion_clientes = 0;
+}
+
+// 3. PRODUCTOS EN STOCK
+try {
+    $stmt = $pdo->prepare("
+        SELECT COUNT(*) as total_productos,
+               SUM(stock_actual) as stock_total
+        FROM productos
+        WHERE empresa_id = ?
+        AND estado = 'activo'
+    ");
+    $stmt->execute([$empresa_id]);
+    $productos = $stmt->fetch();
+} catch (PDOException $e) {
+    $productos = ['total_productos' => 0, 'stock_total' => 0];
+}
+
+// Productos con stock bajo
+try {
+    $stmt = $pdo->prepare("
+        SELECT COUNT(*) as stock_bajo
+        FROM productos
+        WHERE stock_actual <= stock_minimo
+        AND empresa_id = ?
+        AND estado = 'activo'
+    ");
+    $stmt->execute([$empresa_id]);
+    $stock_bajo = $stmt->fetch();
+    $variacion_stock = $productos['total_productos'] > 0 ?
+        -($stock_bajo['stock_bajo'] / $productos['total_productos']) * 100 : 0;
+} catch (PDOException $e) {
+    $variacion_stock = 0;
+}
+
+// 4. FACTURAS PENDIENTES
+try {
+    $stmt = $pdo->prepare("
+        SELECT COUNT(*) as num_pendientes,
+               COALESCE(SUM(total), 0) as monto_pendiente
+        FROM facturas
+        WHERE estado IN ('pendiente', 'emitida')
+        AND empresa_id = ?
+        AND fecha_vencimiento >= CURRENT_DATE()
+    ");
+    $stmt->execute([$empresa_id]);
+    $facturas_pendientes = $stmt->fetch();
+} catch (PDOException $e) {
+    $facturas_pendientes = ['num_pendientes' => 0, 'monto_pendiente' => 0];
+}
+
+// Variación facturas pendientes
+try {
+    $stmt = $pdo->prepare("
+        SELECT COUNT(*) as pendientes_anterior
+        FROM facturas
+        WHERE estado IN ('pendiente', 'emitida')
+        AND empresa_id = ?
+        AND fecha_emision >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
+        AND fecha_emision < CURRENT_DATE()
+    ");
+    $stmt->execute([$empresa_id]);
+    $pendientes_ant = $stmt->fetch();
+    $variacion_facturas = $facturas_pendientes['num_pendientes'] > 0 && $pendientes_ant['pendientes_anterior'] > 0 ?
+        (($facturas_pendientes['num_pendientes'] - $pendientes_ant['pendientes_anterior']) / $pendientes_ant['pendientes_anterior']) * 100 : 0;
+} catch (PDOException $e) {
+    $variacion_facturas = 0;
+}
+
+// 5. ÚLTIMAS TRANSACCIONES
+try {
+    $stmt = $pdo->prepare("
+        SELECT
+            f.id,
+            f.numero_factura,
+            c.nombre as cliente_nombre,
+            c.razon_social,
+            f.total,
+            f.estado,
+            f.fecha_emision,
+            GROUP_CONCAT(DISTINCT p.nombre SEPARATOR ', ') as productos
+        FROM facturas f
+        LEFT JOIN clientes c ON f.cliente_id = c.id
+        LEFT JOIN facturas_detalle fd ON f.id = fd.factura_id
+        LEFT JOIN productos p ON fd.producto_id = p.id
+        WHERE f.empresa_id = ?
+        GROUP BY f.id, f.numero_factura, c.nombre, c.razon_social, f.total, f.estado, f.fecha_emision
+        ORDER BY f.fecha_emision DESC
+        LIMIT 10
+    ");
+    $stmt->execute([$empresa_id]);
+    $ultimas_transacciones = $stmt->fetchAll();
+} catch (PDOException $e) {
+    $ultimas_transacciones = [];
+}
+
+// 6. PRODUCTOS MÁS VENDIDOS
+try {
+    $stmt = $pdo->prepare("
+        SELECT
+            p.id,
+            p.nombre,
+            p.categoria,
+            SUM(fd.cantidad) as unidades_vendidas,
+            SUM(fd.subtotal) as revenue,
+            COUNT(DISTINCT f.id) as num_ventas
+        FROM productos p
+        INNER JOIN facturas_detalle fd ON p.id = fd.producto_id
+        INNER JOIN facturas f ON fd.factura_id = f.id
+        WHERE f.empresa_id = ?
+        AND MONTH(f.fecha_emision) = MONTH(CURRENT_DATE())
+        AND YEAR(f.fecha_emision) = YEAR(CURRENT_DATE())
+        AND f.estado IN ('emitida', 'pagada')
+        GROUP BY p.id, p.nombre, p.categoria
+        ORDER BY unidades_vendidas DESC
+        LIMIT 5
+    ");
+    $stmt->execute([$empresa_id]);
+    $productos_mas_vendidos = $stmt->fetchAll();
+} catch (PDOException $e) {
+    $productos_mas_vendidos = [];
+}
+
+// 7. DATOS PARA GRÁFICO DE VENTAS MENSUALES (últimos 12 meses)
+try {
+    $stmt = $pdo->prepare("
+        SELECT
+            DATE_FORMAT(fecha_emision, '%Y-%m') as mes,
+            MONTHNAME(fecha_emision) as mes_nombre,
+            SUM(total) as total_mes
+        FROM facturas
+        WHERE empresa_id = ?
+        AND fecha_emision >= DATE_SUB(CURRENT_DATE(), INTERVAL 12 MONTH)
+        AND estado IN ('emitida', 'pagada')
+        GROUP BY DATE_FORMAT(fecha_emision, '%Y-%m'), MONTHNAME(fecha_emision)
+        ORDER BY mes ASC
+    ");
+    $stmt->execute([$empresa_id]);
+    $ventas_mensuales = $stmt->fetchAll();
+
+    // Preparar arrays para Chart.js
+    $meses_labels = [];
+    $meses_valores = [];
+
+    foreach ($ventas_mensuales as $vm) {
+        $meses_labels[] = $vm['mes_nombre'] ?? substr($vm['mes'], 5);
+        $meses_valores[] = (float)$vm['total_mes'];
+    }
+} catch (PDOException $e) {
+    $meses_labels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    $meses_valores = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+}
+
+// 8. DISTRIBUCIÓN POR CATEGORÍA (para gráfico de dona)
+try {
+    $stmt = $pdo->prepare("
+        SELECT
+            COALESCE(p.categoria, 'Sin categoría') as categoria,
+            SUM(fd.subtotal) as total_categoria
+        FROM facturas_detalle fd
+        INNER JOIN productos p ON fd.producto_id = p.id
+        INNER JOIN facturas f ON fd.factura_id = f.id
+        WHERE f.empresa_id = ?
+        AND MONTH(f.fecha_emision) = MONTH(CURRENT_DATE())
+        AND YEAR(f.fecha_emision) = YEAR(CURRENT_DATE())
+        AND f.estado IN ('emitida', 'pagada')
+        GROUP BY p.categoria
+        ORDER BY total_categoria DESC
+        LIMIT 6
+    ");
+    $stmt->execute([$empresa_id]);
+    $categorias_data = $stmt->fetchAll();
+
+    $categorias_labels = [];
+    $categorias_valores = [];
+
+    foreach ($categorias_data as $cat) {
+        $categorias_labels[] = $cat['categoria'];
+        $categorias_valores[] = (float)$cat['total_categoria'];
+    }
+} catch (PDOException $e) {
+    $categorias_labels = ['Sin datos'];
+    $categorias_valores = [0];
+}
+
+// 9. COMPARATIVA TRIMESTRAL (año actual vs anterior)
+try {
+    // Año actual
+    $stmt = $pdo->prepare("
+        SELECT
+            QUARTER(fecha_emision) as trimestre,
+            SUM(total) as total_trimestre
+        FROM facturas
+        WHERE empresa_id = ?
+        AND YEAR(fecha_emision) = YEAR(CURRENT_DATE())
+        AND estado IN ('emitida', 'pagada')
+        GROUP BY QUARTER(fecha_emision)
+        ORDER BY trimestre
+    ");
+    $stmt->execute([$empresa_id]);
+    $trimestres_actual = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+
+    // Año anterior
+    $stmt = $pdo->prepare("
+        SELECT
+            QUARTER(fecha_emision) as trimestre,
+            SUM(total) as total_trimestre
+        FROM facturas
+        WHERE empresa_id = ?
+        AND YEAR(fecha_emision) = YEAR(CURRENT_DATE()) - 1
+        AND estado IN ('emitida', 'pagada')
+        GROUP BY QUARTER(fecha_emision)
+        ORDER BY trimestre
+    ");
+    $stmt->execute([$empresa_id]);
+    $trimestres_anterior = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+
+    $trimestres_actual_valores = [];
+    $trimestres_anterior_valores = [];
+
+    for ($i = 1; $i <= 4; $i++) {
+        $trimestres_actual_valores[] = isset($trimestres_actual[$i]) ? (float)$trimestres_actual[$i] : 0;
+        $trimestres_anterior_valores[] = isset($trimestres_anterior[$i]) ? (float)$trimestres_anterior[$i] : 0;
+    }
+} catch (PDOException $e) {
+    $trimestres_actual_valores = [0, 0, 0, 0];
+    $trimestres_anterior_valores = [0, 0, 0, 0];
+}
+
 // Definición completa de TODOS los módulos del sistema
 $modulos_sistema = [
     'Ventas' => [
@@ -327,8 +630,12 @@ $total_categorias = count($modulos_sistema);
 foreach ($modulos_sistema as $categoria => $datos) {
     $total_modulos += count($datos['modulos']);
 }
-?>
 
+// Función helper para formatear moneda
+function formatearMoneda($monto) {
+    return '$' . number_format($monto, 0, ',', '.');
+}
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -800,6 +1107,11 @@ foreach ($modulos_sistema as $categoria => $datos) {
             color: #721c24;
         }
 
+        .badge-info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .sidebar {
@@ -854,9 +1166,11 @@ foreach ($modulos_sistema as $categoria => $datos) {
             </div>
         </div>
         <div class="header-right">
-            <button class="btn btn-sm btn-outline-primary">
+            <button class="btn btn-sm btn-outline-primary position-relative">
                 <i class="fas fa-bell"></i>
-                <span class="badge bg-danger" style="position: absolute; top: -5px; right: -5px; font-size: 10px;">3</span>
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                    3
+                </span>
             </button>
             <div class="user-info">
                 <div class="text-end">
@@ -924,10 +1238,11 @@ foreach ($modulos_sistema as $categoria => $datos) {
                 <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
                     <i class="fas fa-shopping-cart"></i>
                 </div>
-                <div class="stat-value">$2,847,250</div>
-                <div class="stat-label">Ventas del Mes</div>
-                <span class="stat-change positive">
-                    <i class="fas fa-arrow-up"></i> +12.5%
+                <div class="stat-value"><?= formatearMoneda($ventas_mes['total_ventas']) ?></div>
+                <div class="stat-label">Ventas del Mes (<?= $ventas_mes['num_facturas'] ?> facturas)</div>
+                <span class="stat-change <?= $variacion_ventas >= 0 ? 'positive' : 'negative' ?>">
+                    <i class="fas fa-arrow-<?= $variacion_ventas >= 0 ? 'up' : 'down' ?>"></i>
+                    <?= abs(number_format($variacion_ventas, 1)) ?>%
                 </span>
             </div>
 
@@ -935,10 +1250,11 @@ foreach ($modulos_sistema as $categoria => $datos) {
                 <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
                     <i class="fas fa-users"></i>
                 </div>
-                <div class="stat-value">1,249</div>
+                <div class="stat-value"><?= number_format($clientes['total_clientes'], 0, ',', '.') ?></div>
                 <div class="stat-label">Clientes Activos</div>
-                <span class="stat-change positive">
-                    <i class="fas fa-arrow-up"></i> +8.2%
+                <span class="stat-change <?= $variacion_clientes >= 0 ? 'positive' : 'negative' ?>">
+                    <i class="fas fa-arrow-<?= $variacion_clientes >= 0 ? 'up' : 'down' ?>"></i>
+                    <?= abs(number_format($variacion_clientes, 1)) ?>%
                 </span>
             </div>
 
@@ -946,10 +1262,11 @@ foreach ($modulos_sistema as $categoria => $datos) {
                 <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
                     <i class="fas fa-boxes"></i>
                 </div>
-                <div class="stat-value">3,847</div>
-                <div class="stat-label">Productos en Stock</div>
-                <span class="stat-change negative">
-                    <i class="fas fa-arrow-down"></i> -2.3%
+                <div class="stat-value"><?= number_format($productos['total_productos'], 0, ',', '.') ?></div>
+                <div class="stat-label">Productos en Stock (<?= number_format($productos['stock_total'], 0, ',', '.') ?> unidades)</div>
+                <span class="stat-change <?= $variacion_stock >= 0 ? 'positive' : 'negative' ?>">
+                    <i class="fas fa-arrow-<?= $variacion_stock >= 0 ? 'up' : 'down' ?>"></i>
+                    <?= abs(number_format($variacion_stock, 1)) ?>%
                 </span>
             </div>
 
@@ -957,10 +1274,11 @@ foreach ($modulos_sistema as $categoria => $datos) {
                 <div class="stat-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white;">
                     <i class="fas fa-file-invoice-dollar"></i>
                 </div>
-                <div class="stat-value">142</div>
-                <div class="stat-label">Facturas Pendientes</div>
-                <span class="stat-change positive">
-                    <i class="fas fa-arrow-down"></i> -15.7%
+                <div class="stat-value"><?= $facturas_pendientes['num_pendientes'] ?></div>
+                <div class="stat-label">Facturas Pendientes (<?= formatearMoneda($facturas_pendientes['monto_pendiente']) ?>)</div>
+                <span class="stat-change <?= $variacion_facturas <= 0 ? 'positive' : 'negative' ?>">
+                    <i class="fas fa-arrow-<?= $variacion_facturas <= 0 ? 'down' : 'up' ?>"></i>
+                    <?= abs(number_format($variacion_facturas, 1)) ?>%
                 </span>
             </div>
         </div>
@@ -991,10 +1309,10 @@ foreach ($modulos_sistema as $categoria => $datos) {
         <!-- Additional Chart -->
         <div class="chart-card animate-fade-in" style="animation-delay: 0.7s;">
             <div class="chart-header">
-                <h3 class="chart-title"><i class="fas fa-chart-bar"></i> Comparativa Anual</h3>
+                <h3 class="chart-title"><i class="fas fa-chart-bar"></i> Comparativa Trimestral</h3>
                 <div class="chart-actions">
-                    <button class="chart-btn">2023</button>
-                    <button class="chart-btn active">2024</button>
+                    <button class="chart-btn"><?= date('Y') - 1 ?></button>
+                    <button class="chart-btn active"><?= date('Y') ?></button>
                     <button class="chart-btn"><i class="fas fa-download"></i></button>
                 </div>
             </div>
@@ -1007,6 +1325,7 @@ foreach ($modulos_sistema as $categoria => $datos) {
                 <h3 class="chart-title"><i class="fas fa-clipboard-list"></i> Últimas Transacciones</h3>
                 <button class="chart-btn"><i class="fas fa-filter"></i> Filtrar</button>
             </div>
+            <?php if (count($ultimas_transacciones) > 0): ?>
             <table class="custom-table">
                 <thead>
                     <tr>
@@ -1019,48 +1338,29 @@ foreach ($modulos_sistema as $categoria => $datos) {
                     </tr>
                 </thead>
                 <tbody>
+                    <?php foreach ($ultimas_transacciones as $trans): ?>
                     <tr>
-                        <td>#10234</td>
-                        <td>Empresa ABC Ltda.</td>
-                        <td>Sistema ERP Premium</td>
-                        <td>$1,250,000</td>
-                        <td><span class="badge badge-success">Completado</span></td>
-                        <td>2024-01-15</td>
+                        <td>#<?= htmlspecialchars($trans['numero_factura']) ?></td>
+                        <td><?= htmlspecialchars($trans['cliente_nombre'] ?? $trans['razon_social'] ?? 'N/A') ?></td>
+                        <td><?= htmlspecialchars(substr($trans['productos'] ?? 'Varios', 0, 30)) ?>...</td>
+                        <td><?= formatearMoneda($trans['total']) ?></td>
+                        <td>
+                            <?php
+                            $badge_class = 'badge-info';
+                            if ($trans['estado'] == 'pagada') $badge_class = 'badge-success';
+                            elseif ($trans['estado'] == 'pendiente') $badge_class = 'badge-warning';
+                            elseif ($trans['estado'] == 'anulada') $badge_class = 'badge-danger';
+                            ?>
+                            <span class="badge <?= $badge_class ?>"><?= ucfirst($trans['estado']) ?></span>
+                        </td>
+                        <td><?= date('d/m/Y', strtotime($trans['fecha_emision'])) ?></td>
                     </tr>
-                    <tr>
-                        <td>#10235</td>
-                        <td>Comercial XYZ S.A.</td>
-                        <td>Módulo Inventario</td>
-                        <td>$450,000</td>
-                        <td><span class="badge badge-warning">Pendiente</span></td>
-                        <td>2024-01-14</td>
-                    </tr>
-                    <tr>
-                        <td>#10236</td>
-                        <td>Distribuidora 123</td>
-                        <td>Licencia Anual</td>
-                        <td>$890,000</td>
-                        <td><span class="badge badge-success">Completado</span></td>
-                        <td>2024-01-14</td>
-                    </tr>
-                    <tr>
-                        <td>#10237</td>
-                        <td>Retail Store S.A.</td>
-                        <td>Sistema POS</td>
-                        <td>$2,100,000</td>
-                        <td><span class="badge badge-warning">En Proceso</span></td>
-                        <td>2024-01-13</td>
-                    </tr>
-                    <tr>
-                        <td>#10238</td>
-                        <td>Industrias Chile</td>
-                        <td>Módulo Producción</td>
-                        <td>$1,750,000</td>
-                        <td><span class="badge badge-danger">Rechazado</span></td>
-                        <td>2024-01-13</td>
-                    </tr>
+                    <?php endforeach; ?>
                 </tbody>
             </table>
+            <?php else: ?>
+            <div class="alert alert-info">No hay transacciones registradas</div>
+            <?php endif; ?>
         </div>
 
         <!-- Additional Table -->
@@ -1069,6 +1369,7 @@ foreach ($modulos_sistema as $categoria => $datos) {
                 <h3 class="chart-title"><i class="fas fa-star"></i> Productos Más Vendidos</h3>
                 <button class="chart-btn"><i class="fas fa-download"></i> Exportar</button>
             </div>
+            <?php if (count($productos_mas_vendidos) > 0): ?>
             <table class="custom-table">
                 <thead>
                     <tr>
@@ -1077,52 +1378,25 @@ foreach ($modulos_sistema as $categoria => $datos) {
                         <th>Categoría</th>
                         <th>Unidades Vendidas</th>
                         <th>Revenue</th>
-                        <th>Tendencia</th>
+                        <th>N° Ventas</th>
                     </tr>
                 </thead>
                 <tbody>
+                    <?php $contador = 1; foreach ($productos_mas_vendidos as $prod): ?>
                     <tr>
-                        <td>1</td>
-                        <td>Sistema ERP Completo</td>
-                        <td>Software</td>
-                        <td>145</td>
-                        <td>$12,450,000</td>
-                        <td><span class="stat-change positive"><i class="fas fa-arrow-up"></i> +23%</span></td>
+                        <td><?= $contador++ ?></td>
+                        <td><?= htmlspecialchars($prod['nombre']) ?></td>
+                        <td><?= htmlspecialchars($prod['categoria'] ?? 'Sin categoría') ?></td>
+                        <td><?= number_format($prod['unidades_vendidas'], 0, ',', '.') ?></td>
+                        <td><?= formatearMoneda($prod['revenue']) ?></td>
+                        <td><span class="badge badge-info"><?= $prod['num_ventas'] ?></span></td>
                     </tr>
-                    <tr>
-                        <td>2</td>
-                        <td>Módulo Finanzas</td>
-                        <td>Software</td>
-                        <td>89</td>
-                        <td>$4,230,000</td>
-                        <td><span class="stat-change positive"><i class="fas fa-arrow-up"></i> +15%</span></td>
-                    </tr>
-                    <tr>
-                        <td>3</td>
-                        <td>Sistema POS</td>
-                        <td>Hardware + Software</td>
-                        <td>67</td>
-                        <td>$8,920,000</td>
-                        <td><span class="stat-change positive"><i class="fas fa-arrow-up"></i> +8%</span></td>
-                    </tr>
-                    <tr>
-                        <td>4</td>
-                        <td>Módulo RRHH</td>
-                        <td>Software</td>
-                        <td>52</td>
-                        <td>$2,180,000</td>
-                        <td><span class="stat-change negative"><i class="fas fa-arrow-down"></i> -3%</span></td>
-                    </tr>
-                    <tr>
-                        <td>5</td>
-                        <td>Licencia Enterprise</td>
-                        <td>Licenciamiento</td>
-                        <td>34</td>
-                        <td>$6,540,000</td>
-                        <td><span class="stat-change positive"><i class="fas fa-arrow-up"></i> +12%</span></td>
-                    </tr>
+                    <?php endforeach; ?>
                 </tbody>
             </table>
+            <?php else: ?>
+            <div class="alert alert-info">No hay datos de productos vendidos este mes</div>
+            <?php endif; ?>
         </div>
     </main>
 
@@ -1180,16 +1454,23 @@ foreach ($modulos_sistema as $categoria => $datos) {
             });
         });
 
-        // Charts
+        // Datos desde PHP
+        const mesesLabels = <?= json_encode($meses_labels) ?>;
+        const mesesValores = <?= json_encode($meses_valores) ?>;
+        const categoriasLabels = <?= json_encode($categorias_labels) ?>;
+        const categoriasValores = <?= json_encode($categorias_valores) ?>;
+        const trimestresActual = <?= json_encode($trimestres_actual_valores) ?>;
+        const trimestresAnterior = <?= json_encode($trimestres_anterior_valores) ?>;
+
         // Sales Chart
         const salesCtx = document.getElementById('salesChart').getContext('2d');
         new Chart(salesCtx, {
             type: 'line',
             data: {
-                labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+                labels: mesesLabels,
                 datasets: [{
-                    label: 'Ventas 2024',
-                    data: [1200000, 1900000, 1500000, 2200000, 1800000, 2400000, 2100000, 2600000, 2300000, 2800000, 2500000, 2847250],
+                    label: 'Ventas <?= date("Y") ?>',
+                    data: mesesValores,
                     borderColor: '#667eea',
                     backgroundColor: 'rgba(102, 126, 234, 0.1)',
                     tension: 0.4,
@@ -1223,9 +1504,9 @@ foreach ($modulos_sistema as $categoria => $datos) {
         new Chart(categoryCtx, {
             type: 'doughnut',
             data: {
-                labels: ['Ventas', 'Finanzas', 'RRHH', 'Producción', 'Inventario', 'Otros'],
+                labels: categoriasLabels,
                 datasets: [{
-                    data: [30, 25, 15, 12, 10, 8],
+                    data: categoriasValores,
                     backgroundColor: [
                         '#667eea',
                         '#764ba2',
@@ -1255,15 +1536,15 @@ foreach ($modulos_sistema as $categoria => $datos) {
                 labels: ['T1', 'T2', 'T3', 'T4'],
                 datasets: [
                     {
-                        label: '2023',
-                        data: [4500000, 5200000, 4800000, 6100000],
+                        label: '<?= date("Y") - 1 ?>',
+                        data: trimestresAnterior,
                         backgroundColor: 'rgba(102, 126, 234, 0.5)',
                         borderColor: '#667eea',
                         borderWidth: 2
                     },
                     {
-                        label: '2024',
-                        data: [5100000, 5900000, 5400000, 6800000],
+                        label: '<?= date("Y") ?>',
+                        data: trimestresActual,
                         backgroundColor: 'rgba(118, 75, 162, 0.5)',
                         borderColor: '#764ba2',
                         borderWidth: 2
