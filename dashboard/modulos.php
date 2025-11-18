@@ -1146,6 +1146,61 @@ function formatearMoneda($monto) {
         .animate-fade-in {
             animation: fadeInUp 0.5s ease-out;
         }
+
+        /* Breadcrumb Bar */
+        .breadcrumb-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #e2e8f0;
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        .breadcrumb-separator {
+            color: #cbd5e0;
+            font-weight: bold;
+        }
+
+        .breadcrumb-current {
+            color: #2d3748;
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        /* Module View */
+        #moduleView {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        #moduleFrame {
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        /* Loading Spinner for iframe */
+        .iframe-loading {
+            position: relative;
+        }
+
+        .iframe-loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -1212,8 +1267,11 @@ function formatearMoneda($monto) {
                 </div>
                 <div class="submenu">
                     <?php foreach ($datos['modulos'] as $modulo): ?>
-                    <a href="<?= $modulo['url'] ?>" class="submenu-item"
+                    <a href="javascript:void(0)"
+                       onclick="loadModule('<?= addslashes($modulo['url']) ?>', '<?= addslashes($modulo['nombre']) ?>')"
+                       class="submenu-item"
                        data-nombre="<?= htmlspecialchars(strtolower($modulo['nombre'])) ?>"
+                       data-url="<?= htmlspecialchars($modulo['url']) ?>"
                        title="<?= $modulo['desc'] ?>">
                         <i class="fas <?= $modulo['icono'] ?>"></i>
                         <span><?= $modulo['nombre'] ?></span>
@@ -1227,10 +1285,32 @@ function formatearMoneda($monto) {
 
     <!-- Main Content -->
     <main class="main-content" id="mainContent">
-        <div class="dashboard-header animate-fade-in">
-            <h2><i class="fas fa-tachometer-alt" style="color: var(--primary-color);"></i> Dashboard General</h2>
-            <p class="text-muted">Bienvenido al panel de control de CONECTA ERP</p>
+        <!-- Breadcrumb Navigation -->
+        <div id="breadcrumbBar" class="breadcrumb-bar" style="display: none;">
+            <button class="btn btn-sm btn-outline-primary" onclick="showDashboard()">
+                <i class="fas fa-home"></i> Dashboard
+            </button>
+            <span class="breadcrumb-separator">/</span>
+            <span id="breadcrumbModule" class="breadcrumb-current"></span>
+            <button class="btn btn-sm btn-outline-secondary ms-auto" onclick="openModuleInNewTab()" title="Abrir en nueva pestaña">
+                <i class="fas fa-external-link-alt"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-secondary ms-2" onclick="reloadModule()" title="Recargar módulo">
+                <i class="fas fa-sync-alt"></i>
+            </button>
         </div>
+
+        <!-- Module View (iframe) -->
+        <div id="moduleView" style="display: none;">
+            <iframe id="moduleFrame" frameborder="0" style="width: 100%; height: calc(100vh - 120px); border: none; border-radius: 10px; background: white;"></iframe>
+        </div>
+
+        <!-- Dashboard View -->
+        <div id="dashboardView">
+            <div class="dashboard-header animate-fade-in">
+                <h2><i class="fas fa-tachometer-alt" style="color: var(--primary-color);"></i> Dashboard General</h2>
+                <p class="text-muted">Bienvenido al panel de control de CONECTA ERP</p>
+            </div>
 
         <!-- Stats Row -->
         <div class="stats-row">
@@ -1398,6 +1478,7 @@ function formatearMoneda($monto) {
             <div class="alert alert-info">No hay datos de productos vendidos este mes</div>
             <?php endif; ?>
         </div>
+        </div><!-- End dashboardView -->
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -1572,6 +1653,89 @@ function formatearMoneda($monto) {
             document.getElementById('sidebar').classList.add('collapsed');
             document.getElementById('mainContent').classList.add('expanded');
         }
+
+        // ============================================
+        // SISTEMA DE CARGA DE MÓDULOS EN IFRAME
+        // ============================================
+
+        let currentModuleUrl = '';
+
+        /**
+         * Cargar módulo en iframe
+         */
+        function loadModule(url, moduleName) {
+            // Guardar URL actual
+            currentModuleUrl = url;
+
+            // Ocultar dashboard y mostrar iframe
+            document.getElementById('dashboardView').style.display = 'none';
+            document.getElementById('moduleView').style.display = 'block';
+            document.getElementById('breadcrumbBar').style.display = 'flex';
+
+            // Actualizar breadcrumb
+            document.getElementById('breadcrumbModule').textContent = moduleName;
+
+            // Cargar URL en iframe
+            const iframe = document.getElementById('moduleFrame');
+            iframe.src = url;
+
+            // Agregar clase de loading
+            document.getElementById('moduleView').classList.add('iframe-loading');
+
+            // Remover loading cuando cargue
+            iframe.onload = function() {
+                document.getElementById('moduleView').classList.remove('iframe-loading');
+            };
+
+            // Log para debugging
+            console.log('Cargando módulo:', moduleName, 'URL:', url);
+        }
+
+        /**
+         * Volver al dashboard
+         */
+        function showDashboard() {
+            document.getElementById('dashboardView').style.display = 'block';
+            document.getElementById('moduleView').style.display = 'none';
+            document.getElementById('breadcrumbBar').style.display = 'none';
+
+            // Limpiar iframe
+            document.getElementById('moduleFrame').src = 'about:blank';
+            currentModuleUrl = '';
+
+            console.log('Volviendo al dashboard');
+        }
+
+        /**
+         * Abrir módulo en nueva pestaña
+         */
+        function openModuleInNewTab() {
+            if (currentModuleUrl) {
+                window.open(currentModuleUrl, '_blank');
+            }
+        }
+
+        /**
+         * Recargar módulo actual
+         */
+        function reloadModule() {
+            const iframe = document.getElementById('moduleFrame');
+            iframe.src = iframe.src;
+        }
+
+        /**
+         * Atajo de teclado: ESC para volver al dashboard
+         */
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const moduleView = document.getElementById('moduleView');
+                if (moduleView.style.display !== 'none') {
+                    showDashboard();
+                }
+            }
+        });
+
+        console.log('Sistema de módulos cargado correctamente');
     </script>
 </body>
 </html>
