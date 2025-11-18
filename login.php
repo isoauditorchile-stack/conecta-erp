@@ -29,40 +29,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Por favor, ingresa tu email y contraseña';
     } else {
         try {
-            $db = Database::getInstance();
-            $user = $db->fetchOne("SELECT * FROM users WHERE email = ?", [$email]);
+            $conn = getMysqliConnection();
+            $stmt = $conn->prepare("SELECT * FROM usuarios WHERE email = ?");
+            $stmt->bind_param('s', $email);
+            $stmt->execute();
+            $user = $stmt->get_result()->fetch_assoc();
 
             if ($user && password_verify($password, $user['password'])) {
                 // Verificar estado del usuario
-                if ($user['status'] === 'pending_approval') {
-                    $error = 'Tu cuenta está pendiente de aprobación por el administrador. Te notificaremos por email cuando sea aprobada.';
-                } else if ($user['status'] === 'rejected') {
-                    $error = 'Tu cuenta ha sido rechazada. Contacta al administrador para más información.';
-                } else if ($user['status'] === 'expired') {
-                    $error = 'Tu período de trial ha expirado. Por favor, realiza un pago para continuar usando el sistema.';
-                } else if ($user['status'] === 'suspended') {
+                if ($user['estado'] === 'inactivo') {
+                    $error = 'Tu cuenta está inactiva. Contacta al administrador.';
+                } else if ($user['estado'] === 'suspendido') {
                     $error = 'Tu cuenta ha sido suspendida. Contacta al administrador.';
                 } else {
                     // Login exitoso
                     $_SESSION['user_id'] = $user['id'];
-                    $_SESSION['username'] = $user['username'];
+                    $_SESSION['empresa_id'] = $user['empresa_id'];
+                    $_SESSION['nombre'] = $user['nombre'];
                     $_SESSION['email'] = $user['email'];
-                    $_SESSION['firstname'] = $user['firstname'];
-                    $_SESSION['lastname'] = $user['lastname'];
-                    $_SESSION['is_admin'] = $user['is_admin'];
-                    $_SESSION['company_id'] = $user['company_id'];
-                    $_SESSION['language'] = $user['language'];
+                    $_SESSION['rol'] = $user['rol'];
+                    $_SESSION['es_superadmin'] = $user['es_superadmin'];
                     $_SESSION['last_activity'] = time();
+
+                    // Actualizar último login
+                    $stmt = $conn->prepare("UPDATE usuarios SET ultimo_login = NOW() WHERE id = ?");
+                    $stmt->bind_param('i', $user['id']);
+                    $stmt->execute();
 
                     // Registrar actividad
                     logActivity($user['id'], 'login', 'Inicio de sesión exitoso', 'auth');
 
                     // Redirigir según tipo de usuario
-                    // SOLO auditorexchile@gmail.com puede acceder al panel admin
-                    if ($user['email'] === 'auditorexchile@gmail.com') {
+                    if ($user['es_superadmin']) {
                         header('Location: /admin/panel_super_admin.php');
                     } else {
-                        // Todos los demás usuarios van al dashboard de usuario
                         header('Location: /user/dashboard_user.php');
                     }
                     exit;
