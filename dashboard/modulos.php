@@ -10,19 +10,43 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-// Cargar configuración con rutas absolutas
-$base_path = dirname(__DIR__);
-require_once $base_path . '/includes/config.php';
-require_once $base_path . '/includes/functions.php';
+// Cargar configuración - buscar en múltiples ubicaciones posibles
+$possible_paths = [
+    __DIR__ . '/../includes/config.php',           // Ruta relativa desde dashboard
+    dirname(__DIR__) . '/includes/config.php',     // Ruta desde directorio padre
+    $_SERVER['DOCUMENT_ROOT'] . '/includes/config.php', // Desde document root
+    $_SERVER['DOCUMENT_ROOT'] . '/../includes/config.php', // Un nivel arriba de document root
+];
+
+$config_loaded = false;
+foreach ($possible_paths as $config_path) {
+    if (file_exists($config_path)) {
+        require_once $config_path;
+        $functions_path = str_replace('config.php', 'functions.php', $config_path);
+        if (file_exists($functions_path)) {
+            require_once $functions_path;
+        }
+        $config_loaded = true;
+        break;
+    }
+}
+
+if (!$config_loaded) {
+    die('Error: No se pudo cargar config.php. Rutas intentadas: ' . implode(', ', $possible_paths));
+}
 
 // Obtener datos del usuario de forma segura
 $usuario_id = $_SESSION['user_id'];
 $usuario_nombre = $_SESSION['nombre'] . ' ' . $_SESSION['apellido'];
 $empresa_id = $_SESSION['empresa_id'] ?? 1;
 
-// Obtener conexión a la base de datos
-$db = Database::getInstance();
-$pdo = getDB();
+// Obtener conexión a la base de datos con manejo de errores
+try {
+    $db = Database::getInstance();
+    $pdo = getDB();
+} catch (Exception $e) {
+    die('Error de conexión a la base de datos: ' . $e->getMessage());
+}
 
 // ============================================
 // CONSULTAS SQL PARA OBTENER DATOS REALES
