@@ -1,6 +1,6 @@
 <?php
 /**
- * Dashboard Ventas - CONECTA ERP
+ * Marketing Automation - CONECTA ERP
  * Sistema Multiempresa - Multiusuario
  */
 session_start();
@@ -24,22 +24,19 @@ if (!isset($conn)) {
     $conn->set_charset('utf8mb4');
 }
 
-// Dashboard ventas
-$stats = [];
-
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Ventas | CONECTA ERP</title>
+    <title>Marketing Automation | CONECTA ERP</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         .gradient-header {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
             color: white;
             padding: 2rem;
             margin-bottom: 2rem;
@@ -64,7 +61,7 @@ $stats = [];
         <div class="gradient-header">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <h1><i class="fas fa-chart-line"></i> Dashboard Ventas</h1>
+                    <h1><i class="fas fa-robot"></i> Marketing Automation</h1>
                     <p class="mb-0 opacity-75">Sistema completo de gestión</p>
                 </div>
                 <div>
