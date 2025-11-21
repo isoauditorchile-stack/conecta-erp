@@ -44,7 +44,7 @@ $user = getCurrentUser();
                         <div class='module-icon' style='background: #6366f1;'>
                             <i class='fa-cubes'></i>
                         </div>
-                        <div class='module-title'>Maestro de Materiales</div>
+                        <div class='module-title'>Maestro Materiales</div>
                     </a>
                     <a href='./warehouses.php' class='module-card'>
                         <div class='module-icon' style='background: #f59e0b;'>
