@@ -196,6 +196,61 @@ CREATE TABLE IF NOT EXISTS sii_auditoria (
     ip_usuario VARCHAR(50),
     fecha_accion DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS sii_roles (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_rol VARCHAR(100) NOT NULL,
+    descripcion TEXT,
+    activo TINYINT(1) DEFAULT 1,
+    fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY idx_nombre (nombre_rol)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS sii_permisos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    codigo_permiso VARCHAR(100) NOT NULL,
+    nombre_permiso VARCHAR(255) NOT NULL,
+    descripcion TEXT,
+    modulo VARCHAR(100) DEFAULT 'verificacion_sii',
+    activo TINYINT(1) DEFAULT 1,
+    UNIQUE KEY idx_codigo (codigo_permiso)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS sii_roles_permisos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    rol_id INT NOT NULL,
+    permiso_id INT NOT NULL,
+    fecha_asignacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (rol_id) REFERENCES sii_roles(id) ON DELETE CASCADE,
+    FOREIGN KEY (permiso_id) REFERENCES sii_permisos(id) ON DELETE CASCADE,
+    UNIQUE KEY idx_rol_permiso (rol_id, permiso_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS sii_usuarios_roles (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT NOT NULL,
+    rol_id INT NOT NULL,
+    fecha_asignacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (rol_id) REFERENCES sii_roles(id) ON DELETE CASCADE,
+    UNIQUE KEY idx_usuario_rol (usuario_id, rol_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT IGNORE INTO sii_roles (nombre_rol, descripcion) VALUES
+('administrador', 'Acceso total al modulo'),
+('contabilidad', 'Acceso a conciliacion y reportes'),
+('compras', 'Acceso a facturas y vinculacion'),
+('auditoria', 'Solo lectura y reportes');
+
+INSERT IGNORE INTO sii_permisos (codigo_permiso, nombre_permiso, descripcion) VALUES
+('ver_facturas_sii', 'Ver Facturas SII', 'Permite ver facturas descargadas del SII'),
+('descargar_sii', 'Descargar desde SII', 'Permite ejecutar descargas desde el SII'),
+('modificar_vinculo_erp', 'Modificar Vinculo ERP', 'Permite vincular facturas SII con ERP'),
+('marcar_conciliacion', 'Marcar Conciliacion', 'Permite marcar facturas como conciliadas'),
+('rechazar_facturas', 'Rechazar Facturas', 'Permite rechazar facturas'),
+('gestionar_diferencias', 'Gestionar Diferencias', 'Permite registrar y resolver diferencias'),
+('ver_reportes', 'Ver Reportes', 'Permite acceder a reportes'),
+('configurar_parametros', 'Configurar Parametros', 'Permite modificar parametros SII'),
+('gestionar_permisos', 'Gestionar Permisos', 'Permite administrar roles y permisos');
 ");
 
 $vista = isset($_GET['vista']) ? $_GET['vista'] : 'dashboard';
@@ -323,6 +378,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $tipo_mensaje = 'success';
     }
 
+    // Guardar Rol
+    if ($accion === 'guardar_rol') {
+        $stmt = $pdo->prepare("INSERT INTO sii_roles (nombre_rol, descripcion) VALUES (?, ?)");
+        $stmt->execute([$_POST['nombre_rol'], $_POST['descripcion']]);
+        $mensaje = 'Rol creado correctamente';
+        $tipo_mensaje = 'success';
+    }
+
+    // Asignar Permiso a Rol
+    if ($accion === 'asignar_permiso') {
+        $stmt = $pdo->prepare("INSERT IGNORE INTO sii_roles_permisos (rol_id, permiso_id) VALUES (?, ?)");
+        $stmt->execute([$_POST['rol_id'], $_POST['permiso_id']]);
+        $mensaje = 'Permiso asignado correctamente';
+        $tipo_mensaje = 'success';
+    }
+
+    // Quitar Permiso de Rol
+    if ($accion === 'quitar_permiso') {
+        $stmt = $pdo->prepare("DELETE FROM sii_roles_permisos WHERE rol_id = ? AND permiso_id = ?");
+        $stmt->execute([$_POST['rol_id'], $_POST['permiso_id']]);
+        $mensaje = 'Permiso removido correctamente';
+        $tipo_mensaje = 'success';
+    }
+
+    // Asignar Rol a Usuario
+    if ($accion === 'asignar_rol_usuario') {
+        $stmt = $pdo->prepare("INSERT IGNORE INTO sii_usuarios_roles (usuario_id, rol_id) VALUES (?, ?)");
+        $stmt->execute([$_POST['usuario_id'], $_POST['rol_id']]);
+        $mensaje = 'Rol asignado al usuario correctamente';
+        $tipo_mensaje = 'success';
+    }
+
     header("Location: verificacion_facturas_sii.php?vista=$vista&msg=" . urlencode($mensaje) . "&tipo=$tipo_mensaje");
     exit;
 }
@@ -431,6 +518,7 @@ $parametros = $pdo->query("SELECT * FROM sii_parametros LIMIT 1")->fetch();
         <a href="?vista=conciliadas" class="nav-tab <?php echo $vista === 'conciliadas' ? 'active' : ''; ?>">Conciliadas</a>
         <a href="?vista=reportes" class="nav-tab <?php echo $vista === 'reportes' ? 'active' : ''; ?>">Reportes</a>
         <a href="?vista=log_conexion" class="nav-tab <?php echo $vista === 'log_conexion' ? 'active' : ''; ?>">Log Conexion</a>
+        <a href="?vista=permisos" class="nav-tab <?php echo $vista === 'permisos' ? 'active' : ''; ?>">Permisos</a>
     </div>
 
     <div class="container">
@@ -1288,6 +1376,200 @@ $parametros = $pdo->query("SELECT * FROM sii_parametros LIMIT 1")->fetch();
                         <?php endif; ?>
                     </tbody>
                 </table>
+            </div>
+
+        <?php elseif ($vista === 'permisos'): ?>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <p>Roles</p>
+                    <h3><?php echo $pdo->query("SELECT COUNT(*) FROM sii_roles")->fetchColumn(); ?></h3>
+                </div>
+                <div class="stat-card verde">
+                    <p>Permisos</p>
+                    <h3><?php echo $pdo->query("SELECT COUNT(*) FROM sii_permisos")->fetchColumn(); ?></h3>
+                </div>
+                <div class="stat-card azul">
+                    <p>Asignaciones</p>
+                    <h3><?php echo $pdo->query("SELECT COUNT(*) FROM sii_roles_permisos")->fetchColumn(); ?></h3>
+                </div>
+                <div class="stat-card naranja">
+                    <p>Usuarios con Rol</p>
+                    <h3><?php echo $pdo->query("SELECT COUNT(*) FROM sii_usuarios_roles")->fetchColumn(); ?></h3>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title"><i class="fas fa-user-shield"></i> Roles del Sistema</span>
+                    <button class="btn btn-primary" onclick="document.getElementById('modalRol').classList.add('active')"><i class="fas fa-plus"></i> Nuevo Rol</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre Rol</th>
+                            <th>Descripcion</th>
+                            <th>Permisos Asignados</th>
+                            <th>Activo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php
+                        $roles = $pdo->query("SELECT r.*, (SELECT COUNT(*) FROM sii_roles_permisos WHERE rol_id = r.id) as total_permisos FROM sii_roles r ORDER BY r.id")->fetchAll();
+                        foreach ($roles as $rol):
+                        ?>
+                        <tr>
+                            <td><?php echo $rol['id']; ?></td>
+                            <td><strong><?php echo ucfirst(htmlspecialchars($rol['nombre_rol'])); ?></strong></td>
+                            <td><?php echo htmlspecialchars($rol['descripcion']); ?></td>
+                            <td><span class="badge badge-info"><?php echo $rol['total_permisos']; ?> permisos</span></td>
+                            <td><?php echo $rol['activo'] ? '<i class="fas fa-check-circle" style="color:#10b981"></i>' : '<i class="fas fa-times-circle" style="color:#ef4444"></i>'; ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title"><i class="fas fa-key"></i> Permisos Disponibles</span>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Codigo</th>
+                            <th>Nombre</th>
+                            <th>Descripcion</th>
+                            <th>Modulo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php
+                        $permisos = $pdo->query("SELECT * FROM sii_permisos ORDER BY id")->fetchAll();
+                        foreach ($permisos as $p):
+                        ?>
+                        <tr>
+                            <td><code><?php echo htmlspecialchars($p['codigo_permiso']); ?></code></td>
+                            <td><?php echo htmlspecialchars($p['nombre_permiso']); ?></td>
+                            <td><?php echo htmlspecialchars($p['descripcion']); ?></td>
+                            <td><span class="badge badge-secondary"><?php echo htmlspecialchars($p['modulo']); ?></span></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title"><i class="fas fa-link"></i> Asignar Permiso a Rol</span>
+                </div>
+                <form method="POST" style="display:flex; gap:15px; align-items:flex-end; flex-wrap:wrap;">
+                    <input type="hidden" name="accion" value="asignar_permiso">
+                    <div class="form-group" style="margin:0; flex:1; min-width:200px;">
+                        <label>Rol</label>
+                        <select name="rol_id" required>
+                            <?php foreach ($roles as $rol): ?>
+                            <option value="<?php echo $rol['id']; ?>"><?php echo ucfirst($rol['nombre_rol']); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin:0; flex:1; min-width:200px;">
+                        <label>Permiso</label>
+                        <select name="permiso_id" required>
+                            <?php foreach ($permisos as $p): ?>
+                            <option value="<?php echo $p['id']; ?>"><?php echo $p['nombre_permiso']; ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-success"><i class="fas fa-plus"></i> Asignar</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title"><i class="fas fa-list-check"></i> Permisos por Rol</span>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Rol</th>
+                            <th>Permiso</th>
+                            <th>Fecha Asignacion</th>
+                            <th>Accion</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php
+                        $asignaciones = $pdo->query("SELECT rp.*, r.nombre_rol, p.nombre_permiso, p.id as permiso_id FROM sii_roles_permisos rp JOIN sii_roles r ON rp.rol_id = r.id JOIN sii_permisos p ON rp.permiso_id = p.id ORDER BY r.nombre_rol, p.nombre_permiso")->fetchAll();
+                        foreach ($asignaciones as $a):
+                        ?>
+                        <tr>
+                            <td><strong><?php echo ucfirst(htmlspecialchars($a['nombre_rol'])); ?></strong></td>
+                            <td><?php echo htmlspecialchars($a['nombre_permiso']); ?></td>
+                            <td><?php echo date('d/m/Y H:i', strtotime($a['fecha_asignacion'])); ?></td>
+                            <td>
+                                <form method="POST" style="display:inline">
+                                    <input type="hidden" name="accion" value="quitar_permiso">
+                                    <input type="hidden" name="rol_id" value="<?php echo $a['rol_id']; ?>">
+                                    <input type="hidden" name="permiso_id" value="<?php echo $a['permiso_id']; ?>">
+                                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Quitar este permiso?')"><i class="fas fa-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                        <?php if (empty($asignaciones)): ?>
+                        <tr><td colspan="4" class="empty-state">No hay permisos asignados</td></tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title"><i class="fas fa-user-tag"></i> Asignar Rol a Usuario</span>
+                </div>
+                <form method="POST" style="display:flex; gap:15px; align-items:flex-end; flex-wrap:wrap;">
+                    <input type="hidden" name="accion" value="asignar_rol_usuario">
+                    <div class="form-group" style="margin:0; flex:1; min-width:200px;">
+                        <label>ID Usuario</label>
+                        <input type="number" name="usuario_id" required placeholder="ID del usuario">
+                    </div>
+                    <div class="form-group" style="margin:0; flex:1; min-width:200px;">
+                        <label>Rol</label>
+                        <select name="rol_id" required>
+                            <?php foreach ($roles as $rol): ?>
+                            <option value="<?php echo $rol['id']; ?>"><?php echo ucfirst($rol['nombre_rol']); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-success"><i class="fas fa-user-plus"></i> Asignar</button>
+                </form>
+            </div>
+
+            <div id="modalRol" class="modal">
+                <div class="modal-content" style="max-width:500px">
+                    <div class="modal-header">
+                        <h3>Nuevo Rol</h3>
+                        <button class="close-modal" onclick="document.getElementById('modalRol').classList.remove('active')">&times;</button>
+                    </div>
+                    <form method="POST">
+                        <div class="modal-body">
+                            <input type="hidden" name="accion" value="guardar_rol">
+                            <div class="form-group">
+                                <label>Nombre del Rol</label>
+                                <input type="text" name="nombre_rol" required placeholder="ej: supervisor">
+                            </div>
+                            <div class="form-group">
+                                <label>Descripcion</label>
+                                <textarea name="descripcion" rows="3" placeholder="Descripcion del rol y sus responsabilidades"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" onclick="document.getElementById('modalRol').classList.remove('active')">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Guardar</button>
+                        </div>
+                    </form>
+                </div>
             </div>
 
         <?php endif; ?>
