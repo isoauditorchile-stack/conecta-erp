@@ -3,17 +3,34 @@
  * CONECTA ERP - CALIDAD PRODUCCION (QUALITY PRODUCTION)
  * Modulo Completo de Calidad de Produccion
  * Sistema de inspecciones no conformidades acciones correctivas y metricas de calidad
+ * Sin dependencias externas - Todo en un solo archivo
  */
 
-require_once '../../includes/config.php';
+// Iniciar sesion
+session_start();
 
-if (!isAuthenticated()) {
-    header('Location: ../../login.php');
-    exit;
+// Configuracion de base de datos
+define('DB_HOST', 'localhost');
+define('DB_NAME', 'conectae_conectaerpbd');
+define('DB_USER', 'conectae_conectaerpuser');
+define('DB_PASS', 'pt125824caraud');
+define('DB_CHARSET', 'utf8mb4');
+
+// Conexion a base de datos
+try {
+    $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
+    $pdo = new PDO($dsn, DB_USER, DB_PASS, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES => false
+    ]);
+} catch (PDOException $e) {
+    die("Error de conexion: " . $e->getMessage());
 }
 
-$db = Database::getInstance();
-$pdo = $db->getConnection();
+// Variables de sesion
+$company_id = isset($_SESSION['company_id']) ? $_SESSION['company_id'] : 1;
+$user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 1;
 
 $action = $_GET['action'] ?? $_POST['action'] ?? 'dashboard';
 $inspection_id = $_GET['id'] ?? $_POST['inspection_id'] ?? null;
@@ -31,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'create_inspection') {
         ");
         $stmt->execute([
             $_POST['order_id'], $_POST['inspection_type'], $_POST['inspection_date'],
-            $_SESSION['user_id'], $_POST['quantity_inspected'], $_POST['quantity_approved'],
+            $user_id, $_POST['quantity_inspected'], $_POST['quantity_approved'],
             $_POST['quantity_rejected'], $_POST['result'], trim($_POST['notes'] ?? '')
         ]);
         $stmt->closeCursor();
@@ -52,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'create_ncr') {
         $stmt->execute([
             $_POST['inspection_id'], $_POST['ncr_number'], trim($_POST['description']),
             $_POST['severity'], trim($_POST['root_cause'] ?? ''), trim($_POST['corrective_action'] ?? ''),
-            $_SESSION['user_id']
+            $user_id
         ]);
         $stmt->closeCursor();
         $message = "No conformidad registrada exitosamente";

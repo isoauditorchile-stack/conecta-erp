@@ -3,17 +3,34 @@
  * CONECTA ERP - MANTENIMIENTO (MAINTENANCE)
  * Modulo Completo de Mantenimiento
  * Sistema de mantenimiento preventivo correctivo planificacion y metricas MTBF MTTR
+ * Sin dependencias externas - Todo en un solo archivo
  */
 
-require_once '../../includes/config.php';
+// Iniciar sesion
+session_start();
 
-if (!isAuthenticated()) {
-    header('Location: ../../login.php');
-    exit;
+// Configuracion de base de datos
+define('DB_HOST', 'localhost');
+define('DB_NAME', 'conectae_conectaerpbd');
+define('DB_USER', 'conectae_conectaerpuser');
+define('DB_PASS', 'pt125824caraud');
+define('DB_CHARSET', 'utf8mb4');
+
+// Conexion a base de datos
+try {
+    $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
+    $pdo = new PDO($dsn, DB_USER, DB_PASS, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES => false
+    ]);
+} catch (PDOException $e) {
+    die("Error de conexion: " . $e->getMessage());
 }
 
-$db = Database::getInstance();
-$pdo = $db->getConnection();
+// Variables de sesion
+$company_id = isset($_SESSION['company_id']) ? $_SESSION['company_id'] : 1;
+$user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 1;
 
 $action = $_GET['action'] ?? $_POST['action'] ?? 'dashboard';
 $maintenance_id = $_GET['id'] ?? $_POST['maintenance_id'] ?? null;
@@ -33,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($action, ['create', 'updat
             $stmt->execute([
                 $_POST['work_center_id'] ?? null, $_POST['machine_id'] ?? null, $_POST['maintenance_type'],
                 $_POST['scheduled_date'], trim($_POST['description']), $_POST['priority'],
-                $_POST['estimated_duration'], $_SESSION['user_id']
+                $_POST['estimated_duration'], $user_id
             ]);
             $stmt->closeCursor();
             $message = "Mantenimiento programado exitosamente";

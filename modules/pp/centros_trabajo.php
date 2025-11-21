@@ -3,18 +3,34 @@
  * CONECTA ERP - CENTROS DE TRABAJO (WORK CENTERS)
  * Modulo Completo de Gestion de Centros de Trabajo
  * Sistema de capacidad, eficiencia, costos, recursos y mantenimiento
+ * Sin dependencias externas - Todo en un solo archivo
  */
 
-require_once '../../includes/config.php';
+// Iniciar sesion
+session_start();
 
-// Verificar autenticacion
-if (!isAuthenticated()) {
-    header('Location: ../../login.php');
-    exit;
+// Configuracion de base de datos
+define('DB_HOST', 'localhost');
+define('DB_NAME', 'conectae_conectaerpbd');
+define('DB_USER', 'conectae_conectaerpuser');
+define('DB_PASS', 'pt125824caraud');
+define('DB_CHARSET', 'utf8mb4');
+
+// Conexion a base de datos
+try {
+    $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
+    $pdo = new PDO($dsn, DB_USER, DB_PASS, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES => false
+    ]);
+} catch (PDOException $e) {
+    die("Error de conexion: " . $e->getMessage());
 }
 
-$db = Database::getInstance();
-$pdo = $db->getConnection();
+// Variables de sesion
+$company_id = isset($_SESSION['company_id']) ? $_SESSION['company_id'] : 1;
+$user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 1;
 
 // Procesar acciones
 $action = $_GET['action'] ?? $_POST['action'] ?? 'list';
@@ -50,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($action, ['create', 'updat
             $stmt->execute([
                 $center_code, $center_name, $center_type, $department, $capacity_hours, $efficiency,
                 $cost_per_hour, $setup_cost, $labor_cost, $num_operators, $status, $location, $description,
-                $_SESSION['user_id']
+                $user_id
             ]);
             $center_id = $pdo->lastInsertId();
             $message = "Centro de trabajo creado exitosamente";
