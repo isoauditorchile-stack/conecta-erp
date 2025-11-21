@@ -1076,7 +1076,54 @@ $parametros = $pdo->query("SELECT * FROM sii_parametros LIMIT 1")->fetch();
                 </form>
             </div>
 
+            <!-- CERTIFICADO DIGITAL -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title"><i class="fas fa-key"></i> Certificado Digital (.pfx / .p12)</span>
+                </div>
+                <?php if ($parametros && !empty($parametros['certificado_digital'])): ?>
+                    <div class="info-box" style="background:#d4edda;border-color:#28a745;">
+                        <p><i class="fas fa-check-circle" style="color:#28a745;"></i> <strong>Certificado cargado correctamente</strong></p>
+                    </div>
+                <?php else: ?>
+                    <div class="info-box" style="background:#f8d7da;border-color:#dc3545;">
+                        <p><i class="fas fa-exclamation-triangle" style="color:#dc3545;"></i> <strong>No hay certificado digital cargado. Debe cargar su certificado .pfx o .p12 para conectar con SII.</strong></p>
+                    </div>
+                <?php endif; ?>
+                <form method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="accion" value="subir_certificado">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Archivo Certificado (.pfx o .p12)</label>
+                            <input type="file" name="certificado_file" accept=".pfx,.p12" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Clave del Certificado</label>
+                            <input type="password" name="clave_certificado" placeholder="Ingrese la clave del certificado" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-upload"></i> Cargar Certificado</button>
+                </form>
+            </div>
+
+            <!-- PROBAR CONEXION -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title"><i class="fas fa-plug"></i> Probar Conexion con SII</span>
+                </div>
+                <form method="POST">
+                    <input type="hidden" name="accion" value="probar_conexion_sii">
+                    <p>Presione el boton para verificar la conexion con el portal del SII usando el certificado cargado.</p>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Probar Conexion SII</button>
+                </form>
+            </div>
+
         <?php elseif ($vista === 'descargar'): ?>
+            <?php if (!$parametros || empty($parametros['certificado_digital'])): ?>
+            <div class="info-box" style="background:#f8d7da;border-color:#dc3545;margin-bottom:20px;">
+                <p><i class="fas fa-exclamation-triangle" style="color:#dc3545;"></i> <strong>ATENCION:</strong> Debe configurar los parametros SII y cargar su certificado digital antes de descargar facturas. <a href="?vista=parametros">Ir a Parametros</a></p>
+            </div>
+            <?php endif; ?>
             <div class="card">
                 <div class="card-header">
                     <span class="card-title"><span class="sii-logo">SII</span> Descargar Facturas de Compra desde SII</span>
