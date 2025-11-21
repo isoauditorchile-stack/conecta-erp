@@ -37,48 +37,72 @@ class SIIChile {
     // URLs SII
     private $urls = [
         'certificacion' => [
-            'seed' => 'https://maullin.sii.cl/DTEWS/CrSeed.jws?WSDL',
-            'token' => 'https://maullin.sii.cl/DTEWS/GetTokenFromSeed.jws?WSDL',
-            'rcv' => 'https://www4c.sii.cl/registrocompaboraboraliloaboraborRcvws/reaborLiRcvWS'
+            'seed' => 'https://maullin.sii.cl/DTEWS/CrSeed.jws',
+            'token' => 'https://maullin.sii.cl/DTEWS/GetTokenFromSeed.jws',
+            'rcv' => 'https://www4c.sii.cl/consdcvinternetui/services/data/factura/rcv'
         ],
         'produccion' => [
-            'seed' => 'https://palena.sii.cl/DTEWS/CrSeed.jws?WSDL',
-            'token' => 'https://palena.sii.cl/DTEWS/GetTokenFromSeed.jws?WSDL',
-            'rcv' => 'https://www.sii.cl/cgi_rcv/RCVConsulta.cgi'
+            'seed' => 'https://palena.sii.cl/DTEWS/CrSeed.jws',
+            'token' => 'https://palena.sii.cl/DTEWS/GetTokenFromSeed.jws',
+            'rcv' => 'https://www4.sii.cl/consdcvinternetui/services/data/factura/rcv'
         ]
     ];
 
     public function __construct($pdo) {
-        $this->pdo = $pdo;
-        $this->cargarConfiguracion();
+        try {
+            $this->pdo = $pdo;
+            $this->cargarConfiguracion();
+        } catch (Exception $e) {
+            throw new Exception('Error al inicializar SIIChile: ' . $e->getMessage());
+        }
     }
 
     private function cargarConfiguracion() {
-        $stmt = $this->pdo->query("SELECT * FROM sii_parametros WHERE activo=1 LIMIT 1");
-        $config = $stmt->fetch();
-        if ($config) {
-            $this->ambiente = $config['ambiente_sii'] ?: 'certificacion';
-            $this->rutEmpresa = $config['rut_empresa'] . '-' . $config['dv_empresa'];
-            $this->certificado = $config['certificado_digital'];
-            $this->claveCertificado = $config['clave_certificado'];
+        try {
+            $stmt = $this->pdo->query("SELECT * FROM sii_parametros WHERE activo=1 LIMIT 1");
+            $config = $stmt->fetch();
+            if ($config) {
+                $this->ambiente = $config['ambiente_sii'] ?: 'certificacion';
+                $this->rutEmpresa = $config['rut_empresa'] . '-' . $config['dv_empresa'];
+                $this->certificado = $config['certificado_digital'];
+                $this->claveCertificado = $config['clave_certificado'];
+            } else {
+                // Configuracion por defecto
+                $this->ambiente = 'certificacion';
+                $this->rutEmpresa = '';
+                $this->certificado = '';
+                $this->claveCertificado = '';
+            }
+        } catch (Exception $e) {
+            // Configuracion por defecto en caso de error
+            $this->ambiente = 'certificacion';
+            $this->rutEmpresa = '';
+            $this->certificado = '';
+            $this->claveCertificado = '';
         }
     }
 
     public function getSeed() {
-        $url = $this->urls[$this->ambiente]['seed'];
-        $soap = '<?xml version="1.0" encoding="UTF-8"?>
-        <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
-            <soapenv:Body>
-                <getSeed/>
-            </soapenv:Body>
-        </soapenv:Envelope>';
+        try {
+            $url = $this->urls[$this->ambiente]['seed'];
+            $soap = '<?xml version="1.0" encoding="UTF-8"?>
+            <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+                <soapenv:Body>
+                    <getSeed/>
+                </soapenv:Body>
+            </soapenv:Envelope>';
 
-        $response = $this->curlRequest($url, $soap, ['Content-Type: text/xml; charset=utf-8', 'SOAPAction: ""'], 'POST');
+            $response = $this->curlRequest($url, $soap, ['Content-Type: text/xml; charset=utf-8', 'SOAPAction: ""'], 'POST');
 
-        if ($response && preg_match('/<SEMILLA>([^<]+)<\/SEMILLA>/', $response, $matches)) {
-            return $matches[1];
+            if ($response && preg_match('/<SEMILLA>([^<]+)<\/SEMILLA>/', $response, $matches)) {
+                return $matches[1];
+            }
+            $this->log('error', '', 'error', 'No se pudo obtener semilla del SII');
+            return false;
+        } catch (Exception $e) {
+            $this->log('error', '', 'error', 'Excepcion en getSeed: ' . $e->getMessage());
+            return false;
         }
-        return false;
     }
 
     public function getToken() {
@@ -156,11 +180,17 @@ class SIIChile {
         $certInfo = openssl_x509_parse($certificate);
         $serialNumber = $certInfo['serialNumber'] ?? '';
 
+        // Extraer semilla
+        $semilla = '';
+        if (preg_match('/<Semilla>([^<]+)<\/Semilla>/', $xml, $m)) {
+            $semilla = $m[1];
+        }
+
         // Construir XML firmado
         $signedXml = '<?xml version="1.0" encoding="UTF-8"?>
         <getToken>
             <item>
-                <Semilla>' . preg_match('/<Semilla>([^<]+)<\/Semilla>/', $xml, $m) ? $m[1] : '' . '</Semilla>
+                <Semilla>' . $semilla . '</Semilla>
             </item>
             <Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
                 <SignedInfo>
@@ -269,94 +299,109 @@ class SIIChile {
     }
 
     public function sincronizarPeriodo($periodoDesde, $periodoHasta, $descargaId) {
-        $tiposDte = [33, 34, 43, 46, 52, 56, 61];
-        $totalDescargados = 0;
-        $totalNuevos = 0;
-        $errores = [];
+        try {
+            if (empty($this->rutEmpresa)) {
+                return ['descargados' => 0, 'nuevos' => 0, 'errores' => ['Debe configurar RUT empresa en Parametros SII']];
+            }
+            if (empty($this->certificado)) {
+                return ['descargados' => 0, 'nuevos' => 0, 'errores' => ['Debe cargar certificado digital en Parametros SII']];
+            }
 
-        // Convertir periodos a formato YYYYMM
-        $desde = str_replace('-', '', substr($periodoDesde, 0, 7));
-        $hasta = str_replace('-', '', substr($periodoHasta, 0, 7));
+            $tiposDte = [33, 34, 43, 46, 52, 56, 61];
+            $totalDescargados = 0;
+            $totalNuevos = 0;
+            $errores = [];
 
-        $periodoActual = $desde;
-        while ($periodoActual <= $hasta) {
-            foreach ($tiposDte as $tipo) {
-                $resultado = $this->consultarRCV($periodoActual, $tipo);
+            // Convertir periodos a formato YYYYMM
+            $desde = str_replace('-', '', substr($periodoDesde, 0, 7));
+            $hasta = str_replace('-', '', substr($periodoHasta, 0, 7));
 
-                if (isset($resultado['error'])) {
-                    $errores[] = "Periodo $periodoActual Tipo $tipo: " . $resultado['error'];
-                    continue;
-                }
+            $periodoActual = $desde;
+            while ($periodoActual <= $hasta) {
+                foreach ($tiposDte as $tipo) {
+                    $resultado = $this->consultarRCV($periodoActual, $tipo);
 
-                foreach ($resultado['dtes'] as $dte) {
-                    $guardado = $this->guardarDTE($dte, $descargaId);
-                    if ($guardado === 'nuevo') {
-                        $totalNuevos++;
+                    if (isset($resultado['error'])) {
+                        $errores[] = "Periodo $periodoActual Tipo $tipo: " . $resultado['error'];
+                        continue;
                     }
-                    $totalDescargados++;
+
+                    foreach ($resultado['dtes'] as $dte) {
+                        $guardado = $this->guardarDTE($dte, $descargaId);
+                        if ($guardado === 'nuevo') {
+                            $totalNuevos++;
+                        }
+                        $totalDescargados++;
+                    }
                 }
+
+                // Siguiente periodo
+                $year = substr($periodoActual, 0, 4);
+                $month = (int)substr($periodoActual, 4, 2) + 1;
+                if ($month > 12) {
+                    $month = 1;
+                    $year++;
+                }
+                $periodoActual = $year . str_pad($month, 2, '0', STR_PAD_LEFT);
             }
 
-            // Siguiente periodo
-            $year = substr($periodoActual, 0, 4);
-            $month = (int)substr($periodoActual, 4, 2) + 1;
-            if ($month > 12) {
-                $month = 1;
-                $year++;
-            }
-            $periodoActual = $year . str_pad($month, 2, '0', STR_PAD_LEFT);
+            return [
+                'descargados' => $totalDescargados,
+                'nuevos' => $totalNuevos,
+                'errores' => $errores
+            ];
+        } catch (Exception $e) {
+            return ['descargados' => 0, 'nuevos' => 0, 'errores' => ['Excepcion: ' . $e->getMessage()]];
         }
-
-        return [
-            'descargados' => $totalDescargados,
-            'nuevos' => $totalNuevos,
-            'errores' => $errores
-        ];
     }
 
     private function guardarDTE($dte, $descargaId) {
-        // Verificar si ya existe
-        $stmt = $this->pdo->prepare("SELECT id FROM sii_dte_compras WHERE folio_dte=? AND tipo_dte=? AND rut_proveedor=?");
-        $stmt->execute([$dte['folio'], $dte['tipo_dte'], $dte['rut_emisor']]);
+        try {
+            // Verificar si ya existe
+            $stmt = $this->pdo->prepare("SELECT id FROM sii_dte_compras WHERE folio_dte=? AND tipo_dte=? AND rut_proveedor=?");
+            $stmt->execute([$dte['folio'], $dte['tipo_dte'], $dte['rut_emisor']]);
 
-        if ($stmt->fetch()) {
-            return 'existente';
+            if ($stmt->fetch()) {
+                return 'existente';
+            }
+
+            $tiposNombre = [
+                33 => 'Factura Electronica', 34 => 'Factura No Afecta o Exenta',
+                43 => 'Liquidacion Factura', 46 => 'Factura de Compra',
+                52 => 'Guia de Despacho', 56 => 'Nota de Debito', 61 => 'Nota de Credito'
+            ];
+
+            $rutParts = explode('-', $dte['rut_emisor']);
+
+            $stmt = $this->pdo->prepare("INSERT INTO sii_dte_compras
+                (folio_dte, tipo_dte, tipo_dte_nombre, rut_proveedor, dv_proveedor, razon_social_proveedor,
+                 fecha_emision, monto_neto, monto_iva, monto_total, estado_dte_sii, descarga_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'aceptado', ?)");
+
+            $stmt->execute([
+                $dte['folio'],
+                $dte['tipo_dte'],
+                $tiposNombre[$dte['tipo_dte']] ?? 'Otro',
+                $rutParts[0] ?? $dte['rut_emisor'],
+                $rutParts[1] ?? '',
+                $dte['razon_social'],
+                $dte['fecha_emision'],
+                $dte['monto_neto'],
+                $dte['monto_iva'],
+                $dte['monto_total'],
+                $descargaId
+            ]);
+
+            $dteId = $this->pdo->lastInsertId();
+
+            // Crear registros relacionados
+            $this->pdo->exec("INSERT INTO sii_verificacion (dte_sii_id, existe_en_sii, estado_verificacion) VALUES ($dteId, 1, 'pendiente')");
+            $this->pdo->exec("INSERT INTO sii_vinculacion_erp (dte_sii_id, estado_vinculacion) VALUES ($dteId, 'sin_vincular')");
+
+            return 'nuevo';
+        } catch (Exception $e) {
+            return 'error';
         }
-
-        $tiposNombre = [
-            33 => 'Factura Electronica', 34 => 'Factura No Afecta o Exenta',
-            43 => 'Liquidacion Factura', 46 => 'Factura de Compra',
-            52 => 'Guia de Despacho', 56 => 'Nota de Debito', 61 => 'Nota de Credito'
-        ];
-
-        $rutParts = explode('-', $dte['rut_emisor']);
-
-        $stmt = $this->pdo->prepare("INSERT INTO sii_dte_compras
-            (folio_dte, tipo_dte, tipo_dte_nombre, rut_proveedor, dv_proveedor, razon_social_proveedor,
-             fecha_emision, monto_neto, monto_iva, monto_total, estado_dte_sii, descarga_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'aceptado', ?)");
-
-        $stmt->execute([
-            $dte['folio'],
-            $dte['tipo_dte'],
-            $tiposNombre[$dte['tipo_dte']] ?? 'Otro',
-            $rutParts[0] ?? $dte['rut_emisor'],
-            $rutParts[1] ?? '',
-            $dte['razon_social'],
-            $dte['fecha_emision'],
-            $dte['monto_neto'],
-            $dte['monto_iva'],
-            $dte['monto_total'],
-            $descargaId
-        ]);
-
-        $dteId = $this->pdo->lastInsertId();
-
-        // Crear registros relacionados
-        $this->pdo->exec("INSERT INTO sii_verificacion (dte_sii_id, existe_en_sii, estado_verificacion) VALUES ($dteId, 1, 'pendiente')");
-        $this->pdo->exec("INSERT INTO sii_vinculacion_erp (dte_sii_id, estado_vinculacion) VALUES ($dteId, 'sin_vincular')");
-
-        return 'nuevo';
     }
 
     private function curlRequest($url, $data, $headers, $method = 'POST') {
@@ -390,17 +435,29 @@ class SIIChile {
     }
 
     private function log($tipo, $periodo, $estado, $mensaje) {
-        $stmt = $this->pdo->prepare("INSERT INTO sii_conexion_log (estado_conexion, fecha_conexion, periodo_sincronizado, detalle_log) VALUES (?, NOW(), ?, ?)");
-        $stmt->execute([$estado, $periodo, $mensaje]);
+        try {
+            $stmt = $this->pdo->prepare("INSERT INTO sii_conexion_log (estado_conexion, fecha_conexion, periodo_sincronizado, detalle_log) VALUES (?, NOW(), ?, ?)");
+            $stmt->execute([$estado, $periodo, $mensaje]);
+        } catch (Exception $e) {
+            // Silenciar errores de log para no interrumpir el flujo
+        }
     }
 
     public function probarConexion() {
-        $seed = $this->getSeed();
-        if ($seed) {
-            $this->log('test', '', 'conectado', 'Prueba de conexion exitosa - Seed obtenido: ' . substr($seed, 0, 10) . '...');
-            return ['success' => true, 'message' => 'Conexion exitosa con SII'];
+        try {
+            if (empty($this->rutEmpresa)) {
+                return ['success' => false, 'message' => 'Debe configurar los parametros SII (RUT empresa)'];
+            }
+
+            $seed = $this->getSeed();
+            if ($seed) {
+                $this->log('test', '', 'conectado', 'Prueba de conexion exitosa - Seed obtenido: ' . substr($seed, 0, 10) . '...');
+                return ['success' => true, 'message' => 'Conexion exitosa con SII - Seed obtenido correctamente'];
+            }
+            return ['success' => false, 'message' => 'No se pudo conectar con SII - Verifique su conexion a internet'];
+        } catch (Exception $e) {
+            return ['success' => false, 'message' => 'Error: ' . $e->getMessage()];
         }
-        return ['success' => false, 'message' => 'No se pudo conectar con SII'];
     }
 }
 // ============================================================================
@@ -671,58 +728,76 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Descarga REAL desde SII usando clase SIIChile
     if ($accion === 'descargar_sii') {
-        $periodo_desde = $_POST['periodo_desde'];
-        $periodo_hasta = $_POST['periodo_hasta'];
+        try {
+            $periodo_desde = $_POST['periodo_desde'];
+            $periodo_hasta = $_POST['periodo_hasta'];
 
-        // Registrar descarga
-        $stmt = $pdo->prepare("INSERT INTO sii_descargas (periodo_desde, periodo_hasta, tipo_descarga, estado_descarga, fecha_inicio) VALUES (?, ?, ?, 'en_proceso', NOW())");
-        $stmt->execute([$periodo_desde, $periodo_hasta, $_POST['tipo_descarga']]);
-        $descarga_id = $pdo->lastInsertId();
+            // Registrar descarga
+            $stmt = $pdo->prepare("INSERT INTO sii_descargas (periodo_desde, periodo_hasta, tipo_descarga, estado_descarga, fecha_inicio) VALUES (?, ?, ?, 'en_proceso', NOW())");
+            $stmt->execute([$periodo_desde, $periodo_hasta, $_POST['tipo_descarga']]);
+            $descarga_id = $pdo->lastInsertId();
 
-        // Usar clase SII real
-        $sii = new SIIChile($pdo);
-        $resultado = $sii->sincronizarPeriodo($periodo_desde, $periodo_hasta, $descarga_id);
+            // Usar clase SII real
+            $sii = new SIIChile($pdo);
+            $resultado = $sii->sincronizarPeriodo($periodo_desde, $periodo_hasta, $descarga_id);
 
-        if (!empty($resultado['errores'])) {
-            $erroresTexto = implode('; ', $resultado['errores']);
-            $pdo->prepare("UPDATE sii_descargas SET estado_descarga='con_errores', fecha_fin=NOW(), facturas_nuevas=?, facturas_descargadas=?, errores=? WHERE id=?")->execute([$resultado['nuevos'], $resultado['descargados'], $erroresTexto, $descarga_id]);
-            $mensaje = 'Descarga completada con errores. Nuevas: ' . $resultado['nuevos'] . ', Total: ' . $resultado['descargados'];
-            $tipo_mensaje = 'warning';
-        } else {
-            $pdo->prepare("UPDATE sii_descargas SET estado_descarga='exitoso', fecha_fin=NOW(), facturas_nuevas=?, facturas_descargadas=? WHERE id=?")->execute([$resultado['nuevos'], $resultado['descargados'], $descarga_id]);
-            $mensaje = 'Descarga exitosa desde SII. Facturas nuevas: ' . $resultado['nuevos'] . ', Total procesadas: ' . $resultado['descargados'];
-            $tipo_mensaje = 'success';
+            if (!empty($resultado['errores'])) {
+                $erroresTexto = implode('; ', $resultado['errores']);
+                $pdo->prepare("UPDATE sii_descargas SET estado_descarga='con_errores', fecha_fin=NOW(), facturas_nuevas=?, facturas_descargadas=?, errores=? WHERE id=?")->execute([$resultado['nuevos'], $resultado['descargados'], $erroresTexto, $descarga_id]);
+                $mensaje = 'Descarga completada con errores. Nuevas: ' . $resultado['nuevos'] . ', Total: ' . $resultado['descargados'];
+                $tipo_mensaje = 'warning';
+            } else {
+                $pdo->prepare("UPDATE sii_descargas SET estado_descarga='exitoso', fecha_fin=NOW(), facturas_nuevas=?, facturas_descargadas=? WHERE id=?")->execute([$resultado['nuevos'], $resultado['descargados'], $descarga_id]);
+                $mensaje = 'Descarga exitosa desde SII. Facturas nuevas: ' . $resultado['nuevos'] . ', Total procesadas: ' . $resultado['descargados'];
+                $tipo_mensaje = 'success';
+            }
+        } catch (Exception $e) {
+            $mensaje = 'Error al descargar desde SII: ' . $e->getMessage();
+            $tipo_mensaje = 'danger';
+            if (isset($descarga_id)) {
+                $pdo->prepare("UPDATE sii_descargas SET estado_descarga='con_errores', fecha_fin=NOW(), errores=? WHERE id=?")->execute([$e->getMessage(), $descarga_id]);
+            }
         }
     }
 
     // Probar conexion SII
     if ($accion === 'probar_conexion_sii') {
-        $sii = new SIIChile($pdo);
-        $resultado = $sii->probarConexion();
-        $mensaje = $resultado['message'];
-        $tipo_mensaje = $resultado['success'] ? 'success' : 'danger';
+        try {
+            $sii = new SIIChile($pdo);
+            $resultado = $sii->probarConexion();
+            $mensaje = $resultado['message'];
+            $tipo_mensaje = $resultado['success'] ? 'success' : 'danger';
+        } catch (Exception $e) {
+            $mensaje = 'Error al probar conexion: ' . $e->getMessage();
+            $tipo_mensaje = 'danger';
+        }
     }
 
     // Subir certificado digital
     if ($accion === 'subir_certificado') {
-        if (isset($_FILES['certificado_file']) && $_FILES['certificado_file']['error'] === UPLOAD_ERR_OK) {
-            $certContent = file_get_contents($_FILES['certificado_file']['tmp_name']);
-            $certBase64 = base64_encode($certContent);
-            $clave = $_POST['clave_certificado'];
+        try {
+            if (isset($_FILES['certificado_file']) && $_FILES['certificado_file']['error'] === UPLOAD_ERR_OK) {
+                $certContent = file_get_contents($_FILES['certificado_file']['tmp_name']);
+                $certBase64 = base64_encode($certContent);
+                $clave = $_POST['clave_certificado'];
 
-            // Validar que se puede leer el certificado
-            $certs = [];
-            if (openssl_pkcs12_read($certContent, $certs, $clave)) {
-                $stmt = $pdo->prepare("UPDATE sii_parametros SET certificado_digital=?, clave_certificado=? WHERE activo=1");
-                $stmt->execute([$certBase64, $clave]);
-                $mensaje = 'Certificado digital cargado correctamente';
-                $tipo_mensaje = 'success';
+                // Validar que se puede leer el certificado
+                $certs = [];
+                if (openssl_pkcs12_read($certContent, $certs, $clave)) {
+                    $stmt = $pdo->prepare("UPDATE sii_parametros SET certificado_digital=?, clave_certificado=? WHERE activo=1");
+                    $stmt->execute([$certBase64, $clave]);
+                    $mensaje = 'Certificado digital cargado correctamente';
+                    $tipo_mensaje = 'success';
+                } else {
+                    $mensaje = 'Error: No se pudo leer el certificado. Verifique la clave.';
+                    $tipo_mensaje = 'danger';
+                }
             } else {
-                $mensaje = 'Error: No se pudo leer el certificado. Verifique la clave.';
+                $mensaje = 'Error al subir el archivo de certificado';
                 $tipo_mensaje = 'danger';
             }
-        } else {
-            $mensaje = 'Error al subir el archivo de certificado';
+        } catch (Exception $e) {
+            $mensaje = 'Error al cargar certificado: ' . $e->getMessage();
             $tipo_mensaje = 'danger';
         }
     }
