@@ -86,18 +86,26 @@ class SIIChile {
         try {
             $url = $this->urls[$this->ambiente]['seed'];
             $soap = '<?xml version="1.0" encoding="UTF-8"?>
-            <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
-                <soapenv:Body>
-                    <getSeed/>
-                </soapenv:Body>
-            </soapenv:Envelope>';
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:def="http://DefaultNamespace">
+    <soapenv:Header/>
+    <soapenv:Body>
+        <def:getSeed/>
+    </soapenv:Body>
+</soapenv:Envelope>';
 
-            $response = $this->curlRequest($url, $soap, ['Content-Type: text/xml; charset=utf-8', 'SOAPAction: ""'], 'POST');
+            $response = $this->curlRequest($url, $soap, [
+                'Content-Type: text/xml; charset=utf-8',
+                'SOAPAction: ""',
+                'Content-Length: ' . strlen($soap)
+            ], 'POST');
 
             if ($response && preg_match('/<SEMILLA>([^<]+)<\/SEMILLA>/', $response, $matches)) {
                 return $matches[1];
             }
-            $this->log('error', '', 'error', 'No se pudo obtener semilla del SII');
+            if ($response && preg_match('/<getSeedReturn>([^<]+)<\/getSeedReturn>/', $response, $matches)) {
+                return $matches[1];
+            }
+            $this->log('error', '', 'error', 'No se pudo obtener semilla del SII. Respuesta: ' . substr($response, 0, 500));
             return false;
         } catch (Exception $e) {
             $this->log('error', '', 'error', 'Excepcion en getSeed: ' . $e->getMessage());
@@ -413,7 +421,9 @@ class SIIChile {
             CURLOPT_SSL_VERIFYPEER => false,
             CURLOPT_SSL_VERIFYHOST => 0,
             CURLOPT_HTTPHEADER => $headers,
-            CURLOPT_USERAGENT => 'CONECTA-ERP/1.0'
+            CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) CONECTA-ERP/1.0',
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_MAXREDIRS => 5
         ]);
 
         if ($method === 'POST') {
@@ -427,7 +437,17 @@ class SIIChile {
         curl_close($ch);
 
         if ($error) {
-            $this->log('curl_error', '', 'error', "Error CURL: $error");
+            $this->log('curl_error', '', 'error', "Error CURL: $error (HTTP $httpCode)");
+            return false;
+        }
+
+        if ($httpCode === 404) {
+            $this->log('http_error', '', 'error', "Error 404: URL no encontrada - $url");
+            return false;
+        }
+
+        if ($httpCode >= 400) {
+            $this->log('http_error', '', 'error', "Error HTTP $httpCode en $url");
             return false;
         }
 
@@ -449,12 +469,21 @@ class SIIChile {
                 return ['success' => false, 'message' => 'Debe configurar los parametros SII (RUT empresa)'];
             }
 
+            $url = $this->urls[$this->ambiente]['seed'];
+            $this->log('test', '', 'conectado', 'Intentando conectar a: ' . $url);
+
             $seed = $this->getSeed();
             if ($seed) {
                 $this->log('test', '', 'conectado', 'Prueba de conexion exitosa - Seed obtenido: ' . substr($seed, 0, 10) . '...');
                 return ['success' => true, 'message' => 'Conexion exitosa con SII - Seed obtenido correctamente'];
             }
-            return ['success' => false, 'message' => 'No se pudo conectar con SII - Verifique su conexion a internet'];
+
+            // Obtener ultimo error del log
+            $stmt = $this->pdo->query("SELECT detalle_log FROM sii_conexion_log ORDER BY id DESC LIMIT 1");
+            $lastLog = $stmt->fetch();
+            $errorDetail = $lastLog ? $lastLog['detalle_log'] : 'Sin detalles';
+
+            return ['success' => false, 'message' => 'No se pudo conectar con SII. Error: ' . $errorDetail];
         } catch (Exception $e) {
             return ['success' => false, 'message' => 'Error: ' . $e->getMessage()];
         }
