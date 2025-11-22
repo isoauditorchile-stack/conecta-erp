@@ -1,8 +1,8 @@
 <?php
 /**
- * CONECTA ERP - MODULO DE CONTABILIDAD FINANCIERA (SAP FI LEVEL)
- * Sistema completo de contabilidad nivel SAP FI
- * Plan de cuentas jerarquico - Asientos - Subledgers - Clearing - Reportes Excel
+ * CONECTA ERP - MODULO DE CONTABILIDAD FINANCIERA COMPLETO
+ * Sistema completo de contabilidad con plan de cuentas jerarquico (7 niveles) y asientos contables
+ * Integraciones automaticas, clasificaciones IFRS/NIC, auditoria completa
  * Sin dependencias externas - Todo en un solo archivo
  */
 
@@ -32,1067 +32,692 @@ try {
 $company_id = isset($_SESSION['company_id']) ? $_SESSION['company_id'] : 1;
 $user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 1;
 
-$action = $_GET['action'] ?? $_POST['action'] ?? 'accounts';
+$action = $_GET['action'] ?? $_POST['action'] ?? 'cuentas';
 $message = '';
 $error = '';
 
 // === CREAR TABLAS SI NO EXISTEN ===
 try {
-    // Tabla de ejercicios fiscales (fiscal years)
-    $pdo->exec("CREATE TABLE IF NOT EXISTS acc_fiscal_years (
+    // Tabla de plan de cuentas (7 niveles jerarquicos completos)
+    $pdo->exec("CREATE TABLE IF NOT EXISTS acc_plan_cuentas (
         id INT AUTO_INCREMENT PRIMARY KEY,
         company_id INT NOT NULL DEFAULT 1,
-        year VARCHAR(4) NOT NULL,
-        start_date DATE NOT NULL,
-        end_date DATE NOT NULL,
-        status ENUM('open', 'closed') DEFAULT 'open',
-        closed_by INT NULL,
-        closed_at TIMESTAMP NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE KEY uk_year_company (year, company_id)
+        codigo_completo VARCHAR(50) NOT NULL COMMENT 'Ej: 1-1-02-004-01-001-001',
+        codigo_corto VARCHAR(20),
+        nivel INT NOT NULL COMMENT '1 a 7 niveles jerarquicos',
+        cuenta_padre INT NULL,
+        estructura_jerarquica VARCHAR(255) COMMENT 'Path completo de IDs',
+        orden_presentacion INT DEFAULT 0,
+        tipo_cuenta ENUM('balance', 'resultado', 'orden') DEFAULT 'balance',
+
+        nombre_cuenta VARCHAR(255) NOT NULL,
+        descripcion TEXT,
+        naturaleza ENUM('deudor', 'acreedor') NOT NULL,
+        tipo ENUM('activo', 'pasivo', 'patrimonio', 'ingreso', 'gasto', 'orden') NOT NULL,
+        subtipo VARCHAR(100) COMMENT 'circulante fijo no_corriente costo inversion',
+
+        moneda_base VARCHAR(3) DEFAULT 'CLP',
+        moneda_alternativa VARCHAR(3),
+        permite_movimientos TINYINT(1) DEFAULT 0,
+        permite_asientos_automaticos TINYINT(1) DEFAULT 1,
+        requiere_centro_costo TINYINT(1) DEFAULT 0,
+        requiere_auxiliar ENUM('ninguno', 'cliente', 'proveedor', 'empleado', 'activo_fijo', 'otro'),
+        requiere_proyecto TINYINT(1) DEFAULT 0,
+        requiere_dimension_adicional TINYINT(1) DEFAULT 0,
+
+        cuenta_revaluacion_id INT NULL,
+        cuenta_ajuste_tipo_cambio_id INT NULL,
+        es_cuenta_flujo_efectivo TINYINT(1) DEFAULT 0,
+        es_cuenta_restringida TINYINT(1) DEFAULT 0,
+
+        clasificacion_ifrs VARCHAR(100),
+        clasificacion_nic_niif VARCHAR(100),
+        clasificacion_analisis_financiero VARCHAR(100),
+        clasificacion_libro_tributario VARCHAR(100),
+        grupo_depreciacion VARCHAR(50),
+        asignacion_rubro_balance VARCHAR(100),
+        asignacion_rubro_resultado VARCHAR(100),
+        clasificacion_informes_gestion VARCHAR(100),
+        clasificacion_flujo_caja VARCHAR(100) COMMENT 'operacion inversion financiacion',
+        clasificacion_proyectos VARCHAR(100),
+
+        integracion_ventas TINYINT(1) DEFAULT 0,
+        integracion_compras TINYINT(1) DEFAULT 0,
+        integracion_clientes TINYINT(1) DEFAULT 0,
+        integracion_bancos TINYINT(1) DEFAULT 0,
+        integracion_inventario TINYINT(1) DEFAULT 0,
+        integracion_activos_fijos TINYINT(1) DEFAULT 0,
+        integracion_remuneraciones TINYINT(1) DEFAULT 0,
+        integracion_produccion TINYINT(1) DEFAULT 0,
+        integracion_tesoreria TINYINT(1) DEFAULT 0,
+        integracion_impuestos TINYINT(1) DEFAULT 0,
+
+        cuenta_parametrica_tipo VARCHAR(100) COMMENT 'deudas_proveedores cxc_clientes iva_credito etc',
+        asignacion_tipo_documento VARCHAR(100),
+        asignacion_area VARCHAR(100),
+        asignacion_sucursal VARCHAR(100),
+        asignacion_pais VARCHAR(3),
+        asignacion_tipo_transaccion VARCHAR(100),
+        cuenta_conciliacion_automatica TINYINT(1) DEFAULT 0,
+
+        bloqueada TINYINT(1) DEFAULT 0,
+        edicion_restringida TINYINT(1) DEFAULT 0,
+        activa TINYINT(1) DEFAULT 1,
+        version INT DEFAULT 1,
+
+        usuario_creacion INT,
+        fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        usuario_modificacion INT,
+        fecha_modificacion TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP,
+
+        UNIQUE KEY uk_codigo_completo (codigo_completo, company_id),
+        INDEX idx_nivel (nivel),
+        INDEX idx_cuenta_padre (cuenta_padre),
+        INDEX idx_tipo (tipo),
+        INDEX idx_permite_movimientos (permite_movimientos),
+        INDEX idx_clasificacion_ifrs (clasificacion_ifrs),
+        INDEX idx_activa (activa)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    // Tabla de asientos contables (cabecera)
+    $pdo->exec("CREATE TABLE IF NOT EXISTS acc_asientos (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        company_id INT NOT NULL DEFAULT 1,
+        numero_asiento VARCHAR(50) NOT NULL,
+        ano_contable INT NOT NULL,
+        periodo_contable INT NOT NULL COMMENT '1-12',
+        fecha_documento DATE NOT NULL,
+        fecha_registro DATE NOT NULL,
+        lote VARCHAR(50) COMMENT 'Batch',
+        tipo_asiento ENUM('manual', 'automatico', 'reverso', 'ajuste', 'apertura', 'cierre') NOT NULL,
+        origen VARCHAR(100) COMMENT 'ventas compras banco inventario produccion rrhh',
+        glosa_cabecera TEXT,
+
+        usuario_creacion INT,
+        fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        usuario_aprobacion INT NULL,
+        fecha_aprobacion TIMESTAMP NULL,
+        estado ENUM('borrador', 'aprobado', 'contabilizado', 'reversado', 'bloqueado') DEFAULT 'borrador',
+
+        total_debito DECIMAL(18,2) DEFAULT 0,
+        total_credito DECIMAL(18,2) DEFAULT 0,
+        diferencia DECIMAL(18,2) GENERATED ALWAYS AS (total_debito - total_credito) STORED,
+        cuadrado TINYINT(1) GENERATED ALWAYS AS (ABS(total_debito - total_credito) < 0.01) STORED,
+
+        asiento_reversado_id INT NULL COMMENT 'ID del asiento que fue reversado',
+        asiento_reverso_id INT NULL COMMENT 'ID del asiento reverso',
+        es_asiento_critico TINYINT(1) DEFAULT 0,
+        requiere_doble_aprobacion TINYINT(1) DEFAULT 0,
+        bloqueado_auditoria TINYINT(1) DEFAULT 0,
+
+        usuario_modifica INT NULL,
+        fecha_ultima_modificacion TIMESTAMP NULL,
+
+        UNIQUE KEY uk_numero_asiento (numero_asiento, company_id),
+        INDEX idx_ano_periodo (ano_contable, periodo_contable),
+        INDEX idx_fecha_documento (fecha_documento),
+        INDEX idx_tipo_asiento (tipo_asiento),
+        INDEX idx_origen (origen),
+        INDEX idx_estado (estado),
+        INDEX idx_lote (lote)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    // Tabla de lineas de asiento (detalle)
+    $pdo->exec("CREATE TABLE IF NOT EXISTS acc_asientos_detalle (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        asiento_id INT NOT NULL,
+        linea INT NOT NULL,
+        cuenta_id INT NOT NULL,
+        descripcion_cuenta VARCHAR(255),
+        debito DECIMAL(18,2) DEFAULT 0,
+        credito DECIMAL(18,2) DEFAULT 0,
+        moneda VARCHAR(3) DEFAULT 'CLP',
+        tipo_cambio DECIMAL(12,6) DEFAULT 1.000000,
+        debito_moneda_base DECIMAL(18,2) GENERATED ALWAYS AS (debito * tipo_cambio) STORED,
+        credito_moneda_base DECIMAL(18,2) GENERATED ALWAYS AS (credito * tipo_cambio) STORED,
+
+        centro_costo_id INT NULL,
+        proyecto_id INT NULL,
+        sucursal_id INT NULL,
+        auxiliar_tipo VARCHAR(50) COMMENT 'cliente proveedor empleado activo_fijo',
+        auxiliar_id INT NULL,
+        referencia_documento VARCHAR(100),
+        numero_documento VARCHAR(100),
+        fecha_documento DATE,
+        glosa_detalle TEXT,
+
+        linea_reversada TINYINT(1) DEFAULT 0,
+        regla_automatica VARCHAR(100),
+
+        FOREIGN KEY (asiento_id) REFERENCES acc_asientos(id) ON DELETE CASCADE,
+        FOREIGN KEY (cuenta_id) REFERENCES acc_plan_cuentas(id),
+        INDEX idx_asiento (asiento_id),
+        INDEX idx_cuenta (cuenta_id),
+        INDEX idx_centro_costo (centro_costo_id),
+        INDEX idx_auxiliar (auxiliar_tipo, auxiliar_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
     // Tabla de periodos contables
-    $pdo->exec("CREATE TABLE IF NOT EXISTS acc_periods (
+    $pdo->exec("CREATE TABLE IF NOT EXISTS acc_periodos (
         id INT AUTO_INCREMENT PRIMARY KEY,
         company_id INT NOT NULL DEFAULT 1,
-        fiscal_year_id INT NOT NULL,
-        period VARCHAR(7) NOT NULL COMMENT 'YYYY-MM',
-        period_number INT NOT NULL,
-        start_date DATE NOT NULL,
-        end_date DATE NOT NULL,
-        status ENUM('open', 'closed') DEFAULT 'open',
-        closed_by INT NULL,
-        closed_at TIMESTAMP NULL,
-        UNIQUE KEY uk_period_company (period, company_id),
-        INDEX idx_fiscal_year (fiscal_year_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
-    // Tabla de tipos de documento
-    $pdo->exec("CREATE TABLE IF NOT EXISTS acc_document_types (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        company_id INT NOT NULL DEFAULT 1,
-        code VARCHAR(10) NOT NULL,
-        name VARCHAR(100) NOT NULL,
-        description TEXT,
-        category ENUM('accounting', 'ar', 'ap', 'bank', 'asset', 'other') DEFAULT 'accounting',
-        number_range_start INT DEFAULT 1,
-        number_range_end INT DEFAULT 999999,
-        next_number INT DEFAULT 1,
-        active TINYINT(1) DEFAULT 1,
-        UNIQUE KEY uk_code_company (code, company_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
-    // Tabla de claves de contabilizacion (posting keys)
-    $pdo->exec("CREATE TABLE IF NOT EXISTS acc_posting_keys (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        company_id INT NOT NULL DEFAULT 1,
-        key_code VARCHAR(10) NOT NULL,
-        name VARCHAR(100) NOT NULL,
-        type ENUM('debit', 'credit') NOT NULL,
-        account_type ENUM('gl', 'customer', 'vendor', 'asset') DEFAULT 'gl',
-        special_gl VARCHAR(20),
-        active TINYINT(1) DEFAULT 1,
-        UNIQUE KEY uk_key_company (key_code, company_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
-    // Tabla de plan de cuentas (7 niveles jerarquicos)
-    $pdo->exec("CREATE TABLE IF NOT EXISTS acc_chart_of_accounts (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        company_id INT NOT NULL DEFAULT 1,
-        codigo_completo VARCHAR(20) NOT NULL,
-        nivel INT NOT NULL COMMENT '1-7 niveles jerarquicos',
-        parent_id INT NULL,
-        nombre VARCHAR(200) NOT NULL,
-        nombre_ingles VARCHAR(200),
-        descripcion TEXT,
-        naturaleza ENUM('deudora', 'acreedora') NOT NULL,
-        tipo VARCHAR(50) COMMENT 'activo_corriente pasivo_corriente patrimonio ingresos gastos',
-        subtipo VARCHAR(50),
-        account_group VARCHAR(20),
-        moneda VARCHAR(3) DEFAULT 'CLP',
-        permite_movimientos TINYINT(1) DEFAULT 1,
-        requiere_tercero TINYINT(1) DEFAULT 0,
-        tipo_tercero ENUM('customer', 'vendor', 'employee', 'other'),
-        requiere_centro_costos TINYINT(1) DEFAULT 0,
-        requiere_proyecto TINYINT(1) DEFAULT 0,
-        requiere_segmento TINYINT(1) DEFAULT 0,
-        requiere_area TINYINT(1) DEFAULT 0,
-        requiere_documento VARCHAR(100),
-        clasificacion_ifrs VARCHAR(50),
-        clasificacion_nic VARCHAR(50),
-        clasificacion_tributaria VARCHAR(50),
-        clasificacion_flujo_caja VARCHAR(50) COMMENT 'operacion inversion financiacion',
-        clasificacion_balance VARCHAR(50) COMMENT 'activo_corriente pasivo_corriente etc',
-        clasificacion_resultado VARCHAR(50) COMMENT 'ingresos_operacionales gastos_ventas etc',
-        integracion_modulo VARCHAR(50) COMMENT 'ventas compras inventario nomina produccion activos',
-        integracion_tipo_documento VARCHAR(50),
-        integracion_automatica TINYINT(1) DEFAULT 0,
-        cuenta_contrapartida_id INT NULL,
-        cuenta_retencion_id INT NULL,
-        cuenta_anticipo_id INT NULL,
-        reconcile_account TINYINT(1) DEFAULT 0 COMMENT 'Cuenta de conciliacion',
-        open_item_management TINYINT(1) DEFAULT 0 COMMENT 'Gestion de partidas abiertas',
-        line_item_display TINYINT(1) DEFAULT 1,
-        sort_key VARCHAR(20),
-        activa TINYINT(1) DEFAULT 1,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        created_by INT,
-        updated_by INT,
-        UNIQUE KEY uk_codigo_company (codigo_completo, company_id),
-        INDEX idx_parent (parent_id),
-        INDEX idx_nivel (nivel),
-        INDEX idx_tipo (tipo),
-        INDEX idx_account_group (account_group),
-        INDEX idx_integracion (integracion_modulo, integracion_tipo_documento)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
-    // Tabla de asientos contables (journal entries / documents)
-    $pdo->exec("CREATE TABLE IF NOT EXISTS acc_journal_entries (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        company_id INT NOT NULL DEFAULT 1,
-        document_type_id INT,
-        numero_documento VARCHAR(20) NOT NULL,
-        numero_referencia VARCHAR(50),
-        fecha_documento DATE NOT NULL,
-        fecha_contabilizacion DATE NOT NULL,
-        periodo VARCHAR(7) NOT NULL COMMENT 'YYYY-MM',
-        fiscal_year VARCHAR(4),
-        tipo ENUM('manual', 'automatico', 'ajuste', 'cierre', 'apertura', 'reversa', 'provision') DEFAULT 'manual',
-        posting_key VARCHAR(10),
-        origen VARCHAR(50) COMMENT 'ventas compras nomina inventario produccion activos tesoreria',
-        documento_origen_tipo VARCHAR(50),
-        documento_origen_id INT,
-        documento_origen_numero VARCHAR(50),
-        concepto TEXT NOT NULL,
-        texto_cabecera VARCHAR(200),
-        moneda VARCHAR(3) DEFAULT 'CLP',
-        tipo_cambio DECIMAL(10,4) DEFAULT 1,
-        total_debe DECIMAL(15,2) NOT NULL DEFAULT 0,
-        total_haber DECIMAL(15,2) NOT NULL DEFAULT 0,
-        total_debe_moneda_local DECIMAL(15,2) DEFAULT 0,
-        total_haber_moneda_local DECIMAL(15,2) DEFAULT 0,
-        diferencia DECIMAL(15,2) GENERATED ALWAYS AS (total_debe - total_haber) STORED,
-        cuadrado TINYINT(1) GENERATED ALWAYS AS (ABS(total_debe - total_haber) < 0.01) STORED,
-        estado ENUM('borrador', 'preliminar', 'contabilizado', 'anulado', 'reversado') DEFAULT 'borrador',
-        fecha_contabilizacion_sistema TIMESTAMP NULL,
-        contabilizado_por INT NULL,
-        reversa_de INT NULL COMMENT 'ID del documento que reversa',
-        reversado_por INT NULL COMMENT 'ID del documento reversa',
-        reversal_reason VARCHAR(200),
-        batch_id VARCHAR(50),
-        assignment VARCHAR(50),
-        user_name VARCHAR(100),
-        notas TEXT,
-        attachment VARCHAR(255),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        created_by INT,
-        updated_by INT,
-        UNIQUE KEY uk_numero_company (numero_documento, company_id),
-        INDEX idx_fecha_doc (fecha_documento),
-        INDEX idx_fecha_cont (fecha_contabilizacion),
-        INDEX idx_periodo (periodo),
-        INDEX idx_fiscal_year (fiscal_year),
-        INDEX idx_tipo (tipo),
-        INDEX idx_origen (origen, documento_origen_tipo, documento_origen_id),
-        INDEX idx_estado (estado),
-        INDEX idx_batch (batch_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
-    // Tabla de lineas de asiento (journal entry lines)
-    $pdo->exec("CREATE TABLE IF NOT EXISTS acc_journal_entry_lines (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        entry_id INT NOT NULL,
-        linea INT NOT NULL,
-        posting_key VARCHAR(10),
-        cuenta_id INT NOT NULL,
-        cuenta_codigo VARCHAR(20),
-        special_gl VARCHAR(20) COMMENT 'A-anticipo D-documento inicial',
-        debe DECIMAL(15,2) DEFAULT 0,
-        haber DECIMAL(15,2) DEFAULT 0,
-        debe_moneda_local DECIMAL(15,2) DEFAULT 0,
-        haber_moneda_local DECIMAL(15,2) DEFAULT 0,
-        moneda VARCHAR(3) DEFAULT 'CLP',
-        tipo_cambio DECIMAL(10,4) DEFAULT 1,
-        tercero_tipo VARCHAR(50) COMMENT 'customer vendor employee other',
-        tercero_id INT,
-        tercero_codigo VARCHAR(50),
-        tercero_nombre VARCHAR(200),
-        centro_costos_id INT,
-        centro_costos_codigo VARCHAR(20),
-        proyecto_id INT,
-        proyecto_codigo VARCHAR(20),
-        segmento_id INT,
-        segmento_codigo VARCHAR(20),
-        area_id INT,
-        sucursal_id INT,
-        pais VARCHAR(3),
-        concepto TEXT,
-        texto_posicion VARCHAR(200),
-        assignment VARCHAR(50),
-        referencia VARCHAR(100),
-        baseline_date DATE COMMENT 'Fecha base para vencimiento',
-        payment_terms VARCHAR(20),
-        due_date DATE COMMENT 'Fecha de vencimiento',
-        discount_date1 DATE,
-        discount_percent1 DECIMAL(5,2),
-        discount_date2 DATE,
-        discount_percent2 DECIMAL(5,2),
-        payment_block VARCHAR(10),
-        payment_method VARCHAR(20),
-        house_bank VARCHAR(20),
-        bank_account VARCHAR(50),
-        tax_code VARCHAR(10),
-        tax_amount DECIMAL(15,2) DEFAULT 0,
-        withholding_tax_type VARCHAR(10),
-        withholding_tax_code VARCHAR(10),
-        withholding_tax_amount DECIMAL(15,2) DEFAULT 0,
-        cleared TINYINT(1) DEFAULT 0 COMMENT 'Compensado',
-        clearing_document VARCHAR(20),
-        clearing_date DATE,
-        open_amount DECIMAL(15,2),
-        invoice_reference VARCHAR(50),
-        business_area VARCHAR(20),
-        profit_center VARCHAR(20),
-        functional_area VARCHAR(20),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (entry_id) REFERENCES acc_journal_entries(id) ON DELETE CASCADE,
-        FOREIGN KEY (cuenta_id) REFERENCES acc_chart_of_accounts(id),
-        INDEX idx_entry (entry_id),
-        INDEX idx_cuenta (cuenta_id),
-        INDEX idx_tercero (tercero_tipo, tercero_id),
-        INDEX idx_centro_costos (centro_costos_id),
-        INDEX idx_cleared (cleared),
-        INDEX idx_due_date (due_date),
-        INDEX idx_assignment (assignment)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
-    // Tabla de condiciones de pago (payment terms)
-    $pdo->exec("CREATE TABLE IF NOT EXISTS acc_payment_terms (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        company_id INT NOT NULL DEFAULT 1,
-        code VARCHAR(20) NOT NULL,
-        name VARCHAR(100) NOT NULL,
-        descripcion TEXT,
-        days_net INT DEFAULT 0,
-        days_discount1 INT DEFAULT 0,
-        discount_percent1 DECIMAL(5,2) DEFAULT 0,
-        days_discount2 INT DEFAULT 0,
-        discount_percent2 DECIMAL(5,2) DEFAULT 0,
-        active TINYINT(1) DEFAULT 1,
-        UNIQUE KEY uk_code_company (code, company_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
-    // Tabla de codigos de impuestos (tax codes)
-    $pdo->exec("CREATE TABLE IF NOT EXISTS acc_tax_codes (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        company_id INT NOT NULL DEFAULT 1,
-        code VARCHAR(10) NOT NULL,
-        name VARCHAR(100) NOT NULL,
-        tax_type VARCHAR(20) COMMENT 'IVA retencion otro',
-        tax_percent DECIMAL(5,2) NOT NULL,
-        account_id INT,
-        active TINYINT(1) DEFAULT 1,
-        UNIQUE KEY uk_code_company (code, company_id)
+        ano INT NOT NULL,
+        periodo INT NOT NULL COMMENT '1-12',
+        nombre VARCHAR(50),
+        fecha_inicio DATE NOT NULL,
+        fecha_fin DATE NOT NULL,
+        abierto TINYINT(1) DEFAULT 1,
+        bloqueado_auditoria TINYINT(1) DEFAULT 0,
+        fecha_cierre TIMESTAMP NULL,
+        usuario_cierre INT NULL,
+        UNIQUE KEY uk_ano_periodo (ano, periodo, company_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
     // Tabla de centros de costo
-    $pdo->exec("CREATE TABLE IF NOT EXISTS acc_cost_centers (
+    $pdo->exec("CREATE TABLE IF NOT EXISTS acc_centros_costo (
         id INT AUTO_INCREMENT PRIMARY KEY,
         company_id INT NOT NULL DEFAULT 1,
-        code VARCHAR(20) NOT NULL,
-        name VARCHAR(100) NOT NULL,
+        codigo VARCHAR(50) NOT NULL,
+        nombre VARCHAR(255) NOT NULL,
         descripcion TEXT,
-        responsible_user_id INT,
-        active TINYINT(1) DEFAULT 1,
-        UNIQUE KEY uk_code_company (code, company_id)
+        activo TINYINT(1) DEFAULT 1,
+        UNIQUE KEY uk_codigo (codigo, company_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
     // Tabla de proyectos
-    $pdo->exec("CREATE TABLE IF NOT EXISTS acc_projects (
+    $pdo->exec("CREATE TABLE IF NOT EXISTS acc_proyectos (
         id INT AUTO_INCREMENT PRIMARY KEY,
         company_id INT NOT NULL DEFAULT 1,
-        code VARCHAR(20) NOT NULL,
-        name VARCHAR(100) NOT NULL,
+        codigo VARCHAR(50) NOT NULL,
+        nombre VARCHAR(255) NOT NULL,
         descripcion TEXT,
-        start_date DATE,
-        end_date DATE,
-        status VARCHAR(20),
-        UNIQUE KEY uk_code_company (code, company_id)
+        fecha_inicio DATE,
+        fecha_fin DATE,
+        activo TINYINT(1) DEFAULT 1,
+        UNIQUE KEY uk_codigo (codigo, company_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-    // Tabla de segmentos de negocio
-    $pdo->exec("CREATE TABLE IF NOT EXISTS acc_segments (
+    // Tabla de auditoria completa
+    $pdo->exec("CREATE TABLE IF NOT EXISTS acc_auditoria (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        company_id INT NOT NULL DEFAULT 1,
-        code VARCHAR(20) NOT NULL,
-        name VARCHAR(100) NOT NULL,
-        descripcion TEXT,
-        active TINYINT(1) DEFAULT 1,
-        UNIQUE KEY uk_code_company (code, company_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
-    // Tabla de saldos contables por periodo
-    $pdo->exec("CREATE TABLE IF NOT EXISTS acc_account_balances (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        company_id INT NOT NULL DEFAULT 1,
-        cuenta_id INT NOT NULL,
-        fiscal_year VARCHAR(4),
-        periodo VARCHAR(7) NOT NULL COMMENT 'YYYY-MM',
-        saldo_inicial_debe DECIMAL(15,2) DEFAULT 0,
-        saldo_inicial_haber DECIMAL(15,2) DEFAULT 0,
-        movimientos_debe DECIMAL(15,2) DEFAULT 0,
-        movimientos_haber DECIMAL(15,2) DEFAULT 0,
-        saldo_final_debe DECIMAL(15,2) DEFAULT 0,
-        saldo_final_haber DECIMAL(15,2) DEFAULT 0,
-        saldo_final DECIMAL(15,2) DEFAULT 0,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        UNIQUE KEY uk_cuenta_periodo (cuenta_id, periodo, company_id),
-        INDEX idx_periodo (periodo),
-        INDEX idx_fiscal_year (fiscal_year)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
-    // Tabla de partidas abiertas (open items)
-    $pdo->exec("CREATE TABLE IF NOT EXISTS acc_open_items (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        company_id INT NOT NULL DEFAULT 1,
-        entry_id INT NOT NULL,
-        line_id INT NOT NULL,
-        cuenta_id INT NOT NULL,
-        tercero_tipo VARCHAR(50),
-        tercero_id INT,
-        document_number VARCHAR(20),
-        document_date DATE,
-        posting_date DATE,
-        due_date DATE,
-        payment_terms VARCHAR(20),
-        original_amount DECIMAL(15,2),
-        open_amount DECIMAL(15,2),
-        currency VARCHAR(3),
-        assignment VARCHAR(50),
-        cleared TINYINT(1) DEFAULT 0,
-        clearing_document VARCHAR(20),
-        clearing_date DATE,
-        days_overdue INT,
-        aging_bucket VARCHAR(20),
-        INDEX idx_tercero (tercero_tipo, tercero_id),
-        INDEX idx_cleared (cleared),
-        INDEX idx_due_date (due_date)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
-    // Tabla de auditoria
-    $pdo->exec("CREATE TABLE IF NOT EXISTS acc_audit_log (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        table_name VARCHAR(100),
-        record_id INT,
-        action ENUM('create', 'update', 'delete', 'post', 'reverse', 'clear') NOT NULL,
-        old_values TEXT,
-        new_values TEXT,
-        user_id INT,
-        username VARCHAR(100),
+        tabla VARCHAR(100) NOT NULL,
+        registro_id INT NOT NULL,
+        accion ENUM('crear', 'modificar', 'eliminar', 'aprobar', 'revertir', 'bloquear') NOT NULL,
+        campo VARCHAR(100),
+        valor_anterior TEXT,
+        valor_nuevo TEXT,
+        usuario_id INT,
+        fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         ip_address VARCHAR(45),
         user_agent TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_table (table_name, record_id),
-        INDEX idx_created_at (created_at)
+        INDEX idx_tabla_registro (tabla, registro_id),
+        INDEX idx_fecha (fecha),
+        INDEX idx_usuario (usuario_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-    // Tabla de configuracion del modulo
-    $pdo->exec("CREATE TABLE IF NOT EXISTS acc_config (
+    // Tabla de versiones de cuentas
+    $pdo->exec("CREATE TABLE IF NOT EXISTS acc_cuentas_versiones (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        cuenta_id INT NOT NULL,
+        version INT NOT NULL,
+        datos_json TEXT,
+        usuario_modificacion INT,
+        fecha_modificacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_cuenta (cuenta_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    // Tabla de plantillas de asientos
+    $pdo->exec("CREATE TABLE IF NOT EXISTS acc_plantillas_asientos (
         id INT AUTO_INCREMENT PRIMARY KEY,
         company_id INT NOT NULL DEFAULT 1,
-        config_key VARCHAR(100) NOT NULL,
-        config_value TEXT,
-        config_type VARCHAR(50),
-        description TEXT,
-        updated_by INT,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        UNIQUE KEY uk_key_company (config_key, company_id)
+        codigo VARCHAR(50) NOT NULL,
+        nombre VARCHAR(255) NOT NULL,
+        descripcion TEXT,
+        tipo_asiento VARCHAR(50),
+        plantilla_json TEXT,
+        es_recurrente TINYINT(1) DEFAULT 0,
+        frecuencia VARCHAR(50) COMMENT 'mensual trimestral anual',
+        activa TINYINT(1) DEFAULT 1,
+        UNIQUE KEY uk_codigo (codigo, company_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-    // Insertar datos iniciales de configuracion
-    $pdo->exec("INSERT IGNORE INTO acc_config (company_id, config_key, config_value, description) VALUES
-        (1, 'company_name', 'CONECTA ERP', 'Nombre de la empresa'),
-        (1, 'company_tax_id', '76.XXX.XXX-X', 'RUT de la empresa'),
-        (1, 'fiscal_year_variant', '01', 'Variante ejercicio fiscal'),
-        (1, 'currency_local', 'CLP', 'Moneda local'),
-        (1, 'currency_group', 'USD,EUR,CLP', 'Monedas permitidas'),
-        (1, 'decimal_places', '2', 'Decimales en importes'),
-        (1, 'tax_reporting', 'monthly', 'Frecuencia reporte impuestos'),
-        (1, 'chart_of_accounts_template', 'CHILE_IFRS', 'Plantilla plan de cuentas')");
-
-    // Insertar tipos de documento iniciales
-    $pdo->exec("INSERT IGNORE INTO acc_document_types (company_id, code, name, category) VALUES
-        (1, 'SA', 'Documento Contable', 'accounting'),
-        (1, 'DR', 'Factura Cliente', 'ar'),
-        (1, 'DG', 'Abono Cliente', 'ar'),
-        (1, 'DZ', 'Anticipo Cliente', 'ar'),
-        (1, 'KR', 'Factura Proveedor', 'ap'),
-        (1, 'KG', 'Abono Proveedor', 'ap'),
-        (1, 'KZ', 'Anticipo Proveedor', 'ap'),
-        (1, 'ZP', 'Pago', 'bank'),
-        (1, 'ZV', 'Cobro', 'bank'),
-        (1, 'AB', 'Asiento de Cierre', 'accounting'),
-        (1, 'AA', 'Asiento de Apertura', 'accounting')");
-
-    // Insertar claves de contabilizacion iniciales
-    $pdo->exec("INSERT IGNORE INTO acc_posting_keys (company_id, key_code, name, type, account_type) VALUES
-        (1, '01', 'Factura - Debe Cliente', 'debit', 'customer'),
-        (1, '11', 'Abono - Haber Cliente', 'credit', 'customer'),
-        (1, '19', 'Anticipo - Debe Cliente', 'debit', 'customer'),
-        (1, '21', 'Factura - Debe Proveedor', 'debit', 'vendor'),
-        (1, '31', 'Abono - Haber Proveedor', 'credit', 'vendor'),
-        (1, '29', 'Anticipo - Haber Proveedor', 'credit', 'vendor'),
-        (1, '40', 'Debe Cuenta Mayor', 'debit', 'gl'),
-        (1, '50', 'Haber Cuenta Mayor', 'credit', 'gl'),
-        (1, '70', 'Debe Activo Fijo', 'debit', 'asset'),
-        (1, '75', 'Haber Activo Fijo', 'credit', 'asset')");
-
-    // Insertar condiciones de pago iniciales
-    $pdo->exec("INSERT IGNORE INTO acc_payment_terms (company_id, code, name, days_net, days_discount1, discount_percent1) VALUES
-        (1, 'Z001', 'Pago inmediato', 0, 0, 0),
-        (1, 'Z015', 'Neto 15 dias', 15, 0, 0),
-        (1, 'Z030', 'Neto 30 dias', 30, 10, 2.0),
-        (1, 'Z060', 'Neto 60 dias', 60, 10, 3.0),
-        (1, 'Z090', 'Neto 90 dias', 90, 15, 5.0)");
+    // Tabla de saldos contables
+    $pdo->exec("CREATE TABLE IF NOT EXISTS acc_saldos (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        company_id INT NOT NULL DEFAULT 1,
+        cuenta_id INT NOT NULL,
+        ano INT NOT NULL,
+        periodo INT NOT NULL,
+        saldo_inicial_debito DECIMAL(18,2) DEFAULT 0,
+        saldo_inicial_credito DECIMAL(18,2) DEFAULT 0,
+        movimientos_debito DECIMAL(18,2) DEFAULT 0,
+        movimientos_credito DECIMAL(18,2) DEFAULT 0,
+        saldo_final_debito DECIMAL(18,2) DEFAULT 0,
+        saldo_final_credito DECIMAL(18,2) DEFAULT 0,
+        saldo_final DECIMAL(18,2) GENERATED ALWAYS AS (saldo_final_debito - saldo_final_credito) STORED,
+        UNIQUE KEY uk_cuenta_periodo (cuenta_id, ano, periodo, company_id),
+        INDEX idx_ano_periodo (ano, periodo)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
 } catch (PDOException $e) {
     $error = "Error al crear tablas: " . $e->getMessage();
 }
 
-// === GENERAR REPORTE EXCEL ===
-if ($action === 'export_excel') {
-    $report_type = $_GET['type'] ?? 'balance';
-
-    header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
-    header('Content-Disposition: attachment; filename="' . $report_type . '_' . date('Y-m-d') . '.xls"');
-    header('Pragma: no-cache');
-    header('Expires: 0');
-
-    echo "\xEF\xBB\xBF"; // UTF-8 BOM
-
-    if ($report_type === 'balance_8col') {
-        // BALANCE DE 8 COLUMNAS
-        echo "<html><head><meta charset='UTF-8'></head><body>";
-        echo "<table border='1' style='border-collapse: collapse;'>";
-        echo "<tr><td colspan='10' style='text-align:center; font-size:16px; font-weight:bold;'>BALANCE DE COMPROBACION DE 8 COLUMNAS</td></tr>";
-        echo "<tr><td colspan='10' style='text-align:center; font-size:12px;'>CONECTA ERP</td></tr>";
-        echo "<tr><td colspan='10' style='text-align:center; font-size:12px;'>Periodo: " . date('Y-m') . "</td></tr>";
-        echo "<tr><td colspan='10'>&nbsp;</td></tr>";
-        echo "<tr style='background-color: #4472C4; color: white; font-weight: bold;'>";
-        echo "<td>Cuenta</td>";
-        echo "<td>Nombre</td>";
-        echo "<td>Saldo Inicial Debe</td>";
-        echo "<td>Saldo Inicial Haber</td>";
-        echo "<td>Movimientos Debe</td>";
-        echo "<td>Movimientos Haber</td>";
-        echo "<td>Saldo Final Debe</td>";
-        echo "<td>Saldo Final Haber</td>";
-        echo "<td>Activo</td>";
-        echo "<td>Pasivo</td>";
-        echo "</tr>";
-
-        $stmt = $pdo->prepare("
-            SELECT c.codigo_completo, c.nombre, c.naturaleza, c.tipo,
-                   COALESCE(b.saldo_inicial_debe, 0) as si_debe,
-                   COALESCE(b.saldo_inicial_haber, 0) as si_haber,
-                   COALESCE(b.movimientos_debe, 0) as mov_debe,
-                   COALESCE(b.movimientos_haber, 0) as mov_haber,
-                   COALESCE(b.saldo_final_debe, 0) as sf_debe,
-                   COALESCE(b.saldo_final_haber, 0) as sf_haber
-            FROM acc_chart_of_accounts c
-            LEFT JOIN acc_account_balances b ON c.id = b.cuenta_id AND b.periodo = ?
-            WHERE c.company_id = ? AND c.permite_movimientos = 1
-            ORDER BY c.codigo_completo
-        ");
-        $stmt->execute([date('Y-m'), $company_id]);
-        $accounts = $stmt->fetchAll();
-        $stmt->closeCursor();
-
-        $total_si_debe = 0; $total_si_haber = 0;
-        $total_mov_debe = 0; $total_mov_haber = 0;
-        $total_sf_debe = 0; $total_sf_haber = 0;
-        $total_activo = 0; $total_pasivo = 0;
-
-        foreach ($accounts as $acc) {
-            $saldo_final = $acc['sf_debe'] - $acc['sf_haber'];
-            $activo = ($saldo_final > 0 && in_array($acc['tipo'], ['activo_corriente', 'activo_no_corriente'])) ? $saldo_final : 0;
-            $pasivo = ($saldo_final < 0 || in_array($acc['tipo'], ['pasivo_corriente', 'pasivo_no_corriente', 'patrimonio'])) ? abs($saldo_final) : 0;
-
-            echo "<tr>";
-            echo "<td>" . htmlspecialchars($acc['codigo_completo']) . "</td>";
-            echo "<td>" . htmlspecialchars($acc['nombre']) . "</td>";
-            echo "<td style='text-align:right;'>" . number_format($acc['si_debe'], 2) . "</td>";
-            echo "<td style='text-align:right;'>" . number_format($acc['si_haber'], 2) . "</td>";
-            echo "<td style='text-align:right;'>" . number_format($acc['mov_debe'], 2) . "</td>";
-            echo "<td style='text-align:right;'>" . number_format($acc['mov_haber'], 2) . "</td>";
-            echo "<td style='text-align:right;'>" . number_format($acc['sf_debe'], 2) . "</td>";
-            echo "<td style='text-align:right;'>" . number_format($acc['sf_haber'], 2) . "</td>";
-            echo "<td style='text-align:right;'>" . number_format($activo, 2) . "</td>";
-            echo "<td style='text-align:right;'>" . number_format($pasivo, 2) . "</td>";
-            echo "</tr>";
-
-            $total_si_debe += $acc['si_debe'];
-            $total_si_haber += $acc['si_haber'];
-            $total_mov_debe += $acc['mov_debe'];
-            $total_mov_haber += $acc['mov_haber'];
-            $total_sf_debe += $acc['sf_debe'];
-            $total_sf_haber += $acc['sf_haber'];
-            $total_activo += $activo;
-            $total_pasivo += $pasivo;
-        }
-
-        echo "<tr style='background-color: #E7E6E6; font-weight: bold;'>";
-        echo "<td colspan='2'>TOTALES</td>";
-        echo "<td style='text-align:right;'>" . number_format($total_si_debe, 2) . "</td>";
-        echo "<td style='text-align:right;'>" . number_format($total_si_haber, 2) . "</td>";
-        echo "<td style='text-align:right;'>" . number_format($total_mov_debe, 2) . "</td>";
-        echo "<td style='text-align:right;'>" . number_format($total_mov_haber, 2) . "</td>";
-        echo "<td style='text-align:right;'>" . number_format($total_sf_debe, 2) . "</td>";
-        echo "<td style='text-align:right;'>" . number_format($total_sf_haber, 2) . "</td>";
-        echo "<td style='text-align:right;'>" . number_format($total_activo, 2) . "</td>";
-        echo "<td style='text-align:right;'>" . number_format($total_pasivo, 2) . "</td>";
-        echo "</tr>";
-        echo "</table></body></html>";
-
-    } elseif ($report_type === 'libro_mayor') {
-        // LIBRO MAYOR GENERAL
-        $cuenta_id = $_GET['cuenta_id'] ?? null;
-
-        echo "<html><head><meta charset='UTF-8'></head><body>";
-        echo "<table border='1' style='border-collapse: collapse;'>";
-        echo "<tr><td colspan='10' style='text-align:center; font-size:16px; font-weight:bold;'>LIBRO MAYOR GENERAL</td></tr>";
-        echo "<tr><td colspan='10' style='text-align:center; font-size:12px;'>CONECTA ERP</td></tr>";
-        echo "<tr><td colspan='10' style='text-align:center; font-size:12px;'>Periodo: " . date('Y-m') . "</td></tr>";
-        echo "<tr><td colspan='10'>&nbsp;</td></tr>";
-
-        if ($cuenta_id) {
-            $stmt = $pdo->prepare("SELECT * FROM acc_chart_of_accounts WHERE id = ?");
-            $stmt->execute([$cuenta_id]);
-            $cuenta = $stmt->fetch();
-            $stmt->closeCursor();
-
-            echo "<tr><td colspan='10'><strong>Cuenta: " . $cuenta['codigo_completo'] . " - " . $cuenta['nombre'] . "</strong></td></tr>";
-        }
-
-        echo "<tr style='background-color: #4472C4; color: white; font-weight: bold;'>";
-        echo "<td>Fecha Doc.</td>";
-        echo "<td>Fecha Cont.</td>";
-        echo "<td>Documento</td>";
-        echo "<td>Ref.</td>";
-        echo "<td>Concepto</td>";
-        echo "<td>Tercero</td>";
-        echo "<td>Debe</td>";
-        echo "<td>Haber</td>";
-        echo "<td>Saldo</td>";
-        echo "<td>Asignacion</td>";
-        echo "</tr>";
-
-        $where_clause = $cuenta_id ? "AND jel.cuenta_id = " . intval($cuenta_id) : "";
-
-        $stmt = $pdo->prepare("
-            SELECT je.fecha_documento, je.fecha_contabilizacion, je.numero_documento,
-                   je.numero_referencia, je.concepto,
-                   jel.debe, jel.haber, jel.tercero_nombre, jel.assignment,
-                   c.codigo_completo, c.nombre as cuenta_nombre
-            FROM acc_journal_entry_lines jel
-            INNER JOIN acc_journal_entries je ON jel.entry_id = je.id
-            INNER JOIN acc_chart_of_accounts c ON jel.cuenta_id = c.id
-            WHERE je.company_id = ? AND je.estado = 'contabilizado'
-            AND je.periodo = ? $where_clause
-            ORDER BY je.fecha_contabilizacion, je.numero_documento, jel.linea
-        ");
-        $stmt->execute([$company_id, date('Y-m')]);
-        $lines = $stmt->fetchAll();
-        $stmt->closeCursor();
-
-        $saldo = 0;
-        foreach ($lines as $line) {
-            $saldo += $line['debe'] - $line['haber'];
-            echo "<tr>";
-            echo "<td>" . date('d/m/Y', strtotime($line['fecha_documento'])) . "</td>";
-            echo "<td>" . date('d/m/Y', strtotime($line['fecha_contabilizacion'])) . "</td>";
-            echo "<td>" . htmlspecialchars($line['numero_documento']) . "</td>";
-            echo "<td>" . htmlspecialchars($line['numero_referencia']) . "</td>";
-            echo "<td>" . htmlspecialchars(substr($line['concepto'], 0, 50)) . "</td>";
-            echo "<td>" . htmlspecialchars($line['tercero_nombre'] ?? '') . "</td>";
-            echo "<td style='text-align:right;'>" . number_format($line['debe'], 2) . "</td>";
-            echo "<td style='text-align:right;'>" . number_format($line['haber'], 2) . "</td>";
-            echo "<td style='text-align:right;'>" . number_format($saldo, 2) . "</td>";
-            echo "<td>" . htmlspecialchars($line['assignment'] ?? '') . "</td>";
-            echo "</tr>";
-        }
-        echo "</table></body></html>";
-
-    } elseif ($report_type === 'aging') {
-        // ANTIGUEDAD DE SALDOS (AR/AP AGING)
-        $tipo = $_GET['tipo'] ?? 'customer';
-        $titulo = $tipo === 'customer' ? 'CLIENTES' : 'PROVEEDORES';
-
-        echo "<html><head><meta charset='UTF-8'></head><body>";
-        echo "<table border='1' style='border-collapse: collapse;'>";
-        echo "<tr><td colspan='8' style='text-align:center; font-size:16px; font-weight:bold;'>ANTIGUEDAD DE SALDOS - $titulo</td></tr>";
-        echo "<tr><td colspan='8' style='text-align:center; font-size:12px;'>CONECTA ERP - Al: " . date('d/m/Y') . "</td></tr>";
-        echo "<tr><td colspan='8'>&nbsp;</td></tr>";
-        echo "<tr style='background-color: #4472C4; color: white; font-weight: bold;'>";
-        echo "<td>Codigo</td>";
-        echo "<td>Nombre</td>";
-        echo "<td>Al Dia</td>";
-        echo "<td>1-30 dias</td>";
-        echo "<td>31-60 dias</td>";
-        echo "<td>61-90 dias</td>";
-        echo "<td>Mas 90 dias</td>";
-        echo "<td>Total</td>";
-        echo "</tr>";
-
-        $stmt = $pdo->prepare("
-            SELECT jel.tercero_codigo, jel.tercero_nombre,
-                   SUM(CASE WHEN DATEDIFF(CURDATE(), jel.due_date) <= 0 THEN jel.open_amount ELSE 0 END) as aldia,
-                   SUM(CASE WHEN DATEDIFF(CURDATE(), jel.due_date) BETWEEN 1 AND 30 THEN jel.open_amount ELSE 0 END) as d30,
-                   SUM(CASE WHEN DATEDIFF(CURDATE(), jel.due_date) BETWEEN 31 AND 60 THEN jel.open_amount ELSE 0 END) as d60,
-                   SUM(CASE WHEN DATEDIFF(CURDATE(), jel.due_date) BETWEEN 61 AND 90 THEN jel.open_amount ELSE 0 END) as d90,
-                   SUM(CASE WHEN DATEDIFF(CURDATE(), jel.due_date) > 90 THEN jel.open_amount ELSE 0 END) as d90plus,
-                   SUM(jel.open_amount) as total
-            FROM acc_journal_entry_lines jel
-            INNER JOIN acc_journal_entries je ON jel.entry_id = je.id
-            WHERE je.company_id = ? AND jel.tercero_tipo = ? AND jel.cleared = 0
-            GROUP BY jel.tercero_codigo, jel.tercero_nombre
-            HAVING total <> 0
-            ORDER BY total DESC
-        ");
-        $stmt->execute([$company_id, $tipo]);
-        $items = $stmt->fetchAll();
-        $stmt->closeCursor();
-
-        $t_aldia = 0; $t_d30 = 0; $t_d60 = 0; $t_d90 = 0; $t_d90plus = 0; $t_total = 0;
-
-        foreach ($items as $item) {
-            echo "<tr>";
-            echo "<td>" . htmlspecialchars($item['tercero_codigo']) . "</td>";
-            echo "<td>" . htmlspecialchars($item['tercero_nombre']) . "</td>";
-            echo "<td style='text-align:right;'>" . number_format($item['aldia'], 2) . "</td>";
-            echo "<td style='text-align:right;'>" . number_format($item['d30'], 2) . "</td>";
-            echo "<td style='text-align:right;'>" . number_format($item['d60'], 2) . "</td>";
-            echo "<td style='text-align:right;'>" . number_format($item['d90'], 2) . "</td>";
-            echo "<td style='text-align:right;'>" . number_format($item['d90plus'], 2) . "</td>";
-            echo "<td style='text-align:right;'><strong>" . number_format($item['total'], 2) . "</strong></td>";
-            echo "</tr>";
-
-            $t_aldia += $item['aldia'];
-            $t_d30 += $item['d30'];
-            $t_d60 += $item['d60'];
-            $t_d90 += $item['d90'];
-            $t_d90plus += $item['d90plus'];
-            $t_total += $item['total'];
-        }
-
-        echo "<tr style='background-color: #E7E6E6; font-weight: bold;'>";
-        echo "<td colspan='2'>TOTALES</td>";
-        echo "<td style='text-align:right;'>" . number_format($t_aldia, 2) . "</td>";
-        echo "<td style='text-align:right;'>" . number_format($t_d30, 2) . "</td>";
-        echo "<td style='text-align:right;'>" . number_format($t_d60, 2) . "</td>";
-        echo "<td style='text-align:right;'>" . number_format($t_d90, 2) . "</td>";
-        echo "<td style='text-align:right;'>" . number_format($t_d90plus, 2) . "</td>";
-        echo "<td style='text-align:right;'>" . number_format($t_total, 2) . "</td>";
-        echo "</tr>";
-        echo "</table></body></html>";
-
-    } elseif ($report_type === 'estado_resultados') {
-        // ESTADO DE RESULTADOS
-        echo "<html><head><meta charset='UTF-8'></head><body>";
-        echo "<table border='1' style='border-collapse: collapse;'>";
-        echo "<tr><td colspan='3' style='text-align:center; font-size:16px; font-weight:bold;'>ESTADO DE RESULTADOS</td></tr>";
-        echo "<tr><td colspan='3' style='text-align:center; font-size:12px;'>CONECTA ERP</td></tr>";
-        echo "<tr><td colspan='3' style='text-align:center; font-size:12px;'>Periodo: " . date('Y-m') . "</td></tr>";
-        echo "<tr><td colspan='3'>&nbsp;</td></tr>";
-        echo "<tr style='background-color: #4472C4; color: white; font-weight: bold;'>";
-        echo "<td>Cuenta</td>";
-        echo "<td>Nombre</td>";
-        echo "<td>Importe</td>";
-        echo "</tr>";
-
-        // Ingresos
-        echo "<tr style='background-color: #70AD47; font-weight: bold;'><td colspan='3'>INGRESOS OPERACIONALES</td></tr>";
-        $stmt = $pdo->prepare("
-            SELECT c.codigo_completo, c.nombre, COALESCE(b.saldo_final_haber - b.saldo_final_debe, 0) as saldo
-            FROM acc_chart_of_accounts c
-            LEFT JOIN acc_account_balances b ON c.id = b.cuenta_id AND b.periodo = ?
-            WHERE c.company_id = ? AND c.tipo LIKE '%ingreso%'
-            ORDER BY c.codigo_completo
-        ");
-        $stmt->execute([date('Y-m'), $company_id]);
-        $ingresos = $stmt->fetchAll();
-        $stmt->closeCursor();
-
-        $total_ingresos = 0;
-        foreach ($ingresos as $ing) {
-            if ($ing['saldo'] != 0) {
-                echo "<tr><td>" . $ing['codigo_completo'] . "</td><td>" . $ing['nombre'] . "</td><td style='text-align:right;'>" . number_format($ing['saldo'], 2) . "</td></tr>";
-                $total_ingresos += $ing['saldo'];
-            }
-        }
-        echo "<tr style='font-weight:bold;'><td colspan='2'>TOTAL INGRESOS</td><td style='text-align:right;'>" . number_format($total_ingresos, 2) . "</td></tr>";
-
-        // Gastos
-        echo "<tr style='background-color: #FFC000; font-weight: bold;'><td colspan='3'>GASTOS OPERACIONALES</td></tr>";
-        $stmt = $pdo->prepare("
-            SELECT c.codigo_completo, c.nombre, COALESCE(b.saldo_final_debe - b.saldo_final_haber, 0) as saldo
-            FROM acc_chart_of_accounts c
-            LEFT JOIN acc_account_balances b ON c.id = b.cuenta_id AND b.periodo = ?
-            WHERE c.company_id = ? AND c.tipo LIKE '%gasto%'
-            ORDER BY c.codigo_completo
-        ");
-        $stmt->execute([date('Y-m'), $company_id]);
-        $gastos = $stmt->fetchAll();
-        $stmt->closeCursor();
-
-        $total_gastos = 0;
-        foreach ($gastos as $gasto) {
-            if ($gasto['saldo'] != 0) {
-                echo "<tr><td>" . $gasto['codigo_completo'] . "</td><td>" . $gasto['nombre'] . "</td><td style='text-align:right;'>" . number_format($gasto['saldo'], 2) . "</td></tr>";
-                $total_gastos += $gasto['saldo'];
-            }
-        }
-        echo "<tr style='font-weight:bold;'><td colspan='2'>TOTAL GASTOS</td><td style='text-align:right;'>" . number_format($total_gastos, 2) . "</td></tr>";
-
-        $utilidad = $total_ingresos - $total_gastos;
-        echo "<tr style='background-color: #5B9BD5; color: white; font-weight: bold; font-size: 14px;'>";
-        echo "<td colspan='2'>UTILIDAD / PERDIDA DEL PERIODO</td>";
-        echo "<td style='text-align:right;'>" . number_format($utilidad, 2) . "</td>";
-        echo "</tr>";
-
-        echo "</table></body></html>";
-    }
-
-    exit;
-}
-
 // === CREAR CUENTA ===
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'create_account') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'crear_cuenta') {
     try {
-        $codigo = trim($_POST['codigo_completo']);
-        $nivel = intval($_POST['nivel']);
-        $nombre = trim($_POST['nombre']);
+        $pdo->beginTransaction();
 
         $stmt = $pdo->prepare("
-            INSERT INTO acc_chart_of_accounts (
-                company_id, codigo_completo, nivel, parent_id, nombre, nombre_ingles,
-                descripcion, naturaleza, tipo, subtipo, account_group, moneda,
-                permite_movimientos, requiere_tercero, tipo_tercero, requiere_centro_costos,
-                requiere_proyecto, clasificacion_ifrs, clasificacion_flujo_caja,
-                reconcile_account, open_item_management, created_by
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO acc_plan_cuentas (
+                company_id, codigo_completo, codigo_corto, nivel, cuenta_padre, estructura_jerarquica,
+                orden_presentacion, tipo_cuenta, nombre_cuenta, descripcion, naturaleza, tipo, subtipo,
+                moneda_base, moneda_alternativa, permite_movimientos, permite_asientos_automaticos,
+                requiere_centro_costo, requiere_auxiliar, requiere_proyecto, requiere_dimension_adicional,
+                cuenta_revaluacion_id, cuenta_ajuste_tipo_cambio_id, es_cuenta_flujo_efectivo, es_cuenta_restringida,
+                clasificacion_ifrs, clasificacion_nic_niif, clasificacion_analisis_financiero, clasificacion_libro_tributario,
+                grupo_depreciacion, asignacion_rubro_balance, asignacion_rubro_resultado,
+                clasificacion_informes_gestion, clasificacion_flujo_caja, clasificacion_proyectos,
+                integracion_ventas, integracion_compras, integracion_clientes, integracion_bancos,
+                integracion_inventario, integracion_activos_fijos, integracion_remuneraciones,
+                integracion_produccion, integracion_tesoreria, integracion_impuestos,
+                cuenta_parametrica_tipo, asignacion_tipo_documento, asignacion_area, asignacion_sucursal,
+                asignacion_pais, asignacion_tipo_transaccion, cuenta_conciliacion_automatica,
+                bloqueada, edicion_restringida, activa, usuario_creacion
+            ) VALUES (
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            )
         ");
 
         $stmt->execute([
-            $company_id, $codigo, $nivel,
-            !empty($_POST['parent_id']) ? $_POST['parent_id'] : null,
-            $nombre,
-            $_POST['nombre_ingles'] ?? null,
-            $_POST['descripcion'] ?? null,
+            $company_id,
+            trim($_POST['codigo_completo']),
+            trim($_POST['codigo_corto'] ?? ''),
+            intval($_POST['nivel']),
+            !empty($_POST['cuenta_padre']) ? intval($_POST['cuenta_padre']) : null,
+            $_POST['estructura_jerarquica'] ?? '',
+            intval($_POST['orden_presentacion'] ?? 0),
+            $_POST['tipo_cuenta'] ?? 'balance',
+            trim($_POST['nombre_cuenta']),
+            trim($_POST['descripcion'] ?? ''),
             $_POST['naturaleza'],
-            $_POST['tipo'] ?? null,
-            $_POST['subtipo'] ?? null,
-            $_POST['account_group'] ?? null,
-            $_POST['moneda'] ?? 'CLP',
+            $_POST['tipo'],
+            $_POST['subtipo'] ?? '',
+            $_POST['moneda_base'] ?? 'CLP',
+            $_POST['moneda_alternativa'] ?? null,
             isset($_POST['permite_movimientos']) ? 1 : 0,
-            isset($_POST['requiere_tercero']) ? 1 : 0,
-            $_POST['tipo_tercero'] ?? null,
-            isset($_POST['requiere_centro_costos']) ? 1 : 0,
+            isset($_POST['permite_asientos_automaticos']) ? 1 : 0,
+            isset($_POST['requiere_centro_costo']) ? 1 : 0,
+            $_POST['requiere_auxiliar'] ?? 'ninguno',
             isset($_POST['requiere_proyecto']) ? 1 : 0,
-            $_POST['clasificacion_ifrs'] ?? null,
-            $_POST['clasificacion_flujo_caja'] ?? null,
-            isset($_POST['reconcile_account']) ? 1 : 0,
-            isset($_POST['open_item_management']) ? 1 : 0,
+            isset($_POST['requiere_dimension_adicional']) ? 1 : 0,
+            !empty($_POST['cuenta_revaluacion_id']) ? intval($_POST['cuenta_revaluacion_id']) : null,
+            !empty($_POST['cuenta_ajuste_tipo_cambio_id']) ? intval($_POST['cuenta_ajuste_tipo_cambio_id']) : null,
+            isset($_POST['es_cuenta_flujo_efectivo']) ? 1 : 0,
+            isset($_POST['es_cuenta_restringida']) ? 1 : 0,
+            $_POST['clasificacion_ifrs'] ?? '',
+            $_POST['clasificacion_nic_niif'] ?? '',
+            $_POST['clasificacion_analisis_financiero'] ?? '',
+            $_POST['clasificacion_libro_tributario'] ?? '',
+            $_POST['grupo_depreciacion'] ?? '',
+            $_POST['asignacion_rubro_balance'] ?? '',
+            $_POST['asignacion_rubro_resultado'] ?? '',
+            $_POST['clasificacion_informes_gestion'] ?? '',
+            $_POST['clasificacion_flujo_caja'] ?? '',
+            $_POST['clasificacion_proyectos'] ?? '',
+            isset($_POST['integracion_ventas']) ? 1 : 0,
+            isset($_POST['integracion_compras']) ? 1 : 0,
+            isset($_POST['integracion_clientes']) ? 1 : 0,
+            isset($_POST['integracion_bancos']) ? 1 : 0,
+            isset($_POST['integracion_inventario']) ? 1 : 0,
+            isset($_POST['integracion_activos_fijos']) ? 1 : 0,
+            isset($_POST['integracion_remuneraciones']) ? 1 : 0,
+            isset($_POST['integracion_produccion']) ? 1 : 0,
+            isset($_POST['integracion_tesoreria']) ? 1 : 0,
+            isset($_POST['integracion_impuestos']) ? 1 : 0,
+            $_POST['cuenta_parametrica_tipo'] ?? '',
+            $_POST['asignacion_tipo_documento'] ?? '',
+            $_POST['asignacion_area'] ?? '',
+            $_POST['asignacion_sucursal'] ?? '',
+            $_POST['asignacion_pais'] ?? '',
+            $_POST['asignacion_tipo_transaccion'] ?? '',
+            isset($_POST['cuenta_conciliacion_automatica']) ? 1 : 0,
+            isset($_POST['bloqueada']) ? 1 : 0,
+            isset($_POST['edicion_restringida']) ? 1 : 0,
+            isset($_POST['activa']) ? 1 : 1,
             $user_id
         ]);
+
+        $cuenta_id = $pdo->lastInsertId();
         $stmt->closeCursor();
 
-        $message = "Cuenta creada exitosamente: $codigo - $nombre";
+        // Registrar en auditoria
+        $stmt = $pdo->prepare("
+            INSERT INTO acc_auditoria (tabla, registro_id, accion, usuario_id)
+            VALUES ('acc_plan_cuentas', ?, 'crear', ?)
+        ");
+        $stmt->execute([$cuenta_id, $user_id]);
+        $stmt->closeCursor();
+
+        $pdo->commit();
+        $message = "Cuenta creada exitosamente: " . $_POST['codigo_completo'] . " - " . $_POST['nombre_cuenta'];
 
     } catch (Exception $e) {
+        $pdo->rollBack();
         $error = "Error al crear cuenta: " . $e->getMessage();
     }
 }
 
 // === CREAR ASIENTO ===
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'create_entry') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'crear_asiento') {
     try {
         $pdo->beginTransaction();
 
-        $fecha_doc = $_POST['fecha_documento'];
-        $fecha_cont = $_POST['fecha_contabilizacion'];
-        $periodo = date('Y-m', strtotime($fecha_cont));
-        $doc_type = $_POST['document_type'] ?? 'SA';
-
-        // Generar numero de documento
-        $stmt = $pdo->prepare("SELECT next_number FROM acc_document_types WHERE code = ? AND company_id = ?");
-        $stmt->execute([$doc_type, $company_id]);
-        $doc_config = $stmt->fetch();
-        $stmt->closeCursor();
-
-        $numero_doc = $doc_type . '-' . str_pad($doc_config['next_number'], 10, '0', STR_PAD_LEFT);
-
-        // Actualizar contador
-        $stmt = $pdo->prepare("UPDATE acc_document_types SET next_number = next_number + 1 WHERE code = ? AND company_id = ?");
-        $stmt->execute([$doc_type, $company_id]);
-        $stmt->closeCursor();
-
-        // Crear encabezado
+        // Validar periodo abierto
         $stmt = $pdo->prepare("
-            INSERT INTO acc_journal_entries (
-                company_id, numero_documento, numero_referencia, fecha_documento, fecha_contabilizacion,
-                periodo, fiscal_year, tipo, concepto, texto_cabecera, moneda, estado, created_by
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'borrador', ?)
+            SELECT abierto FROM acc_periodos
+            WHERE company_id = ? AND ano = ? AND periodo = ?
+        ");
+        $ano = date('Y', strtotime($_POST['fecha_documento']));
+        $periodo = date('n', strtotime($_POST['fecha_documento']));
+        $stmt->execute([$company_id, $ano, $periodo]);
+        $periodo_info = $stmt->fetch();
+        $stmt->closeCursor();
+
+        if ($periodo_info && !$periodo_info['abierto']) {
+            throw new Exception("El periodo contable esta cerrado");
+        }
+
+        // Generar numero de asiento
+        $stmt = $pdo->prepare("
+            SELECT COALESCE(MAX(CAST(SUBSTRING_INDEX(numero_asiento, '-', -1) AS UNSIGNED)), 0) + 1 as siguiente
+            FROM acc_asientos
+            WHERE company_id = ? AND ano_contable = ?
+        ");
+        $stmt->execute([$company_id, $ano]);
+        $siguiente = $stmt->fetch()['siguiente'];
+        $stmt->closeCursor();
+
+        $numero_asiento = 'AST-' . $ano . '-' . str_pad($siguiente, 8, '0', STR_PAD_LEFT);
+
+        // Crear asiento
+        $stmt = $pdo->prepare("
+            INSERT INTO acc_asientos (
+                company_id, numero_asiento, ano_contable, periodo_contable, fecha_documento,
+                fecha_registro, lote, tipo_asiento, origen, glosa_cabecera, usuario_creacion,
+                estado, es_asiento_critico, requiere_doble_aprobacion
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'borrador', ?, ?)
         ");
         $stmt->execute([
-            $company_id, $numero_doc,
-            $_POST['numero_referencia'] ?? null,
-            $fecha_doc, $fecha_cont, $periodo,
-            date('Y', strtotime($fecha_cont)),
-            $_POST['tipo'] ?? 'manual',
-            $_POST['concepto'],
-            $_POST['texto_cabecera'] ?? null,
-            $_POST['moneda'] ?? 'CLP',
-            $user_id
+            $company_id, $numero_asiento, $ano, $periodo,
+            $_POST['fecha_documento'],
+            $_POST['fecha_registro'] ?? date('Y-m-d'),
+            $_POST['lote'] ?? '',
+            $_POST['tipo_asiento'],
+            $_POST['origen'] ?? 'manual',
+            trim($_POST['glosa_cabecera']),
+            $user_id,
+            isset($_POST['es_asiento_critico']) ? 1 : 0,
+            isset($_POST['requiere_doble_aprobacion']) ? 1 : 0
         ]);
-        $entry_id = $pdo->lastInsertId();
+
+        $asiento_id = $pdo->lastInsertId();
         $stmt->closeCursor();
 
         // Procesar lineas
-        $total_debe = 0;
-        $total_haber = 0;
+        $total_debito = 0;
+        $total_credito = 0;
 
-        if (isset($_POST['cuenta_id']) && is_array($_POST['cuenta_id'])) {
-            for ($i = 0; $i < count($_POST['cuenta_id']); $i++) {
-                if (empty($_POST['cuenta_id'][$i])) continue;
+        if (isset($_POST['linea_cuenta_id']) && is_array($_POST['linea_cuenta_id'])) {
+            for ($i = 0; $i < count($_POST['linea_cuenta_id']); $i++) {
+                if (empty($_POST['linea_cuenta_id'][$i])) continue;
 
-                $debe = floatval($_POST['debe'][$i] ?? 0);
-                $haber = floatval($_POST['haber'][$i] ?? 0);
+                $debito = floatval($_POST['linea_debito'][$i] ?? 0);
+                $credito = floatval($_POST['linea_credito'][$i] ?? 0);
 
-                if ($debe == 0 && $haber == 0) continue;
+                if ($debito == 0 && $credito == 0) continue;
 
+                // Validar cuenta activa y permite movimientos
                 $stmt = $pdo->prepare("
-                    INSERT INTO acc_journal_entry_lines (
-                        entry_id, linea, posting_key, cuenta_id, debe, haber,
-                        concepto, assignment, due_date, open_amount
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    SELECT id, nombre_cuenta, permite_movimientos, bloqueada
+                    FROM acc_plan_cuentas
+                    WHERE id = ? AND company_id = ? AND activa = 1
+                ");
+                $stmt->execute([$_POST['linea_cuenta_id'][$i], $company_id]);
+                $cuenta = $stmt->fetch();
+                $stmt->closeCursor();
+
+                if (!$cuenta) {
+                    throw new Exception("Cuenta invalida o inactiva en linea " . ($i + 1));
+                }
+
+                if (!$cuenta['permite_movimientos']) {
+                    throw new Exception("La cuenta " . $cuenta['nombre_cuenta'] . " no permite movimientos");
+                }
+
+                if ($cuenta['bloqueada']) {
+                    throw new Exception("La cuenta " . $cuenta['nombre_cuenta'] . " esta bloqueada");
+                }
+
+                // Insertar linea
+                $stmt = $pdo->prepare("
+                    INSERT INTO acc_asientos_detalle (
+                        asiento_id, linea, cuenta_id, descripcion_cuenta, debito, credito, moneda, tipo_cambio,
+                        centro_costo_id, proyecto_id, sucursal_id, auxiliar_tipo, auxiliar_id,
+                        referencia_documento, numero_documento, fecha_documento, glosa_detalle, regla_automatica
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ");
                 $stmt->execute([
-                    $entry_id, $i + 1,
-                    $_POST['posting_key'][$i] ?? '40',
-                    $_POST['cuenta_id'][$i],
-                    $debe, $haber,
-                    $_POST['concepto_linea'][$i] ?? '',
-                    $_POST['assignment'][$i] ?? '',
-                    $_POST['due_date'][$i] ?? null,
-                    $debe > 0 ? $debe : $haber
+                    $asiento_id, $i + 1, $_POST['linea_cuenta_id'][$i], $cuenta['nombre_cuenta'],
+                    $debito, $credito,
+                    $_POST['linea_moneda'][$i] ?? 'CLP',
+                    floatval($_POST['linea_tipo_cambio'][$i] ?? 1),
+                    !empty($_POST['linea_centro_costo'][$i]) ? intval($_POST['linea_centro_costo'][$i]) : null,
+                    !empty($_POST['linea_proyecto'][$i]) ? intval($_POST['linea_proyecto'][$i]) : null,
+                    !empty($_POST['linea_sucursal'][$i]) ? intval($_POST['linea_sucursal'][$i]) : null,
+                    $_POST['linea_auxiliar_tipo'][$i] ?? null,
+                    !empty($_POST['linea_auxiliar_id'][$i]) ? intval($_POST['linea_auxiliar_id'][$i]) : null,
+                    $_POST['linea_referencia'][$i] ?? '',
+                    $_POST['linea_numero_doc'][$i] ?? '',
+                    !empty($_POST['linea_fecha_doc'][$i]) ? $_POST['linea_fecha_doc'][$i] : null,
+                    trim($_POST['linea_glosa'][$i] ?? ''),
+                    $_POST['linea_regla'][$i] ?? ''
                 ]);
                 $stmt->closeCursor();
 
-                $total_debe += $debe;
-                $total_haber += $haber;
+                $total_debito += $debito;
+                $total_credito += $credito;
             }
         }
 
         // Actualizar totales
-        $stmt = $pdo->prepare("UPDATE acc_journal_entries SET total_debe = ?, total_haber = ? WHERE id = ?");
-        $stmt->execute([$total_debe, $total_haber, $entry_id]);
+        $stmt = $pdo->prepare("
+            UPDATE acc_asientos
+            SET total_debito = ?, total_credito = ?
+            WHERE id = ?
+        ");
+        $stmt->execute([$total_debito, $total_credito, $asiento_id]);
         $stmt->closeCursor();
 
-        // Validar balance
-        if (abs($total_debe - $total_haber) > 0.01) {
-            throw new Exception("El documento no cuadra. Debe: $total_debe, Haber: $total_haber");
+        // Validar cuadre
+        if (abs($total_debito - $total_credito) > 0.01) {
+            throw new Exception("El asiento no cuadra. Debito: $total_debito, Credito: $total_credito");
         }
 
+        // Registrar en auditoria
+        $stmt = $pdo->prepare("
+            INSERT INTO acc_auditoria (tabla, registro_id, accion, usuario_id)
+            VALUES ('acc_asientos', ?, 'crear', ?)
+        ");
+        $stmt->execute([$asiento_id, $user_id]);
+        $stmt->closeCursor();
+
         $pdo->commit();
-        $message = "Documento creado: $numero_doc";
+        $message = "Asiento creado exitosamente: $numero_asiento";
 
     } catch (Exception $e) {
         $pdo->rollBack();
-        $error = "Error: " . $e->getMessage();
+        $error = "Error al crear asiento: " . $e->getMessage();
     }
 }
 
-// === CONTABILIZAR DOCUMENTO ===
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'post_entry') {
+// === CONTABILIZAR ASIENTO ===
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'contabilizar_asiento') {
     try {
-        $entry_id = intval($_POST['entry_id']);
         $pdo->beginTransaction();
 
-        $stmt = $pdo->prepare("SELECT * FROM acc_journal_entries WHERE id = ? AND company_id = ?");
-        $stmt->execute([$entry_id, $company_id]);
-        $entry = $stmt->fetch();
+        $asiento_id = intval($_POST['asiento_id']);
+
+        // Validar estado
+        $stmt = $pdo->prepare("
+            SELECT * FROM acc_asientos
+            WHERE id = ? AND company_id = ? AND estado = 'borrador'
+        ");
+        $stmt->execute([$asiento_id, $company_id]);
+        $asiento = $stmt->fetch();
         $stmt->closeCursor();
 
-        if (!$entry['cuadrado']) {
-            throw new Exception("El documento no cuadra");
+        if (!$asiento) {
+            throw new Exception("Asiento no encontrado o ya contabilizado");
+        }
+
+        if (!$asiento['cuadrado']) {
+            throw new Exception("El asiento no cuadra");
         }
 
         // Actualizar estado
         $stmt = $pdo->prepare("
-            UPDATE acc_journal_entries
-            SET estado = 'contabilizado', fecha_contabilizacion_sistema = NOW(), contabilizado_por = ?
+            UPDATE acc_asientos
+            SET estado = 'contabilizado', usuario_aprobacion = ?, fecha_aprobacion = NOW()
             WHERE id = ?
         ");
-        $stmt->execute([$user_id, $entry_id]);
+        $stmt->execute([$user_id, $asiento_id]);
         $stmt->closeCursor();
 
         // Actualizar saldos
-        $stmt = $pdo->prepare("SELECT * FROM acc_journal_entry_lines WHERE entry_id = ?");
-        $stmt->execute([$entry_id]);
-        $lines = $stmt->fetchAll();
+        $stmt = $pdo->prepare("SELECT * FROM acc_asientos_detalle WHERE asiento_id = ?");
+        $stmt->execute([$asiento_id]);
+        $lineas = $stmt->fetchAll();
         $stmt->closeCursor();
 
-        foreach ($lines as $line) {
-            $periodo = $entry['periodo'];
-            $cuenta_id = $line['cuenta_id'];
-
+        foreach ($lineas as $linea) {
+            // Verificar si existe saldo
             $stmt = $pdo->prepare("
-                SELECT id FROM acc_account_balances
-                WHERE cuenta_id = ? AND periodo = ? AND company_id = ?
+                SELECT id FROM acc_saldos
+                WHERE cuenta_id = ? AND ano = ? AND periodo = ? AND company_id = ?
             ");
-            $stmt->execute([$cuenta_id, $periodo, $company_id]);
-            $balance = $stmt->fetch();
+            $stmt->execute([$linea['cuenta_id'], $asiento['ano_contable'], $asiento['periodo_contable'], $company_id]);
+            $saldo = $stmt->fetch();
             $stmt->closeCursor();
 
-            if ($balance) {
+            if ($saldo) {
+                // Actualizar saldo
                 $stmt = $pdo->prepare("
-                    UPDATE acc_account_balances
-                    SET movimientos_debe = movimientos_debe + ?,
-                        movimientos_haber = movimientos_haber + ?,
-                        saldo_final_debe = saldo_inicial_debe + movimientos_debe + ?,
-                        saldo_final_haber = saldo_inicial_haber + movimientos_haber + ?,
-                        saldo_final = (saldo_inicial_debe + movimientos_debe + ?) - (saldo_inicial_haber + movimientos_haber + ?)
+                    UPDATE acc_saldos
+                    SET movimientos_debito = movimientos_debito + ?,
+                        movimientos_credito = movimientos_credito + ?,
+                        saldo_final_debito = saldo_inicial_debito + movimientos_debito + ?,
+                        saldo_final_credito = saldo_inicial_credito + movimientos_credito + ?
                     WHERE id = ?
                 ");
                 $stmt->execute([
-                    $line['debe'], $line['haber'],
-                    $line['debe'], $line['haber'],
-                    $line['debe'], $line['haber'],
-                    $balance['id']
+                    $linea['debito'], $linea['credito'],
+                    $linea['debito'], $linea['credito'],
+                    $saldo['id']
                 ]);
                 $stmt->closeCursor();
             } else {
+                // Crear saldo
                 $stmt = $pdo->prepare("
-                    INSERT INTO acc_account_balances (
-                        company_id, cuenta_id, fiscal_year, periodo,
-                        movimientos_debe, movimientos_haber,
-                        saldo_final_debe, saldo_final_haber, saldo_final
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    INSERT INTO acc_saldos (
+                        company_id, cuenta_id, ano, periodo,
+                        movimientos_debito, movimientos_credito,
+                        saldo_final_debito, saldo_final_credito
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 ");
                 $stmt->execute([
-                    $company_id, $cuenta_id, $entry['fiscal_year'], $periodo,
-                    $line['debe'], $line['haber'],
-                    $line['debe'], $line['haber'],
-                    $line['debe'] - $line['haber']
+                    $company_id, $linea['cuenta_id'], $asiento['ano_contable'], $asiento['periodo_contable'],
+                    $linea['debito'], $linea['credito'],
+                    $linea['debito'], $linea['credito']
                 ]);
                 $stmt->closeCursor();
             }
         }
 
+        // Registrar en auditoria
+        $stmt = $pdo->prepare("
+            INSERT INTO acc_auditoria (tabla, registro_id, accion, usuario_id)
+            VALUES ('acc_asientos', ?, 'aprobar', ?)
+        ");
+        $stmt->execute([$asiento_id, $user_id]);
+        $stmt->closeCursor();
+
         $pdo->commit();
-        $message = "Documento contabilizado exitosamente";
+        $message = "Asiento contabilizado exitosamente";
 
     } catch (Exception $e) {
         $pdo->rollBack();
-        $error = "Error: " . $e->getMessage();
-    }
-}
-
-// === GUARDAR CONFIGURACION ===
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save_config') {
-    try {
-        foreach ($_POST as $key => $value) {
-            if (strpos($key, 'config_') === 0) {
-                $config_key = str_replace('config_', '', $key);
-
-                $stmt = $pdo->prepare("
-                    INSERT INTO acc_config (company_id, config_key, config_value, updated_by)
-                    VALUES (?, ?, ?, ?)
-                    ON DUPLICATE KEY UPDATE config_value = ?, updated_by = ?
-                ");
-                $stmt->execute([$company_id, $config_key, $value, $user_id, $value, $user_id]);
-                $stmt->closeCursor();
-            }
-        }
-
-        $message = "Configuracion guardada exitosamente";
-
-    } catch (Exception $e) {
-        $error = "Error al guardar: " . $e->getMessage();
+        $error = "Error al contabilizar: " . $e->getMessage();
     }
 }
 
 // === OBTENER DATOS ===
+$cuentas = [];
+$asientos = [];
 $stats = [];
-$recent_entries = [];
-$accounts = [];
-$entries = [];
-$config_values = [];
+$centros_costo = [];
+$proyectos = [];
 
 try {
     // Estadisticas
     $stmt = $pdo->prepare("
-        SELECT
-            COUNT(DISTINCT id) as total_cuentas,
-            SUM(CASE WHEN activa = 1 THEN 1 ELSE 0 END) as cuentas_activas
-        FROM acc_chart_of_accounts
+        SELECT COUNT(*) as total_cuentas,
+               SUM(CASE WHEN activa = 1 THEN 1 ELSE 0 END) as cuentas_activas,
+               SUM(CASE WHEN permite_movimientos = 1 THEN 1 ELSE 0 END) as cuentas_movimiento
+        FROM acc_plan_cuentas
         WHERE company_id = ?
     ");
     $stmt->execute([$company_id]);
     $stats = $stmt->fetch();
     $stmt->closeCursor();
 
-    // Documentos recientes
-    $stmt = $pdo->prepare("
-        SELECT * FROM acc_journal_entries
-        WHERE company_id = ?
-        ORDER BY created_at DESC
-        LIMIT 10
-    ");
-    $stmt->execute([$company_id]);
-    $recent_entries = $stmt->fetchAll();
-    $stmt->closeCursor();
-
-    // Plan de cuentas
-    if ($action === 'accounts') {
+    // Cuentas
+    if ($action === 'cuentas') {
         $stmt = $pdo->prepare("
-            SELECT * FROM acc_chart_of_accounts
+            SELECT * FROM acc_plan_cuentas
             WHERE company_id = ?
             ORDER BY codigo_completo
         ");
         $stmt->execute([$company_id]);
-        $accounts = $stmt->fetchAll();
+        $cuentas = $stmt->fetchAll();
         $stmt->closeCursor();
     }
 
-    // Documentos contables
-    if ($action === 'entries') {
+    // Asientos
+    if ($action === 'asientos') {
         $stmt = $pdo->prepare("
-            SELECT * FROM acc_journal_entries
+            SELECT * FROM acc_asientos
             WHERE company_id = ?
-            ORDER BY fecha_contabilizacion DESC
+            ORDER BY fecha_documento DESC, numero_asiento DESC
             LIMIT 100
         ");
         $stmt->execute([$company_id]);
-        $entries = $stmt->fetchAll();
+        $asientos = $stmt->fetchAll();
         $stmt->closeCursor();
     }
 
-    // Configuracion
-    if ($action === 'settings') {
-        $stmt = $pdo->prepare("SELECT * FROM acc_config WHERE company_id = ?");
-        $stmt->execute([$company_id]);
-        $configs = $stmt->fetchAll();
-        $stmt->closeCursor();
+    // Centros de costo
+    $stmt = $pdo->prepare("SELECT * FROM acc_centros_costo WHERE company_id = ? AND activo = 1");
+    $stmt->execute([$company_id]);
+    $centros_costo = $stmt->fetchAll();
+    $stmt->closeCursor();
 
-        foreach ($configs as $cfg) {
-            $config_values[$cfg['config_key']] = $cfg['config_value'];
-        }
-    }
+    // Proyectos
+    $stmt = $pdo->prepare("SELECT * FROM acc_proyectos WHERE company_id = ? AND activo = 1");
+    $stmt->execute([$company_id]);
+    $proyectos = $stmt->fetchAll();
+    $stmt->closeCursor();
 
 } catch (PDOException $e) {
     $error = "Error al cargar datos: " . $e->getMessage();
@@ -1103,10 +728,10 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contabilidad Financiera - CONECTA ERP</title>
+    <title>Contabilidad - CONECTA ERP</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: #f5f5f5; color: #1a1a1a; line-height: 1.6; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #1a1a1a; line-height: 1.6; }
         .header { background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); color: white; padding: 1.5rem 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
         .header h1 { font-size: 1.75rem; font-weight: 600; margin-bottom: 0.25rem; }
         .header p { opacity: 0.95; font-size: 0.9rem; }
@@ -1117,7 +742,7 @@ try {
         .container { max-width: 1600px; margin: 0 auto; padding: 2rem; }
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
         .stat-card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 4px solid #1e40af; }
-        .stat-card h3 { font-size: 0.8rem; color: #6b7280; margin-bottom: 0.5rem; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; }
+        .stat-card h3 { font-size: 0.8rem; color: #6b7280; margin-bottom: 0.5rem; text-transform: uppercase; font-weight: 600; }
         .stat-card .value { font-size: 2rem; font-weight: 700; color: #1f2937; }
         .stat-card .label { font-size: 0.85rem; color: #9ca3af; margin-top: 0.25rem; }
         .card { background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1.5rem; margin-bottom: 1.5rem; }
@@ -1128,11 +753,7 @@ try {
         .btn-primary:hover { background: #1e3a8a; }
         .btn-success { background: #059669; color: white; }
         .btn-success:hover { background: #047857; }
-        .btn-secondary { background: #f3f4f6; color: #374151; }
-        .btn-secondary:hover { background: #e5e7eb; }
         .btn-small { padding: 0.375rem 0.75rem; font-size: 0.813rem; }
-        .btn-export { background: #10b981; color: white; }
-        .btn-export:hover { background: #059669; }
         .table-container { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
         th { background: #f9fafb; padding: 0.75rem; text-align: left; font-weight: 600; color: #374151; border-bottom: 2px solid #e5e7eb; }
@@ -1143,35 +764,29 @@ try {
         .badge-warning { background: #fef3c7; color: #92400e; }
         .badge-danger { background: #fee2e2; color: #991b1b; }
         .badge-info { background: #dbeafe; color: #1e40af; }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
         .form-group { margin-bottom: 1rem; }
         .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: #374151; font-size: 0.875rem; }
         .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.625rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.875rem; }
         .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #1e40af; box-shadow: 0 0 0 3px rgba(30,64,175,0.1); }
         .form-group textarea { min-height: 80px; resize: vertical; }
-        .checkbox-group { display: flex; align-items: center; gap: 0.5rem; }
+        .checkbox-group { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
         .checkbox-group input[type="checkbox"] { width: auto; }
         .alert { padding: 1rem 1.25rem; border-radius: 6px; margin-bottom: 1.5rem; font-weight: 500; }
         .alert-success { background: #d1fae5; color: #065f46; border-left: 4px solid #10b981; }
         .alert-error { background: #fee2e2; color: #991b1b; border-left: 4px solid #ef4444; }
-        .config-section { background: #f9fafb; padding: 1.5rem; border-radius: 6px; margin-bottom: 1.5rem; }
-        .config-section h3 { font-size: 1rem; font-weight: 600; color: #1f2937; margin-bottom: 1rem; }
-        .report-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
-        .report-card { background: white; border: 2px solid #e5e7eb; border-radius: 8px; padding: 1.5rem; transition: all 0.2s; }
-        .report-card:hover { border-color: #1e40af; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .report-card h3 { font-size: 1rem; font-weight: 600; color: #1f2937; margin-bottom: 0.5rem; }
-        .report-card p { font-size: 0.875rem; color: #6b7280; margin-bottom: 1rem; }
+        .nivel-badge { display: inline-block; padding: 0.125rem 0.5rem; background: #3b82f6; color: white; border-radius: 3px; font-size: 0.75rem; font-weight: 600; margin-right: 0.5rem; }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>Contabilidad Financiera - SAP FI Level</h1>
-        <p>Gestion contable empresarial con plan de cuentas, asientos, subledgers, clearing y reportes</p>
+        <h1>Contabilidad Financiera Completa</h1>
+        <p>Plan de Cuentas Jerarquico (7 niveles) - Asientos Contables - Integraciones - Auditoria</p>
     </div>
 
     <div class="tabs">
-        <a href="?action=accounts" class="<?php echo $action === 'accounts' ? 'active' : ''; ?>">Cuentas</a>
-        <a href="?action=entries" class="<?php echo $action === 'entries' ? 'active' : ''; ?>">Asientos Contables</a>
+        <a href="?action=cuentas" class="<?php echo $action === 'cuentas' ? 'active' : ''; ?>">Cuentas</a>
+        <a href="?action=asientos" class="<?php echo $action === 'asientos' ? 'active' : ''; ?>">Asientos Contables</a>
     </div>
 
     <div class="container">
@@ -1182,10 +797,10 @@ try {
             <div class="alert alert-error"><?php echo htmlspecialchars($error); ?></div>
         <?php endif; ?>
 
-        <?php if ($action === 'accounts'): ?>
+        <?php if ($action === 'cuentas'): ?>
         <div class="stats-grid">
             <div class="stat-card">
-                <h3>Cuentas Contables</h3>
+                <h3>Total Cuentas</h3>
                 <div class="value"><?php echo $stats['total_cuentas'] ?? 0; ?></div>
                 <div class="label">en plan de cuentas</div>
             </div>
@@ -1195,9 +810,9 @@ try {
                 <div class="label">actualmente activas</div>
             </div>
             <div class="stat-card">
-                <h3>Ejercicio Fiscal</h3>
-                <div class="value"><?php echo date('Y'); ?></div>
-                <div class="label">periodo actual</div>
+                <h3>Con Movimientos</h3>
+                <div class="value"><?php echo $stats['cuentas_movimiento'] ?? 0; ?></div>
+                <div class="label">permite movimientos</div>
             </div>
             <div class="stat-card">
                 <h3>Sistema</h3>
@@ -1206,38 +821,181 @@ try {
             </div>
         </div>
 
-        <div style="margin-bottom: 1.5rem; display: flex; gap: 1rem;">
-            <a href="?action=export_excel&type=balance_8col" class="btn btn-export">Balance 8 Columnas</a>
-            <a href="?action=export_excel&type=libro_mayor" class="btn btn-export">Libro Mayor</a>
-            <a href="?action=export_excel&type=estado_resultados" class="btn btn-export">Estado Resultados</a>
-            <a href="?action=settings" class="btn btn-secondary">Configuracion</a>
-        </div>
         <div class="card">
             <div class="card-header">
-                <h2>Plan de Cuentas</h2>
-                <button onclick="alert('Funcion de creacion de cuentas')" class="btn btn-primary">Nueva Cuenta</button>
+                <h2>Plan de Cuentas (7 Niveles Jerarquicos)</h2>
+                <button onclick="document.getElementById('formNuevaCuenta').style.display='block'" class="btn btn-primary">Nueva Cuenta</button>
             </div>
+
+            <div id="formNuevaCuenta" style="display:none; margin-bottom: 2rem; padding: 1.5rem; background: #f9fafb; border-radius: 8px;">
+                <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">Nueva Cuenta Contable</h3>
+                <form method="POST" action="?action=crear_cuenta">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Codigo Completo *</label>
+                            <input type="text" name="codigo_completo" placeholder="Ej: 1-1-02-004-01-001-001" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Codigo Corto</label>
+                            <input type="text" name="codigo_corto" placeholder="Ej: 1102004">
+                        </div>
+                        <div class="form-group">
+                            <label>Nivel *</label>
+                            <select name="nivel" required>
+                                <option value="1">Nivel 1 - Clase</option>
+                                <option value="2">Nivel 2 - Grupo</option>
+                                <option value="3">Nivel 3 - Subgrupo</option>
+                                <option value="4">Nivel 4 - Cuenta</option>
+                                <option value="5">Nivel 5 - Subcuenta</option>
+                                <option value="6">Nivel 6 - Analitica</option>
+                                <option value="7">Nivel 7 - Detalle</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Nombre Cuenta *</label>
+                            <input type="text" name="nombre_cuenta" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Naturaleza *</label>
+                            <select name="naturaleza" required>
+                                <option value="deudor">Deudor</option>
+                                <option value="acreedor">Acreedor</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Tipo *</label>
+                            <select name="tipo" required>
+                                <option value="activo">Activo</option>
+                                <option value="pasivo">Pasivo</option>
+                                <option value="patrimonio">Patrimonio</option>
+                                <option value="ingreso">Ingreso</option>
+                                <option value="gasto">Gasto</option>
+                                <option value="orden">Orden</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Subtipo</label>
+                            <input type="text" name="subtipo" placeholder="circulante, fijo, no corriente">
+                        </div>
+                        <div class="form-group">
+                            <label>Clasificacion IFRS</label>
+                            <input type="text" name="clasificacion_ifrs">
+                        </div>
+                        <div class="form-group">
+                            <label>Clasificacion NIC/NIIF</label>
+                            <input type="text" name="clasificacion_nic_niif">
+                        </div>
+                        <div class="form-group">
+                            <label>Flujo de Caja</label>
+                            <select name="clasificacion_flujo_caja">
+                                <option value="">Ninguna</option>
+                                <option value="operacion">Operacion</option>
+                                <option value="inversion">Inversion</option>
+                                <option value="financiacion">Financiacion</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Descripcion</label>
+                        <textarea name="descripcion"></textarea>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                        <div class="checkbox-group">
+                            <input type="checkbox" name="permite_movimientos" id="permite_mov">
+                            <label for="permite_mov">Permite Movimientos</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" name="requiere_centro_costo" id="req_cc">
+                            <label for="req_cc">Requiere Centro Costo</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" name="requiere_proyecto" id="req_proy">
+                            <label for="req_proy">Requiere Proyecto</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" name="es_cuenta_flujo_efectivo" id="flujo_ef">
+                            <label for="flujo_ef">Cuenta Flujo Efectivo</label>
+                        </div>
+                    </div>
+
+                    <h4 style="margin: 1.5rem 0 1rem; font-size: 1rem; color: #1f2937;">Integraciones</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; margin-bottom: 1rem;">
+                        <div class="checkbox-group">
+                            <input type="checkbox" name="integracion_ventas" id="int_ventas">
+                            <label for="int_ventas">Ventas</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" name="integracion_compras" id="int_compras">
+                            <label for="int_compras">Compras</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" name="integracion_clientes" id="int_clientes">
+                            <label for="int_clientes">Clientes</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" name="integracion_bancos" id="int_bancos">
+                            <label for="int_bancos">Bancos</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" name="integracion_inventario" id="int_inv">
+                            <label for="int_inv">Inventario</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" name="integracion_activos_fijos" id="int_af">
+                            <label for="int_af">Activos Fijos</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" name="integracion_remuneraciones" id="int_rem">
+                            <label for="int_rem">Remuneraciones</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" name="integracion_produccion" id="int_prod">
+                            <label for="int_prod">Produccion</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" name="integracion_tesoreria" id="int_tes">
+                            <label for="int_tes">Tesoreria</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" name="integracion_impuestos" id="int_imp">
+                            <label for="int_imp">Impuestos</label>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem;">
+                        <button type="submit" class="btn btn-success">Crear Cuenta</button>
+                        <button type="button" onclick="document.getElementById('formNuevaCuenta').style.display='none'" class="btn btn-primary" style="background: #6b7280;">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+
             <div class="table-container">
                 <table>
                     <thead>
                         <tr>
+                            <th>Nivel</th>
                             <th>Codigo</th>
                             <th>Nombre</th>
                             <th>Tipo</th>
                             <th>Naturaleza</th>
+                            <th>IFRS</th>
                             <th>Movimientos</th>
                             <th>Estado</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($accounts as $account): ?>
+                        <?php foreach ($cuentas as $cuenta): ?>
                         <tr>
-                            <td><strong><?php echo htmlspecialchars($account['codigo_completo']); ?></strong></td>
-                            <td><?php echo htmlspecialchars($account['nombre']); ?></td>
-                            <td><?php echo htmlspecialchars($account['tipo'] ?? 'N/A'); ?></td>
-                            <td><?php echo strtoupper($account['naturaleza']); ?></td>
-                            <td><?php echo $account['permite_movimientos'] ? 'Si' : 'No'; ?></td>
-                            <td><span class="badge badge-<?php echo $account['activa'] ? 'success' : 'danger'; ?>"><?php echo $account['activa'] ? 'ACTIVA' : 'INACTIVA'; ?></span></td>
+                            <td><span class="nivel-badge">N<?php echo $cuenta['nivel']; ?></span></td>
+                            <td><strong><?php echo htmlspecialchars($cuenta['codigo_completo']); ?></strong></td>
+                            <td style="padding-left: <?php echo ($cuenta['nivel'] * 1.5); ?>rem;"><?php echo htmlspecialchars($cuenta['nombre_cuenta']); ?></td>
+                            <td><?php echo strtoupper($cuenta['tipo']); ?></td>
+                            <td><?php echo strtoupper($cuenta['naturaleza']); ?></td>
+                            <td><?php echo htmlspecialchars($cuenta['clasificacion_ifrs'] ?? '-'); ?></td>
+                            <td><?php echo $cuenta['permite_movimientos'] ? 'Si' : 'No'; ?></td>
+                            <td><span class="badge badge-<?php echo $cuenta['activa'] ? 'success' : 'danger'; ?>"><?php echo $cuenta['activa'] ? 'ACTIVA' : 'INACTIVA'; ?></span></td>
                         </tr>
                         <?php endforeach; ?>
                     </tbody>
@@ -1245,17 +1003,17 @@ try {
             </div>
         </div>
 
-        <?php elseif ($action === 'entries'): ?>
+        <?php elseif ($action === 'asientos'): ?>
         <div class="stats-grid">
             <div class="stat-card">
-                <h3>Documentos del Mes</h3>
-                <div class="value"><?php echo count($recent_entries); ?></div>
-                <div class="label">registros contables</div>
+                <h3>Total Asientos</h3>
+                <div class="value"><?php echo count($asientos); ?></div>
+                <div class="label">registrados</div>
             </div>
             <div class="stat-card">
-                <h3>Ejercicio Fiscal</h3>
+                <h3>Ano Actual</h3>
                 <div class="value"><?php echo date('Y'); ?></div>
-                <div class="label">periodo actual</div>
+                <div class="label">ejercicio fiscal</div>
             </div>
             <div class="stat-card">
                 <h3>Periodo</h3>
@@ -1269,46 +1027,129 @@ try {
             </div>
         </div>
 
-        <div style="margin-bottom: 1.5rem; display: flex; gap: 1rem;">
-            <a href="?action=export_excel&type=aging&tipo=customer" class="btn btn-export">Antiguedad Clientes</a>
-            <a href="?action=export_excel&type=aging&tipo=vendor" class="btn btn-export">Antiguedad Proveedores</a>
-            <a href="?action=export_excel&type=balance_general" class="btn btn-export">Balance General</a>
-        </div>
-
         <div class="card">
             <div class="card-header">
                 <h2>Asientos Contables</h2>
-                <button onclick="alert('Funcion de creacion de documentos')" class="btn btn-primary">Nuevo Asiento</button>
+                <button onclick="document.getElementById('formNuevoAsiento').style.display='block'" class="btn btn-primary">Nuevo Asiento</button>
             </div>
+
+            <div id="formNuevoAsiento" style="display:none; margin-bottom: 2rem; padding: 1.5rem; background: #f9fafb; border-radius: 8px;">
+                <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">Nuevo Asiento Contable</h3>
+                <form method="POST" action="?action=crear_asiento">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Fecha Documento *</label>
+                            <input type="date" name="fecha_documento" value="<?php echo date('Y-m-d'); ?>" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Tipo Asiento *</label>
+                            <select name="tipo_asiento" required>
+                                <option value="manual">Manual</option>
+                                <option value="automatico">Automatico</option>
+                                <option value="ajuste">Ajuste</option>
+                                <option value="reverso">Reverso</option>
+                                <option value="apertura">Apertura</option>
+                                <option value="cierre">Cierre</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Origen</label>
+                            <input type="text" name="origen" value="manual" placeholder="ventas compras banco">
+                        </div>
+                        <div class="form-group">
+                            <label>Lote</label>
+                            <input type="text" name="lote" placeholder="Numero de lote">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Glosa Cabecera *</label>
+                        <textarea name="glosa_cabecera" required></textarea>
+                    </div>
+
+                    <h4 style="margin: 1.5rem 0 1rem; font-size: 1rem; color: #1f2937;">Lineas del Asiento</h4>
+                    <div id="lineasAsiento">
+                        <div class="linea-asiento" style="display: grid; grid-template-columns: 2fr 1fr 1fr 2fr auto; gap: 0.5rem; margin-bottom: 0.5rem; align-items: end;">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label>Cuenta</label>
+                                <select name="linea_cuenta_id[]" required>
+                                    <option value="">Seleccione...</option>
+                                    <?php
+                                    $stmt = $pdo->prepare("SELECT id, codigo_completo, nombre_cuenta FROM acc_plan_cuentas WHERE company_id = ? AND permite_movimientos = 1 AND activa = 1 ORDER BY codigo_completo");
+                                    $stmt->execute([$company_id]);
+                                    $cuentas_select = $stmt->fetchAll();
+                                    $stmt->closeCursor();
+                                    foreach ($cuentas_select as $c):
+                                    ?>
+                                        <option value="<?php echo $c['id']; ?>"><?php echo htmlspecialchars($c['codigo_completo'] . ' - ' . $c['nombre_cuenta']); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label>Debito</label>
+                                <input type="number" name="linea_debito[]" step="0.01" min="0" value="0">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label>Credito</label>
+                                <input type="number" name="linea_credito[]" step="0.01" min="0" value="0">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label>Glosa</label>
+                                <input type="text" name="linea_glosa[]">
+                            </div>
+                            <button type="button" class="btn btn-small" style="background: #dc2626; color: white; height: 38px;" onclick="this.parentElement.remove()">X</button>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-small" style="background: #10b981; color: white; margin-bottom: 1rem;" onclick="agregarLinea()">Agregar Linea</button>
+
+                    <input type="hidden" name="linea_moneda[]" value="CLP">
+                    <input type="hidden" name="linea_tipo_cambio[]" value="1">
+                    <input type="hidden" name="linea_centro_costo[]" value="">
+                    <input type="hidden" name="linea_proyecto[]" value="">
+                    <input type="hidden" name="linea_sucursal[]" value="">
+                    <input type="hidden" name="linea_auxiliar_tipo[]" value="">
+                    <input type="hidden" name="linea_auxiliar_id[]" value="">
+                    <input type="hidden" name="linea_referencia[]" value="">
+                    <input type="hidden" name="linea_numero_doc[]" value="">
+                    <input type="hidden" name="linea_fecha_doc[]" value="">
+                    <input type="hidden" name="linea_regla[]" value="">
+
+                    <div style="display: flex; gap: 1rem;">
+                        <button type="submit" class="btn btn-success">Crear Asiento</button>
+                        <button type="button" onclick="document.getElementById('formNuevoAsiento').style.display='none'" class="btn btn-primary" style="background: #6b7280;">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+
             <div class="table-container">
                 <table>
                     <thead>
                         <tr>
                             <th>Numero</th>
-                            <th>Fecha Doc.</th>
-                            <th>Fecha Cont.</th>
-                            <th>Concepto</th>
-                            <th>Debe</th>
-                            <th>Haber</th>
+                            <th>Fecha</th>
+                            <th>Tipo</th>
+                            <th>Glosa</th>
+                            <th>Debito</th>
+                            <th>Credito</th>
                             <th>Estado</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($entries as $entry): ?>
+                        <?php foreach ($asientos as $asiento): ?>
                         <tr>
-                            <td><strong><?php echo htmlspecialchars($entry['numero_documento']); ?></strong></td>
-                            <td><?php echo date('d/m/Y', strtotime($entry['fecha_documento'])); ?></td>
-                            <td><?php echo date('d/m/Y', strtotime($entry['fecha_contabilizacion'])); ?></td>
-                            <td><?php echo htmlspecialchars(substr($entry['concepto'], 0, 50)); ?></td>
-                            <td>$<?php echo number_format($entry['total_debe'], 2); ?></td>
-                            <td>$<?php echo number_format($entry['total_haber'], 2); ?></td>
-                            <td><span class="badge badge-<?php echo $entry['estado'] === 'contabilizado' ? 'success' : 'warning'; ?>"><?php echo strtoupper($entry['estado']); ?></span></td>
+                            <td><strong><?php echo htmlspecialchars($asiento['numero_asiento']); ?></strong></td>
+                            <td><?php echo date('d/m/Y', strtotime($asiento['fecha_documento'])); ?></td>
+                            <td><?php echo strtoupper($asiento['tipo_asiento']); ?></td>
+                            <td><?php echo htmlspecialchars(substr($asiento['glosa_cabecera'], 0, 50)); ?></td>
+                            <td>$<?php echo number_format($asiento['total_debito'], 2); ?></td>
+                            <td>$<?php echo number_format($asiento['total_credito'], 2); ?></td>
+                            <td><span class="badge badge-<?php echo $asiento['estado'] === 'contabilizado' ? 'success' : 'warning'; ?>"><?php echo strtoupper($asiento['estado']); ?></span></td>
                             <td>
-                                <?php if ($entry['estado'] === 'borrador'): ?>
+                                <?php if ($asiento['estado'] === 'borrador'): ?>
                                 <form method="POST" style="display:inline;">
-                                    <input type="hidden" name="action" value="post_entry">
-                                    <input type="hidden" name="entry_id" value="<?php echo $entry['id']; ?>">
+                                    <input type="hidden" name="action" value="contabilizar_asiento">
+                                    <input type="hidden" name="asiento_id" value="<?php echo $asiento['id']; ?>">
                                     <button type="submit" class="btn btn-success btn-small">Contabilizar</button>
                                 </form>
                                 <?php endif; ?>
@@ -1319,119 +1160,21 @@ try {
                 </table>
             </div>
         </div>
-
-        <?php elseif ($action === 'settings'): ?>
-        <div style="margin-bottom: 1.5rem;">
-            <a href="?action=accounts" class="btn btn-secondary">Volver a Cuentas</a>
-        </div>
-        <div class="card">
-            <div class="card-header">
-                <h2>Configuracion del Modulo Contable</h2>
-            </div>
-
-            <form method="POST">
-                <input type="hidden" name="action" value="save_config">
-
-                <div class="config-section">
-                    <h3>Datos de la Empresa</h3>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Nombre de la Empresa *</label>
-                            <input type="text" name="config_company_name" value="<?php echo htmlspecialchars($config_values['company_name'] ?? 'CONECTA ERP'); ?>" required>
-                        </div>
-                        <div class="form-group">
-                            <label>RUT / Tax ID *</label>
-                            <input type="text" name="config_company_tax_id" value="<?php echo htmlspecialchars($config_values['company_tax_id'] ?? ''); ?>" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Moneda Local *</label>
-                            <select name="config_currency_local">
-                                <option value="CLP" <?php echo ($config_values['currency_local'] ?? 'CLP') === 'CLP' ? 'selected' : ''; ?>>CLP - Peso Chileno</option>
-                                <option value="USD" <?php echo ($config_values['currency_local'] ?? '') === 'USD' ? 'selected' : ''; ?>>USD - Dolar</option>
-                                <option value="EUR" <?php echo ($config_values['currency_local'] ?? '') === 'EUR' ? 'selected' : ''; ?>>EUR - Euro</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="config-section">
-                    <h3>Parametros Contables</h3>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Variante Ejercicio Fiscal</label>
-                            <input type="text" name="config_fiscal_year_variant" value="<?php echo htmlspecialchars($config_values['fiscal_year_variant'] ?? '01'); ?>">
-                        </div>
-                        <div class="form-group">
-                            <label>Decimales en Importes</label>
-                            <select name="config_decimal_places">
-                                <option value="0" <?php echo ($config_values['decimal_places'] ?? '2') === '0' ? 'selected' : ''; ?>>0</option>
-                                <option value="2" <?php echo ($config_values['decimal_places'] ?? '2') === '2' ? 'selected' : ''; ?>>2</option>
-                                <option value="4" <?php echo ($config_values['decimal_places'] ?? '2') === '4' ? 'selected' : ''; ?>>4</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Frecuencia Reporte Impuestos</label>
-                            <select name="config_tax_reporting">
-                                <option value="monthly" <?php echo ($config_values['tax_reporting'] ?? 'monthly') === 'monthly' ? 'selected' : ''; ?>>Mensual</option>
-                                <option value="quarterly" <?php echo ($config_values['tax_reporting'] ?? '') === 'quarterly' ? 'selected' : ''; ?>>Trimestral</option>
-                                <option value="yearly" <?php echo ($config_values['tax_reporting'] ?? '') === 'yearly' ? 'selected' : ''; ?>>Anual</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="config-section">
-                    <h3>Integraciones</h3>
-                    <div class="form-grid">
-                        <div class="checkbox-group">
-                            <input type="checkbox" name="config_integration_sales" id="int_sales" value="1">
-                            <label for="int_sales">Integracion automatica con Ventas</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" name="config_integration_purchases" id="int_purch" value="1">
-                            <label for="int_purch">Integracion automatica con Compras</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" name="config_integration_inventory" id="int_inv" value="1">
-                            <label for="int_inv">Integracion automatica con Inventario</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" name="config_integration_payroll" id="int_pay" value="1">
-                            <label for="int_pay">Integracion automatica con Nomina</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" name="config_integration_production" id="int_prod" value="1">
-                            <label for="int_prod">Integracion automatica con Produccion</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" name="config_integration_assets" id="int_asset" value="1">
-                            <label for="int_asset">Integracion automatica con Activos Fijos</label>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="config-section">
-                    <h3>Seguridad y Auditoria</h3>
-                    <div class="form-grid">
-                        <div class="checkbox-group">
-                            <input type="checkbox" name="config_require_approval" id="req_appr" value="1">
-                            <label for="req_appr">Requerir aprobacion para contabilizar</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" name="config_enable_audit_log" id="audit_log" value="1" checked>
-                            <label for="audit_log">Habilitar log de auditoria completo</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" name="config_lock_past_periods" id="lock_past" value="1">
-                            <label for="lock_past">Bloquear periodos cerrados</label>
-                        </div>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn btn-success">Guardar Configuracion</button>
-            </form>
-        </div>
         <?php endif; ?>
     </div>
+
+    <script>
+    function agregarLinea() {
+        var lineasDiv = document.getElementById('lineasAsiento');
+        var primeraLinea = lineasDiv.querySelector('.linea-asiento');
+        var nuevaLinea = primeraLinea.cloneNode(true);
+        nuevaLinea.querySelectorAll('input').forEach(function(input) {
+            if (input.type === 'number') input.value = '0';
+            else input.value = '';
+        });
+        nuevaLinea.querySelector('select').selectedIndex = 0;
+        lineasDiv.appendChild(nuevaLinea);
+    }
+    </script>
 </body>
 </html>
