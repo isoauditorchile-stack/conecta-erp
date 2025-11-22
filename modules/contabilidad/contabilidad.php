@@ -32,7 +32,7 @@ try {
 $company_id = isset($_SESSION['company_id']) ? $_SESSION['company_id'] : 1;
 $user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 1;
 
-$action = $_GET['action'] ?? $_POST['action'] ?? 'dashboard';
+$action = $_GET['action'] ?? $_POST['action'] ?? 'accounts';
 $message = '';
 $error = '';
 
@@ -1110,10 +1110,10 @@ try {
         .header { background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); color: white; padding: 1.5rem 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
         .header h1 { font-size: 1.75rem; font-weight: 600; margin-bottom: 0.25rem; }
         .header p { opacity: 0.95; font-size: 0.9rem; }
-        .nav { background: white; padding: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 2rem; border-bottom: 2px solid #e5e7eb; }
-        .nav a { display: inline-block; padding: 1rem 1.5rem; color: #4b5563; text-decoration: none; font-weight: 500; transition: all 0.2s; border-bottom: 3px solid transparent; }
-        .nav a:hover { background: #f9fafb; color: #1e40af; }
-        .nav a.active { color: #1e40af; border-bottom-color: #1e40af; background: #eff6ff; }
+        .tabs { background: white; padding: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 2rem; display: flex; gap: 0; }
+        .tabs a { flex: 1; text-align: center; padding: 1.25rem 2rem; color: #4b5563; text-decoration: none; font-weight: 600; font-size: 1.1rem; transition: all 0.2s; border-bottom: 3px solid transparent; background: #f9fafb; }
+        .tabs a:hover { background: #e5e7eb; color: #1e40af; }
+        .tabs a.active { color: #1e40af; border-bottom-color: #1e40af; background: white; }
         .container { max-width: 1600px; margin: 0 auto; padding: 2rem; }
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
         .stat-card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 4px solid #1e40af; }
@@ -1169,12 +1169,9 @@ try {
         <p>Gestion contable empresarial con plan de cuentas, asientos, subledgers, clearing y reportes</p>
     </div>
 
-    <div class="nav">
-        <a href="?action=dashboard" class="<?php echo $action === 'dashboard' ? 'active' : ''; ?>">Dashboard</a>
-        <a href="?action=accounts" class="<?php echo $action === 'accounts' ? 'active' : ''; ?>">Plan de Cuentas</a>
-        <a href="?action=entries" class="<?php echo $action === 'entries' ? 'active' : ''; ?>">Documentos</a>
-        <a href="?action=reports" class="<?php echo $action === 'reports' ? 'active' : ''; ?>">Reportes</a>
-        <a href="?action=settings" class="<?php echo $action === 'settings' ? 'active' : ''; ?>">Configuracion</a>
+    <div class="tabs">
+        <a href="?action=accounts" class="<?php echo $action === 'accounts' ? 'active' : ''; ?>">Cuentas</a>
+        <a href="?action=entries" class="<?php echo $action === 'entries' ? 'active' : ''; ?>">Asientos Contables</a>
     </div>
 
     <div class="container">
@@ -1185,7 +1182,7 @@ try {
             <div class="alert alert-error"><?php echo htmlspecialchars($error); ?></div>
         <?php endif; ?>
 
-        <?php if ($action === 'dashboard'): ?>
+        <?php if ($action === 'accounts'): ?>
         <div class="stats-grid">
             <div class="stat-card">
                 <h3>Cuentas Contables</h3>
@@ -1193,9 +1190,9 @@ try {
                 <div class="label">en plan de cuentas</div>
             </div>
             <div class="stat-card">
-                <h3>Documentos del Mes</h3>
-                <div class="value"><?php echo count($recent_entries); ?></div>
-                <div class="label">registros contables</div>
+                <h3>Cuentas Activas</h3>
+                <div class="value"><?php echo $stats['cuentas_activas'] ?? 0; ?></div>
+                <div class="label">actualmente activas</div>
             </div>
             <div class="stat-card">
                 <h3>Ejercicio Fiscal</h3>
@@ -1203,46 +1200,18 @@ try {
                 <div class="label">periodo actual</div>
             </div>
             <div class="stat-card">
-                <h3>Estado Sistema</h3>
+                <h3>Sistema</h3>
                 <div class="value">OK</div>
                 <div class="label">operativo</div>
             </div>
         </div>
 
-        <div class="card">
-            <div class="card-header">
-                <h2>Documentos Recientes</h2>
-                <a href="?action=entries" class="btn btn-primary btn-small">Ver Todos</a>
-            </div>
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Documento</th>
-                            <th>Fecha</th>
-                            <th>Concepto</th>
-                            <th>Debe</th>
-                            <th>Haber</th>
-                            <th>Estado</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($recent_entries as $entry): ?>
-                        <tr>
-                            <td><strong><?php echo htmlspecialchars($entry['numero_documento']); ?></strong></td>
-                            <td><?php echo date('d/m/Y', strtotime($entry['fecha_contabilizacion'])); ?></td>
-                            <td><?php echo htmlspecialchars(substr($entry['concepto'], 0, 60)); ?></td>
-                            <td>$<?php echo number_format($entry['total_debe'], 2); ?></td>
-                            <td>$<?php echo number_format($entry['total_haber'], 2); ?></td>
-                            <td><span class="badge badge-<?php echo $entry['estado'] === 'contabilizado' ? 'success' : 'warning'; ?>"><?php echo strtoupper($entry['estado']); ?></span></td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
+        <div style="margin-bottom: 1.5rem; display: flex; gap: 1rem;">
+            <a href="?action=export_excel&type=balance_8col" class="btn btn-export">Balance 8 Columnas</a>
+            <a href="?action=export_excel&type=libro_mayor" class="btn btn-export">Libro Mayor</a>
+            <a href="?action=export_excel&type=estado_resultados" class="btn btn-export">Estado Resultados</a>
+            <a href="?action=settings" class="btn btn-secondary">Configuracion</a>
         </div>
-
-        <?php elseif ($action === 'accounts'): ?>
         <div class="card">
             <div class="card-header">
                 <h2>Plan de Cuentas</h2>
@@ -1277,10 +1246,39 @@ try {
         </div>
 
         <?php elseif ($action === 'entries'): ?>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Documentos del Mes</h3>
+                <div class="value"><?php echo count($recent_entries); ?></div>
+                <div class="label">registros contables</div>
+            </div>
+            <div class="stat-card">
+                <h3>Ejercicio Fiscal</h3>
+                <div class="value"><?php echo date('Y'); ?></div>
+                <div class="label">periodo actual</div>
+            </div>
+            <div class="stat-card">
+                <h3>Periodo</h3>
+                <div class="value"><?php echo date('m'); ?></div>
+                <div class="label">mes actual</div>
+            </div>
+            <div class="stat-card">
+                <h3>Sistema</h3>
+                <div class="value">OK</div>
+                <div class="label">operativo</div>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 1.5rem; display: flex; gap: 1rem;">
+            <a href="?action=export_excel&type=aging&tipo=customer" class="btn btn-export">Antiguedad Clientes</a>
+            <a href="?action=export_excel&type=aging&tipo=vendor" class="btn btn-export">Antiguedad Proveedores</a>
+            <a href="?action=export_excel&type=balance_general" class="btn btn-export">Balance General</a>
+        </div>
+
         <div class="card">
             <div class="card-header">
-                <h2>Documentos Contables</h2>
-                <button onclick="alert('Funcion de creacion de documentos')" class="btn btn-primary">Nuevo Documento</button>
+                <h2>Asientos Contables</h2>
+                <button onclick="alert('Funcion de creacion de documentos')" class="btn btn-primary">Nuevo Asiento</button>
             </div>
             <div class="table-container">
                 <table>
@@ -1322,46 +1320,10 @@ try {
             </div>
         </div>
 
-        <?php elseif ($action === 'reports'): ?>
-        <div class="card">
-            <div class="card-header">
-                <h2>Reportes Contables - Exportacion Excel</h2>
-            </div>
-            <div class="report-grid">
-                <div class="report-card">
-                    <h3>Balance de 8 Columnas</h3>
-                    <p>Balance de comprobacion con saldos iniciales, movimientos y saldos finales clasificados por activo/pasivo</p>
-                    <a href="?action=export_excel&type=balance_8col" class="btn btn-export btn-small">Exportar a Excel</a>
-                </div>
-                <div class="report-card">
-                    <h3>Libro Mayor General</h3>
-                    <p>Movimientos detallados por cuenta contable con saldos acumulados y referencias completas</p>
-                    <a href="?action=export_excel&type=libro_mayor" class="btn btn-export btn-small">Exportar a Excel</a>
-                </div>
-                <div class="report-card">
-                    <h3>Antiguedad de Saldos - Clientes</h3>
-                    <p>Analisis de antiguedad de cuentas por cobrar clasificado por rangos de dias (al dia, 1-30, 31-60, 61-90, +90)</p>
-                    <a href="?action=export_excel&type=aging&tipo=customer" class="btn btn-export btn-small">Exportar a Excel</a>
-                </div>
-                <div class="report-card">
-                    <h3>Antiguedad de Saldos - Proveedores</h3>
-                    <p>Analisis de antiguedad de cuentas por pagar clasificado por rangos de dias vencidos</p>
-                    <a href="?action=export_excel&type=aging&tipo=vendor" class="btn btn-export btn-small">Exportar a Excel</a>
-                </div>
-                <div class="report-card">
-                    <h3>Estado de Resultados</h3>
-                    <p>Estado de resultados con ingresos, gastos y utilidad del periodo con clasificacion detallada</p>
-                    <a href="?action=export_excel&type=estado_resultados" class="btn btn-export btn-small">Exportar a Excel</a>
-                </div>
-                <div class="report-card">
-                    <h3>Balance General</h3>
-                    <p>Estado de situacion financiera con activos, pasivos y patrimonio clasificado segun IFRS</p>
-                    <a href="?action=export_excel&type=balance_general" class="btn btn-export btn-small">Exportar a Excel</a>
-                </div>
-            </div>
-        </div>
-
         <?php elseif ($action === 'settings'): ?>
+        <div style="margin-bottom: 1.5rem;">
+            <a href="?action=accounts" class="btn btn-secondary">Volver a Cuentas</a>
+        </div>
         <div class="card">
             <div class="card-header">
                 <h2>Configuracion del Modulo Contable</h2>
