@@ -401,13 +401,31 @@ $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Cargar catalogos necesarios
-$tipos_cliente = $pdo->query("SELECT * FROM cat_tipos_cliente WHERE company_id = $company_id AND pais_id = $pais_id AND activo = 1 ORDER BY nombre")->fetchAll(PDO::FETCH_ASSOC);
-$categorias_cliente = $pdo->query("SELECT * FROM cat_categorias_cliente WHERE company_id = $company_id AND pais_id = $pais_id AND activo = 1 ORDER BY nombre")->fetchAll(PDO::FETCH_ASSOC);
-$grupos_cliente = $pdo->query("SELECT * FROM cat_grupos_cliente WHERE company_id = $company_id AND pais_id = $pais_id AND activo = 1 ORDER BY nombre")->fetchAll(PDO::FETCH_ASSOC);
-$condiciones_pago = $pdo->query("SELECT * FROM cat_condiciones_pago WHERE company_id = $company_id AND pais_id = $pais_id ORDER BY nombre")->fetchAll(PDO::FETCH_ASSOC);
-$listas_precio = $pdo->query("SELECT * FROM cat_listas_precio WHERE company_id = $company_id AND pais_id = $pais_id ORDER BY nombre")->fetchAll(PDO::FETCH_ASSOC);
-$vendedores = $pdo->query("SELECT id, CONCAT(nombres, ' ', apellidos) as nombre_completo FROM rrhh_empleados WHERE company_id = $company_id AND cargo = 'Vendedor' AND activo = 1 ORDER BY nombres")->fetchAll(PDO::FETCH_ASSOC);
+// Cargar catalogos necesarios (usando prepared statements - SIN datos embebidos)
+$stmt = $pdo->prepare("SELECT * FROM cat_tipos_cliente WHERE company_id = ? AND pais_id = ? AND activo = 1 ORDER BY nombre");
+$stmt->execute([$company_id, $pais_id]);
+$tipos_cliente = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$stmt = $pdo->prepare("SELECT * FROM cat_categorias_cliente WHERE company_id = ? AND pais_id = ? AND activo = 1 ORDER BY nombre");
+$stmt->execute([$company_id, $pais_id]);
+$categorias_cliente = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$stmt = $pdo->prepare("SELECT * FROM cat_grupos_cliente WHERE company_id = ? AND pais_id = ? AND activo = 1 ORDER BY nombre");
+$stmt->execute([$company_id, $pais_id]);
+$grupos_cliente = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$stmt = $pdo->prepare("SELECT * FROM cat_condiciones_pago WHERE company_id = ? AND pais_id = ? ORDER BY nombre");
+$stmt->execute([$company_id, $pais_id]);
+$condiciones_pago = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$stmt = $pdo->prepare("SELECT * FROM cat_listas_precio WHERE company_id = ? AND pais_id = ? ORDER BY nombre");
+$stmt->execute([$company_id, $pais_id]);
+$listas_precio = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$stmt = $pdo->prepare("SELECT id, CONCAT(nombres, ' ', apellidos) as nombre_completo FROM rrhh_empleados WHERE company_id = ? AND cargo = 'Vendedor' AND activo = 1 ORDER BY nombres");
+$stmt->execute([$company_id]);
+$vendedores = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 $paises = $pdo->query("SELECT * FROM cat_paises ORDER BY nombre")->fetchAll(PDO::FETCH_ASSOC);
 
 // Regiones de Chile
