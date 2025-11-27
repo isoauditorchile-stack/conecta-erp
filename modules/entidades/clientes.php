@@ -402,6 +402,9 @@ $stmt->execute($params);
 $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Cargar catalogos necesarios
+$tipos_cliente = $pdo->query("SELECT * FROM cat_tipos_cliente WHERE company_id = $company_id AND pais_id = $pais_id AND activo = 1 ORDER BY nombre")->fetchAll(PDO::FETCH_ASSOC);
+$categorias_cliente = $pdo->query("SELECT * FROM cat_categorias_cliente WHERE company_id = $company_id AND pais_id = $pais_id AND activo = 1 ORDER BY nombre")->fetchAll(PDO::FETCH_ASSOC);
+$grupos_cliente = $pdo->query("SELECT * FROM cat_grupos_cliente WHERE company_id = $company_id AND pais_id = $pais_id AND activo = 1 ORDER BY nombre")->fetchAll(PDO::FETCH_ASSOC);
 $condiciones_pago = $pdo->query("SELECT * FROM cat_condiciones_pago WHERE company_id = $company_id AND pais_id = $pais_id ORDER BY nombre")->fetchAll(PDO::FETCH_ASSOC);
 $listas_precio = $pdo->query("SELECT * FROM cat_listas_precio WHERE company_id = $company_id AND pais_id = $pais_id ORDER BY nombre")->fetchAll(PDO::FETCH_ASSOC);
 $vendedores = $pdo->query("SELECT id, CONCAT(nombres, ' ', apellidos) as nombre_completo FROM rrhh_empleados WHERE company_id = $company_id AND cargo = 'Vendedor' AND activo = 1 ORDER BY nombres")->fetchAll(PDO::FETCH_ASSOC);
@@ -866,8 +869,11 @@ $regiones_chile = [
                                 <label class="required">Tipo Cliente</label>
                                 <select name="tipo_cliente" id="tipo_cliente_select" required onchange="toggleQuickAdd(this, 'tipo_cliente_quick')">
                                     <option value="">Seleccione...</option>
-                                    <option value="NACIONAL" <?php echo ($cliente_edit['tipo_cliente'] ?? '') === 'NACIONAL' ? 'selected' : ''; ?>>Nacional</option>
-                                    <option value="INTERNACIONAL" <?php echo ($cliente_edit['tipo_cliente'] ?? '') === 'INTERNACIONAL' ? 'selected' : ''; ?>>Internacional</option>
+                                    <?php foreach ($tipos_cliente as $tc): ?>
+                                        <option value="<?php echo htmlspecialchars($tc['codigo']); ?>" <?php echo ($cliente_edit['tipo_cliente'] ?? '') === $tc['codigo'] ? 'selected' : ''; ?>>
+                                            <?php echo htmlspecialchars($tc['codigo'] . ' - ' . $tc['nombre']); ?>
+                                        </option>
+                                    <?php endforeach; ?>
                                     <option value="__NUEVO__">AGREGAR NUEVO...</option>
                                 </select>
                                 <div id="tipo_cliente_quick" class="quick-add">
@@ -884,9 +890,11 @@ $regiones_chile = [
                                 <label>Categoria Cliente</label>
                                 <select name="categoria_cliente" id="categoria_select" onchange="toggleQuickAdd(this, 'categoria_quick')">
                                     <option value="">Seleccione...</option>
-                                    <option value="A" <?php echo ($cliente_edit['categoria_cliente'] ?? '') === 'A' ? 'selected' : ''; ?>>Categoria A</option>
-                                    <option value="B" <?php echo ($cliente_edit['categoria_cliente'] ?? '') === 'B' ? 'selected' : ''; ?>>Categoria B</option>
-                                    <option value="C" <?php echo ($cliente_edit['categoria_cliente'] ?? '') === 'C' ? 'selected' : ''; ?>>Categoria C</option>
+                                    <?php foreach ($categorias_cliente as $cc): ?>
+                                        <option value="<?php echo htmlspecialchars($cc['codigo']); ?>" <?php echo ($cliente_edit['categoria_cliente'] ?? '') === $cc['codigo'] ? 'selected' : ''; ?>>
+                                            <?php echo htmlspecialchars($cc['codigo'] . ' - ' . $cc['nombre']); ?>
+                                        </option>
+                                    <?php endforeach; ?>
                                     <option value="__NUEVO__">AGREGAR NUEVO...</option>
                                 </select>
                                 <div id="categoria_quick" class="quick-add">
@@ -903,9 +911,11 @@ $regiones_chile = [
                                 <label>Grupo Cliente</label>
                                 <select name="grupo_cliente" id="grupo_select" onchange="toggleQuickAdd(this, 'grupo_quick')">
                                     <option value="">Seleccione...</option>
-                                    <option value="RETAIL" <?php echo ($cliente_edit['grupo_cliente'] ?? '') === 'RETAIL' ? 'selected' : ''; ?>>Retail</option>
-                                    <option value="MAYORISTA" <?php echo ($cliente_edit['grupo_cliente'] ?? '') === 'MAYORISTA' ? 'selected' : ''; ?>>Mayorista</option>
-                                    <option value="CORPORATIVO" <?php echo ($cliente_edit['grupo_cliente'] ?? '') === 'CORPORATIVO' ? 'selected' : ''; ?>>Corporativo</option>
+                                    <?php foreach ($grupos_cliente as $gc): ?>
+                                        <option value="<?php echo htmlspecialchars($gc['codigo']); ?>" <?php echo ($cliente_edit['grupo_cliente'] ?? '') === $gc['codigo'] ? 'selected' : ''; ?>>
+                                            <?php echo htmlspecialchars($gc['codigo'] . ' - ' . $gc['nombre']); ?>
+                                        </option>
+                                    <?php endforeach; ?>
                                     <option value="__NUEVO__">AGREGAR NUEVO...</option>
                                 </select>
                                 <div id="grupo_quick" class="quick-add">
@@ -1373,9 +1383,14 @@ $regiones_chile = [
                     const select = document.getElementById(selectId);
 
                     // Crear nueva opcion con el formato correcto
+                    // Para tipo_cliente, categoria y grupo usamos codigo como value
+                    // Para condicion_pago y lista_precio usamos id como value
+                    const useId = (tabla === 'cat_condiciones_pago' || tabla === 'cat_listas_precio');
+                    const optionValue = useId ? result.id : result.codigo;
+
                     const newOption = new Option(
                         result.codigo + ' - ' + result.nombre,
-                        result.id,
+                        optionValue,
                         true,
                         true
                     );
@@ -1383,7 +1398,7 @@ $regiones_chile = [
                     // Agregar antes de la opcion "__NUEVO__"
                     const nuevoIndex = select.options.length - 1;
                     select.add(newOption, nuevoIndex);
-                    select.value = result.id;
+                    select.value = optionValue;
 
                     // Limpiar formulario quick add
                     container.classList.remove('active');
