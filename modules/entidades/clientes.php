@@ -85,22 +85,71 @@ $cliente_edit = null;
 
 // Procesar formulario INSERT RAPIDO de catalogos
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['quick_add'])) {
-    $tabla = $_POST['tabla'];
-    $codigo = strtoupper(trim($_POST['codigo']));
-    $nombre = trim($_POST['nombre']);
+    // LISTA BLANCA DE TABLAS PERMITIDAS - SEGURIDAD
+    $tablas_permitidas = [
+        'cat_tipos_cliente',
+        'cat_categorias_cliente',
+        'cat_grupos_cliente',
+        'cat_condiciones_pago',
+        'cat_listas_precio'
+    ];
 
-    $sql = "INSERT INTO $tabla (codigo, nombre, company_id, pais_id) VALUES (:codigo, :nombre, :company_id, :pais_id)";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([
-        ':codigo' => $codigo,
-        ':nombre' => $nombre,
-        ':company_id' => $company_id,
-        ':pais_id' => $pais_id
-    ]);
+    $tabla = $_POST['tabla'] ?? '';
+    $codigo = strtoupper(trim($_POST['codigo'] ?? ''));
+    $nombre = trim($_POST['nombre'] ?? '');
 
-    $new_id = $pdo->lastInsertId();
-    echo json_encode(['success' => true, 'id' => $new_id, 'codigo' => $codigo, 'nombre' => $nombre]);
-    exit;
+    // Validar que la tabla este en la lista blanca
+    if (!in_array($tabla, $tablas_permitidas)) {
+        echo json_encode(['success' => false, 'error' => 'Tabla no permitida']);
+        exit;
+    }
+
+    // Validar campos requeridos
+    if (empty($codigo) || empty($nombre)) {
+        echo json_encode(['success' => false, 'error' => 'Codigo y nombre son requeridos']);
+        exit;
+    }
+
+    try {
+        // Verificar si ya existe el codigo
+        $sql_check = "SELECT id FROM $tabla WHERE codigo = ? AND company_id = ? AND pais_id = ?";
+        $stmt_check = $pdo->prepare($sql_check);
+        $stmt_check->execute([$codigo, $company_id, $pais_id]);
+
+        if ($stmt_check->fetch()) {
+            echo json_encode(['success' => false, 'error' => 'El codigo ya existe']);
+            exit;
+        }
+
+        // Insertar nuevo registro
+        $sql = "INSERT INTO $tabla (codigo, nombre, company_id, pais_id, created_at)
+                VALUES (:codigo, :nombre, :company_id, :pais_id, NOW())";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ':codigo' => $codigo,
+            ':nombre' => $nombre,
+            ':company_id' => $company_id,
+            ':pais_id' => $pais_id
+        ]);
+
+        $new_id = $pdo->lastInsertId();
+        echo json_encode([
+            'success' => true,
+            'id' => $new_id,
+            'codigo' => $codigo,
+            'nombre' => $nombre
+        ]);
+        exit;
+
+    } catch (PDOException $e) {
+        // Manejar error de duplicado u otros errores de BD
+        $error_msg = 'Error al guardar el registro';
+        if (strpos($e->getMessage(), 'Duplicate entry') !== false) {
+            $error_msg = 'El registro ya existe (codigo duplicado)';
+        }
+        echo json_encode(['success' => false, 'error' => $error_msg, 'details' => $e->getMessage()]);
+        exit;
+    }
 }
 
 // Procesar formulario principal CLIENTES
@@ -1298,7 +1347,7 @@ $regiones_chile = [
             const nombre = inputs[1].value.trim();
 
             if (!codigo || !nombre) {
-                alert('Complete codigo y nombre');
+                alert('Por favor complete codigo y nombre');
                 return;
             }
 
@@ -1314,25 +1363,43 @@ $regiones_chile = [
                     body: formData
                 });
 
+                if (!response.ok) {
+                    throw new Error('Error en la respuesta del servidor');
+                }
+
                 const result = await response.json();
 
                 if (result.success) {
                     const select = document.getElementById(selectId);
-                    const newOption = new Option(codigo + ' - ' + nombre, result.id, true, true);
-                    select.add(newOption, select.options.length - 1);
+
+                    // Crear nueva opcion con el formato correcto
+                    const newOption = new Option(
+                        result.codigo + ' - ' + result.nombre,
+                        result.id,
+                        true,
+                        true
+                    );
+
+                    // Agregar antes de la opcion "__NUEVO__"
+                    const nuevoIndex = select.options.length - 1;
+                    select.add(newOption, nuevoIndex);
                     select.value = result.id;
 
+                    // Limpiar formulario quick add
                     container.classList.remove('active');
                     inputs[0].value = '';
                     inputs[1].value = '';
 
-                    alert('Registro agregado exitosamente');
+                    alert('✓ Registro agregado exitosamente');
                 } else {
-                    alert('Error al agregar registro');
+                    // Mostrar mensaje de error especifico del servidor
+                    const errorMsg = result.error || 'Error desconocido al agregar registro';
+                    alert('❌ ERROR: ' + errorMsg);
+                    console.error('Error del servidor:', result);
                 }
             } catch (error) {
-                console.error('Error:', error);
-                alert('Error al procesar solicitud');
+                console.error('Error de red o procesamiento:', error);
+                alert('❌ ERROR: No se pudo conectar con el servidor. Verifique su conexion.');
             }
         }
 
