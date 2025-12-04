@@ -11,9 +11,9 @@
 // CONFIGURACIÓN DE BASE DE DATOS
 // ==========================================
 define('DB_HOST', 'localhost');
-define('DB_USER', 'conectae_isogestionbd');
+define('DB_USER', 'conectae_isogestionuser');
 define('DB_PASS', 'pt125824caraud');
-define('DB_NAME', 'conectae_isogestionuser');
+define('DB_NAME', 'conectae_isogestionbd');
 define('DB_CHARSET', 'utf8mb4');
 
 // ==========================================
