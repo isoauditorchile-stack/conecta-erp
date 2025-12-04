@@ -784,5 +784,216 @@ if ($type == 'formato') {
     }
 }
 
+// =====================================================
+// GENERACIÓN DE POLÍTICAS
+// =====================================================
+elseif ($type == 'politica') {
+
+    $politicas_content = [
+        'POL-SI-001' => [
+            'titulo' => 'POLÍTICA DE SEGURIDAD DE LA INFORMACIÓN',
+            'objetivo' => 'Establecer el marco general de seguridad de la información en la organización, definiendo principios, responsabilidades y lineamientos para proteger los activos de información.',
+            'alcance' => 'Aplica a todos los empleados, contratistas, proveedores y terceros que tengan acceso a información de la organización.',
+            'contenido' => '1. PROPÓSITO\nProteger la confidencialidad, integridad y disponibilidad de la información.\n\n2. PRINCIPIOS FUNDAMENTALES\n- Seguridad por diseño\n- Defensa en profundidad\n- Menor privilegio\n- Segregación de funciones\n\n3. RESPONSABILIDADES\n- Alta Dirección: Aprobar y promover la política\n- CISO: Implementar y supervisar\n- Empleados: Cumplir con los lineamientos\n\n4. CUMPLIMIENTO\nEl incumplimiento puede resultar en medidas disciplinarias.'
+        ],
+        'POL-SI-002' => [
+            'titulo' => 'POLÍTICA DE CONTROL DE ACCESO',
+            'objetivo' => 'Establecer reglas para la gestión y control de accesos a sistemas, datos y recursos tecnológicos.',
+            'alcance' => 'Todos los sistemas de información, aplicaciones, bases de datos y recursos de red.',
+            'contenido' => '1. PRINCIPIO DE MENOR PRIVILEGIO\nOtorgar únicamente los accesos necesarios.\n\n2. AUTENTICACIÓN\n- Contraseñas robustas\n- Autenticación multifactor (MFA)\n- Bloqueo tras intentos fallidos\n\n3. AUTORIZACIÓN\n- Aprobación formal por gerente\n- Revisión trimestral de accesos\n- Revocación inmediata al término\n\n4. MONITOREO\nRegistro y revisión de accesos privilegiados.'
+        ],
+        'POL-SI-003' => [
+            'titulo' => 'POLÍTICA DE CLASIFICACIÓN DE LA INFORMACIÓN',
+            'objetivo' => 'Definir niveles de clasificación de la información y controles de protección correspondientes.',
+            'alcance' => 'Toda la información generada, procesada o almacenada por la organización.',
+            'contenido' => '1. NIVELES DE CLASIFICACIÓN\n\nPÚBLICA:\n- Información de dominio público\n- Sin restricciones de distribución\n\nINTERNA:\n- Uso exclusivo interno\n- No divulgar externamente\n\nCONFIDENCIAL:\n- Información sensible del negocio\n- Acceso restringido, cifrado requerido\n\nESTRICTAMENTE CONFIDENCIAL:\n- Información crítica\n- Acceso altamente restringido, cifrado obligatorio\n\n2. ETIQUETADO\nTodos los documentos deben ser etiquetados.'
+        ],
+        'POL-SI-004' => [
+            'titulo' => 'POLÍTICA DE USO ACEPTABLE',
+            'objetivo' => 'Definir reglas de uso aceptable de recursos tecnológicos de la organización.',
+            'alcance' => 'Todos los usuarios de recursos tecnológicos de la organización.',
+            'contenido' => '1. USO PERMITIDO\n- Actividades laborales\n- Uso personal limitado y razonable\n\n2. USO PROHIBIDO\n- Descarga de contenido ilegal\n- Instalación de software no autorizado\n- Acceso a sitios inapropiados\n- Uso de recursos para negocio personal\n\n3. CORREO ELECTRÓNICO\n- No enviar información confidencial sin cifrar\n- Cuidado con phishing\n\n4. MONITOREO\nLa organización se reserva el derecho de monitorear el uso.'
+        ],
+        'POL-SI-005' => [
+            'titulo' => 'POLÍTICA DE ESCRITORIO LIMPIO Y PANTALLA LIMPIA',
+            'objetivo' => 'Reducir riesgos de acceso no autorizado a información mediante buenas prácticas de escritorio y pantalla limpios.',
+            'alcance' => 'Todas las áreas de trabajo y estaciones de trabajo.',
+            'contenido' => '1. ESCRITORIO LIMPIO\n- No dejar documentos sensibles sobre el escritorio\n- Guardar bajo llave al finalizar jornada\n- Destrucción segura de documentos\n\n2. PANTALLA LIMPIA\n- Bloqueo automático tras 5 minutos inactividad\n- Cerrar sesión al ausentarse\n- Posicionar pantalla para evitar visualización no autorizada\n\n3. DISPOSITIVOS\n- No dejar dispositivos desatendidos\n- Cable de seguridad para laptops'
+        ],
+        'POL-SI-006' => [
+            'titulo' => 'POLÍTICA DE TRANSFERENCIA DE INFORMACIÓN',
+            'objetivo' => 'Establecer controles para transferencia segura de información por diferentes medios.',
+            'alcance' => 'Toda transferencia de información dentro y fuera de la organización.',
+            'contenido' => '1. MEDIOS DE TRANSFERENCIA\n\nCORREO ELECTRÓNICO:\n- Cifrado para información confidencial\n- Verificar destinatarios\n\nDISPOSITIVOS USB:\n- Cifrado obligatorio\n- Escaneo antimalware\n\nNUBE:\n- Solo servicios aprobados\n- Cifrado en tránsito y reposo\n\nFÍSICO:\n- Mensajería autorizada\n- Seguimiento de envíos\n\n2. CONTROLES\n- DLP (Data Loss Prevention)\n- Registro de transferencias críticas'
+        ],
+        'POL-SI-007' => [
+            'titulo' => 'POLÍTICA DE GESTIÓN DE CONTRASEÑAS',
+            'objetivo' => 'Definir requisitos para creación, uso y administración de contraseñas.',
+            'alcance' => 'Todos los sistemas que requieran autenticación.',
+            'contenido' => '1. REQUISITOS DE CONTRASEÑAS\n- Mínimo 12 caracteres\n- Combinación de mayúsculas, minúsculas, números y símbolos\n- No usar información personal\n- No reutilizar últimas 10 contraseñas\n- Cambio cada 90 días\n\n2. ALMACENAMIENTO\n- No escribir contraseñas\n- Usar gestor de contraseñas aprobado\n\n3. COMPARTIR\n- Prohibido compartir contraseñas\n- Cuentas compartidas requieren aprobación especial\n\n4. MFA\n- Obligatorio para accesos remotos y privilegiados'
+        ],
+        'POL-SI-008' => [
+            'titulo' => 'POLÍTICA DE CRIPTOGRAFÍA',
+            'objetivo' => 'Definir el uso de controles criptográficos para proteger información.',
+            'alcance' => 'Toda información clasificada como Confidencial o superior.',
+            'contenido' => '1. CIFRADO DE DATOS\n\nEN REPOSO:\n- Bases de datos: AES-256\n- Discos: BitLocker/FileVault\n- Backups: Cifrado obligatorio\n\nEN TRÁNSITO:\n- HTTPS/TLS 1.2+\n- VPN IPsec para accesos remotos\n- Correo: S/MIME o PGP\n\n2. GESTIÓN DE LLAVES\n- Almacenamiento seguro (HSM)\n- Rotación anual\n- Respaldo de llaves\n\n3. CERTIFICADOS\n- Renovación antes de expiración\n- Solo CA confiables'
+        ],
+        'POL-SI-009' => [
+            'titulo' => 'POLÍTICA DE CONTINUIDAD DEL NEGOCIO',
+            'objetivo' => 'Asegurar continuidad de operaciones críticas ante interrupciones.',
+            'alcance' => 'Todos los procesos críticos del negocio.',
+            'contenido' => '1. PLAN DE CONTINUIDAD (BCP)\n- Identificación de procesos críticos\n- RTO/RPO definidos\n- Recursos alternativos\n\n2. PLAN DE RECUPERACIÓN (DRP)\n- Sitio alterno de TI\n- Procedimientos de recuperación\n- Pruebas semestrales\n\n3. RESPALDOS\n- Diarios para sistemas críticos\n- Almacenamiento off-site\n- Pruebas de restauración trimestrales\n\n4. GESTIÓN DE CRISIS\n- Equipo de crisis definido\n- Comunicaciones de emergencia\n- Centro de operaciones alterno'
+        ],
+        'POL-SI-010' => [
+            'titulo' => 'POLÍTICA DE RESPALDO Y RECUPERACIÓN',
+            'objetivo' => 'Garantizar disponibilidad e integridad de información mediante respaldos adecuados.',
+            'alcance' => 'Todos los datos y sistemas críticos.',
+            'contenido' => '1. FRECUENCIA DE RESPALDOS\n- Críticos: Diario\n- Importantes: Semanal\n- Normales: Mensual\n\n2. TIPOS DE RESPALDO\n- Completo: Domingo\n- Incremental: Lunes-Sábado\n- Diferencial: Según criticidad\n\n3. ALMACENAMIENTO\n- 3 copias\n- 2 medios diferentes\n- 1 off-site\n\n4. RETENCIÓN\n- Respaldos diarios: 30 días\n- Semanales: 3 meses\n- Mensuales: 1 año\n- Anuales: 7 años\n\n5. PRUEBAS\n- Restauración mensual de muestra\n- Prueba completa trimestral'
+        ],
+        'POL-SI-011' => [
+            'titulo' => 'POLÍTICA DE DESARROLLO SEGURO',
+            'objetivo' => 'Integrar seguridad en el ciclo de vida de desarrollo de software.',
+            'alcance' => 'Todo desarrollo interno y externo de software.',
+            'contenido' => '1. SDLC SEGURO\n- Requisitos de seguridad desde diseño\n- Revisión de código\n- Pruebas de seguridad (SAST/DAST)\n\n2. PRÁCTICAS SEGURAS\n- Validación de entradas\n- Gestión segura de sesiones\n- Control de errores\n- Logging de seguridad\n\n3. AMBIENTES\n- Separación Dev/QA/Prod\n- Datos de prueba anonimizados\n- Hardening de servidores\n\n4. LIBRERÍAS TERCEROS\n- Análisis de vulnerabilidades\n- Actualización regular\n- Licenciamiento apropiado'
+        ],
+        'POL-SI-012' => [
+            'titulo' => 'POLÍTICA DE SEGURIDAD EN LA NUBE',
+            'objetivo' => 'Establecer controles para uso seguro de servicios cloud.',
+            'alcance' => 'Todos los servicios cloud utilizados por la organización.',
+            'contenido' => '1. SELECCIÓN DE PROVEEDORES\n- Certificaciones: ISO 27001, SOC 2\n- Ubicación de datos conocida\n- SLA con cláusulas de seguridad\n\n2. CONFIGURACIÓN\n- Cifrado en reposo y tránsito\n- MFA obligatorio\n- Logging centralizado\n- Segmentación de redes\n\n3. GESTIÓN DE IDENTIDADES\n- SSO corporativo\n- Revisión trimestral de accesos\n- Desactivación automática usuarios inactivos\n\n4. MONITOREO\n- CASB (Cloud Access Security Broker)\n- Alertas de actividades sospechosas\n- Auditorías regulares'
+        ],
+        'POL-SI-013' => [
+            'titulo' => 'POLÍTICA DE GESTIÓN DE INCIDENTES',
+            'objetivo' => 'Establecer proceso para identificar, responder y aprender de incidentes de seguridad.',
+            'alcance' => 'Todos los incidentes de seguridad que afecten confidencialidad, integridad o disponibilidad.',
+            'contenido' => '1. CLASIFICACIÓN\n- Crítico: Impacto severo inmediato\n- Alto: Impacto significativo\n- Medio: Impacto limitado\n- Bajo: Impacto mínimo\n\n2. REPORTE\n- Canales: Email, teléfono, portal\n- Tiempo: Inmediato para críticos/altos\n- Información: Qué, cuándo, dónde, cómo\n\n3. RESPUESTA\n- Contención\n- Erradicación\n- Recuperación\n- Lecciones aprendidas\n\n4. COMUNICACIÓN\n- Interna: según severidad\n- Externa: según requisitos legales\n- Entes reguladores: según normativa'
+        ],
+        'POL-SI-014' => [
+            'titulo' => 'POLÍTICA DE GESTIÓN DE CRISIS',
+            'objetivo' => 'Definir marco para gestión de crisis de seguridad.',
+            'alcance' => 'Situaciones que amenacen severamente operaciones, reputación o viabilidad.',
+            'contenido' => '1. EQUIPO DE CRISIS\n- Gerencia General: Líder\n- CISO: Coordinador técnico\n- Legal: Asesor legal\n- RRHH: Comunicaciones internas\n- Relaciones Públicas: Comunicaciones externas\n\n2. PROCEDIMIENTOS\n- Activación: Criterios claros\n- Centro de operaciones: Ubicación alterna\n- Comunicaciones seguras\n- Toma de decisiones rápida\n\n3. COMUNICACIONES\n- Mensaje único y consistente\n- Portavoz oficial\n- Canales predefinidos\n\n4. RECUPERACIÓN\n- Plan de vuelta a normalidad\n- Análisis post-crisis\n- Mejoras continuas'
+        ],
+        'POL-SI-015' => [
+            'titulo' => 'POLÍTICA DE CUMPLIMIENTO LEGAL Y REGULATORIO',
+            'objetivo' => 'Asegurar cumplimiento de requisitos legales y regulatorios aplicables.',
+            'alcance' => 'Toda la organización.',
+            'contenido' => '1. IDENTIFICACIÓN DE REQUISITOS\n- Leyes de protección de datos\n- Regulaciones de industria\n- Normas internacionales (ISO)\n- Requisitos contractuales\n\n2. EVALUACIÓN DE CUMPLIMIENTO\n- Revisión anual de requisitos\n- Gap analysis\n- Plan de remediación\n\n3. GESTIÓN DE CAMBIOS REGULATORIOS\n- Monitoreo de cambios legislativos\n- Evaluación de impacto\n- Actualización de controles\n\n4. AUDITORÍAS\n- Internas: Semestrales\n- Externas: Anuales\n- Documentación de evidencias'
+        ],
+        'POL-SI-016' => [
+            'titulo' => 'POLÍTICA DE PRIVACIDAD Y PROTECCIÓN DE DATOS',
+            'objetivo' => 'Proteger datos personales según normativa aplicable.',
+            'alcance' => 'Todos los datos personales procesados por la organización.',
+            'contenido' => '1. PRINCIPIOS\n- Licitud, lealtad, transparencia\n- Limitación de finalidad\n- Minimización de datos\n- Exactitud\n- Limitación de plazo\n- Integridad y confidencialidad\n\n2. DERECHOS DE TITULARES\n- Acceso\n- Rectificación\n- Supresión\n- Portabilidad\n- Oposición\n\n3. TRATAMIENTO\n- Base legal documentada\n- Consentimiento cuando aplique\n- Evaluaciones de impacto (DPIA)\n\n4. TRANSFERENCIAS INTERNACIONALES\n- Solo a países adecuados\n- Cláusulas contractuales estándar\n- Certificaciones apropiadas'
+        ],
+        'POL-SI-017' => [
+            'titulo' => 'POLÍTICA DE PROPIEDAD INTELECTUAL',
+            'objetivo' => 'Proteger derechos de propiedad intelectual propios y respetar los ajenos.',
+            'alcance' => 'Todo uso de propiedad intelectual en la organización.',
+            'contenido' => '1. SOFTWARE\n- Solo software licenciado\n- Registro de licencias\n- Auditorías de cumplimiento\n- Prohibición de software pirata\n\n2. CONTENIDO\n- Respeto de derechos de autor\n- Atribución apropiada\n- Licencias Creative Commons\n\n3. CREACIONES INTERNAS\n- Propiedad de la organización\n- Acuerdos con empleados\n- Registro de patentes/marcas\n\n4. TERCEROS\n- NDAs firmados\n- Contratos con cláusulas IP\n- Respeto de secretos comerciales'
+        ],
+        'POL-SI-018' => [
+            'titulo' => 'POLÍTICA DE SELECCIÓN Y CONTRATACIÓN',
+            'objetivo' => 'Asegurar que el personal cumple requisitos de seguridad antes de contratación.',
+            'alcance' => 'Todo proceso de selección y contratación.',
+            'contenido' => '1. VERIFICACIÓN DE ANTECEDENTES\n- Verificación de referencias\n- Validación de títulos\n- Antecedentes penales (donde permita ley)\n- Historial crediticio (para puestos sensibles)\n\n2. DOCUMENTACIÓN\n- Acuerdo de confidencialidad\n- Código de conducta\n- Políticas de seguridad\n- Aceptación de monitoreo\n\n3. INDUCCIÓN\n- Capacitación en seguridad\n- Entrega de credenciales\n- Firma de documentos\n\n4. PERÍODO DE PRUEBA\n- Accesos limitados\n- Supervisión cercana\n- Evaluaciones frecuentes'
+        ],
+        'POL-SI-019' => [
+            'titulo' => 'POLÍTICA DE CAPACITACIÓN Y CONCIENTIZACIÓN',
+            'objetivo' => 'Asegurar que el personal tiene conocimientos adecuados de seguridad.',
+            'alcance' => 'Todo el personal de la organización.',
+            'contenido' => '1. PROGRAMA DE CAPACITACIÓN\n\nINDUCCIÓN (Nuevos empleados):\n- Políticas de seguridad\n- Uso aceptable\n- Gestión de contraseñas\n- Reporte de incidentes\n\nANUAL (Todos):\n- Phishing y ingeniería social\n- Manejo de información confidencial\n- Trabajo remoto seguro\n- Tendencias de amenazas\n\nESPECÍFICA (Roles técnicos):\n- Desarrollo seguro\n- Administración segura\n- Respuesta a incidentes\n\n2. CONCIENTIZACIÓN\n- Campañas mensuales\n- Simulacros de phishing\n- Boletines de seguridad\n\n3. MEDICIÓN\n- Test de conocimientos\n- Métricas de efectividad\n- Mejora continua'
+        ],
+        'POL-SI-020' => [
+            'titulo' => 'POLÍTICA DE TRABAJO REMOTO',
+            'objetivo' => 'Establecer controles de seguridad para trabajo remoto.',
+            'alcance' => 'Todo personal que trabaje fuera de instalaciones de la organización.',
+            'contenido' => '1. EQUIPOS\n- Equipos corporativos con hardening\n- Cifrado de disco completo\n- Antimalware actualizado\n- Firewall activado\n\n2. CONECTIVIDAD\n- VPN obligatoria\n- WiFi segura (WPA3)\n- Evitar WiFi públicas\n- Hotspot personal si necesario\n\n3. AMBIENTE DE TRABAJO\n- Espacio dedicado\n- Pantalla privacidad\n- Cerradura en habitación\n- Familia/visitantes sin acceso\n\n4. PRÁCTICAS\n- Bloqueo al ausentarse\n- No imprimir información confidencial\n- Destrucción segura si se imprime\n- Uso de auriculares para llamadas confidenciales'
+        ],
+        'POL-SI-021' => [
+            'titulo' => 'POLÍTICA DE TERMINACIÓN DE EMPLEO',
+            'objetivo' => 'Asegurar devolución de activos y revocación de accesos al terminar empleo.',
+            'alcance' => 'Todo proceso de terminación de empleo.',
+            'contenido' => '1. NOTIFICACIÓN\n- RRHH notifica a TI inmediatamente\n- Fecha y hora de término\n- Tipo de término (voluntario/involuntario)\n\n2. REVOCACIÓN DE ACCESOS\n- Sistemas: Desactivación inmediata\n- Físicos: Recolección de tarjetas/llaves\n- Remotos: VPN, email, cloud\n\n3. DEVOLUCIÓN DE ACTIVOS\n- Laptop/desktop\n- Teléfono móvil\n- Dispositivos adicionales\n- Documentos físicos/digitales\n\n4. ENTREVISTA DE SALIDA\n- Recordatorio de confidencialidad\n- Destrucción de copias personales\n- Firma de documento de salida\n\n5. MONITOREO POST-SALIDA\n- Intentos de acceso\n- 30 días de vigilancia'
+        ],
+        'POL-SI-022' => [
+            'titulo' => 'POLÍTICA DE GESTION DE VULNERABILIDADES',
+            'objetivo' => 'Identificar, evaluar y remediar vulnerabilidades de seguridad.',
+            'alcance' => 'Toda infraestructura tecnológica.',
+            'contenido' => '1. ESCANEO DE VULNERABILIDADES\n- Interno: Semanal\n- Externo: Mensual\n- Aplicaciones: Trimestral\n- Infraestructura: Mensual\n\n2. EVALUACIÓN\n- CVSS scoring\n- Criticidad: Crítico/Alto/Medio/Bajo\n- Contexto de negocio\n- Explotabilidad\n\n3. REMEDIACIÓN\n- Crítico: 7 días\n- Alto: 30 días\n- Medio: 90 días\n- Bajo: 180 días\n\n4. GESTIÓN DE PARCHES\n- Prueba en ambiente QA\n- Ventanas de mantenimiento\n- Rollback plan\n- Documentación de cambios\n\n5. EXCEPCIONES\n- Aprobación por CISO\n- Controles compensatorios\n- Revisión trimestral\n- Documentación formal'
+        ]
+    ];
+
+    if (isset($politicas_content[$code])) {
+        $pol = $politicas_content[$code];
+
+        $content = '
+        <div style="margin-bottom: 30px;">
+            <table width="100%" border="1" style="border-collapse: collapse;">
+                <tr>
+                    <td colspan="2" style="background: #0066cc; color: white; padding: 15px; text-align: center;">
+                        <strong style="font-size: 20px;">' . $company['company_name'] . '</strong>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; width: 70%;"><strong>Código:</strong> ' . $code . '</td>
+                    <td style="padding: 10px;"><strong>Versión:</strong> 1.0</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px;"><strong>Fecha de Emisión:</strong> ' . date('d/m/Y') . '</td>
+                    <td style="padding: 10px;"><strong>Próxima Revisión:</strong> ' . date('d/m/Y', strtotime('+1 year')) . '</td>
+                </tr>
+            </table>
+        </div>
+
+        <h2 style="color: #0066cc; border-bottom: 2px solid #0066cc; padding-bottom: 10px;">1. OBJETIVO</h2>
+        <p style="text-align: justify; margin: 15px 0; line-height: 1.8;">' . nl2br($pol['objetivo']) . '</p>
+
+        <h2 style="color: #0066cc; border-bottom: 2px solid #0066cc; padding-bottom: 10px;">2. ALCANCE</h2>
+        <p style="text-align: justify; margin: 15px 0; line-height: 1.8;">' . nl2br($pol['alcance']) . '</p>
+
+        <h2 style="color: #0066cc; border-bottom: 2px solid #0066cc; padding-bottom: 10px;">3. CONTENIDO DE LA POLÍTICA</h2>
+        <div style="text-align: justify; margin: 15px 0; line-height: 1.8;">' . nl2br($pol['contenido']) . '</div>
+
+        <h2 style="color: #0066cc; border-bottom: 2px solid #0066cc; padding-bottom: 10px;">4. CUMPLIMIENTO</h2>
+        <p style="text-align: justify; margin: 15px 0; line-height: 1.8;">
+        El incumplimiento de esta política puede resultar en acciones disciplinarias que pueden incluir,
+        pero no se limitan a, advertencias verbales o escritas, suspensión, o terminación del empleo.
+        En casos de violaciones graves, pueden aplicarse acciones legales.
+        </p>
+
+        <h2 style="color: #0066cc; border-bottom: 2px solid #0066cc; padding-bottom: 10px;">5. REVISIÓN</h2>
+        <p style="text-align: justify; margin: 15px 0; line-height: 1.8;">
+        Esta política será revisada anualmente o cuando cambios significativos en la organización,
+        tecnología o marco regulatorio lo requieran.
+        </p>
+
+        <div style="margin-top: 60px;">
+            <table width="100%" border="1" style="border-collapse: collapse;">
+                <tr style="background: #f0f0f0;">
+                    <th style="padding: 12px; text-align: center;">Elaborado por</th>
+                    <th style="padding: 12px; text-align: center;">Revisado por</th>
+                    <th style="padding: 12px; text-align: center;">Aprobado por</th>
+                </tr>
+                <tr>
+                    <td style="padding: 40px; text-align: center; vertical-align: bottom;">
+                        <div style="border-top: 1px solid #000; padding-top: 5px; margin-top: 30px;">CISO</div>
+                    </td>
+                    <td style="padding: 40px; text-align: center; vertical-align: bottom;">
+                        <div style="border-top: 1px solid #000; padding-top: 5px; margin-top: 30px;">Gerente de TI</div>
+                    </td>
+                    <td style="padding: 40px; text-align: center; vertical-align: bottom;">
+                        <div style="border-top: 1px solid #000; padding-top: 5px; margin-top: 30px;">Gerencia General</div>
+                    </td>
+                </tr>
+            </table>
+        </div>';
+
+        generateWordDoc($code . '_' . str_replace(' ', '_', $pol['titulo']), $content, $pol['titulo']);
+    } else {
+        die('Política no encontrada: ' . $code);
+    }
+}
+
 $conn->close();
 ?>
