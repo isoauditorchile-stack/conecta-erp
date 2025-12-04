@@ -660,6 +660,13 @@ $t = $texts[$language];
                 <div class="module-description">Registro y seguimiento de hallazgos de auditoria</div>
                 <a href="no_conformidades.php" class="btn btn-primary"><?php echo $t['access']; ?></a>
             </div>
+
+            <div class="module-card">
+                <div class="module-icon">&#128218;</div>
+                <div class="module-title">Biblioteca de Plantillas</div>
+                <div class="module-description">Cargue, organice y descargue plantillas Excel/Word/PDF</div>
+                <a href="plantillas.php" class="btn btn-primary"><?php echo $t['access']; ?></a>
+            </div>
         </div>
 
         <div class="table-container">
