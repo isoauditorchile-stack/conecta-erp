@@ -1,711 +1,568 @@
-<?php
-session_start();
-
-// Configuracion de base de datos
-define('DB_HOST', 'localhost');
-define('DB_USER', 'conectae_isogestionuser');
-define('DB_PASS', 'pt125824caraud');
-define('DB_NAME', 'conectae_isogestionbd');
-
-// Conexion a base de datos
-$conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
-if ($conn->connect_error) {
-    die("Error de conexion: " . $conn->connect_error);
-}
-$conn->set_charset("utf8mb4");
-
-// Variables de sesion y configuracion
-$user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 1;
-$company_id = isset($_SESSION['company_id']) ? $_SESSION['company_id'] : 1;
-$language = isset($_SESSION['language']) ? $_SESSION['language'] : 'es';
-$country = isset($_SESSION['country']) ? $_SESSION['country'] : 'CL';
-
-// Obtener informacion del usuario
-$stmt = $conn->prepare("SELECT username, email, full_name FROM users WHERE id = ?");
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$result = $stmt->get_result();
-$user_data = $result->fetch_assoc();
-$stmt->close();
-
-// Obtener informacion de la empresa
-$stmt = $conn->prepare("SELECT company_name, rut, industry, country FROM companies WHERE id = ?");
-$stmt->bind_param("i", $company_id);
-$stmt->execute();
-$result = $stmt->get_result();
-$company_data = $result->fetch_assoc();
-$stmt->close();
-
-// Obtener estadisticas globales de ISOs
-$stmt = $conn->prepare("SELECT iso_code, COUNT(*) as total FROM iso_implementations WHERE company_id = ? GROUP BY iso_code");
-$stmt->bind_param("i", $company_id);
-$stmt->execute();
-$result = $stmt->get_result();
-$iso_stats = [];
-while ($row = $result->fetch_assoc()) {
-    $iso_stats[$row['iso_code']] = $row['total'];
-}
-$stmt->close();
-
-// Obtener auditorias pendientes
-$stmt = $conn->prepare("SELECT COUNT(*) as total FROM audits WHERE company_id = ? AND status = 'pendiente'");
-$stmt->bind_param("i", $company_id);
-$stmt->execute();
-$result = $stmt->get_result();
-$audits_pending = $result->fetch_assoc()['total'];
-$stmt->close();
-
-// Obtener no conformidades abiertas
-$stmt = $conn->prepare("SELECT COUNT(*) as total FROM non_conformities WHERE company_id = ? AND status IN ('abierta', 'en_proceso')");
-$stmt->bind_param("i", $company_id);
-$stmt->execute();
-$result = $stmt->get_result();
-$nc_open = $result->fetch_assoc()['total'];
-$stmt->close();
-
-// Obtener acciones correctivas pendientes
-$stmt = $conn->prepare("SELECT COUNT(*) as total FROM corrective_actions WHERE company_id = ? AND status IN ('pendiente', 'en_proceso')");
-$stmt->bind_param("i", $company_id);
-$stmt->execute();
-$result = $stmt->get_result();
-$actions_pending = $result->fetch_assoc()['total'];
-$stmt->close();
-
-// Obtener documentos por aprobar
-$stmt = $conn->prepare("SELECT COUNT(*) as total FROM documents WHERE company_id = ? AND approval_status = 'pendiente'");
-$stmt->bind_param("i", $company_id);
-$stmt->execute();
-$result = $stmt->get_result();
-$docs_pending = $result->fetch_assoc()['total'];
-$stmt->close();
-
-// Catalogo completo de ISOs disponibles
-$iso_catalog = [
-    'ISO_9001' => [
-        'code' => 'ISO 9001',
-        'name_es' => 'Gestion de Calidad',
-        'name_en' => 'Quality Management',
-        'name_pt' => 'Gestao da Qualidade',
-        'description_es' => 'Sistema de Gestion de Calidad para mejorar la satisfaccion del cliente',
-        'color' => '#0066cc',
-        'icon' => '&#9733;',
-        'module' => 'iso_9001'
-    ],
-    'ISO_14001' => [
-        'code' => 'ISO 14001',
-        'name_es' => 'Gestion Ambiental',
-        'name_en' => 'Environmental Management',
-        'name_pt' => 'Gestao Ambiental',
-        'description_es' => 'Sistema de Gestion Ambiental para reducir impacto ecologico',
-        'color' => '#00994d',
-        'icon' => '&#127793;',
-        'module' => 'iso_14001'
-    ],
-    'ISO_27001' => [
-        'code' => 'ISO 27001',
-        'name_es' => 'Seguridad de la Informacion',
-        'name_en' => 'Information Security',
-        'name_pt' => 'Seguranca da Informacao',
-        'description_es' => 'Sistema de Gestion de Seguridad de la Informacion',
-        'color' => '#cc0000',
-        'icon' => '&#128274;',
-        'module' => 'iso_27001'
-    ],
-    'ISO_22301' => [
-        'code' => 'ISO 22301',
-        'name_es' => 'Continuidad del Negocio',
-        'name_en' => 'Business Continuity',
-        'name_pt' => 'Continuidade de Negocios',
-        'description_es' => 'Sistema de Gestion de Continuidad del Negocio',
-        'color' => '#ff6600',
-        'icon' => '&#128295;',
-        'module' => 'iso_22301'
-    ],
-    'ISO_37001' => [
-        'code' => 'ISO 37001',
-        'name_es' => 'Gestion Antisoborno',
-        'name_en' => 'Anti-Bribery Management',
-        'name_pt' => 'Gestao Antissuborno',
-        'description_es' => 'Sistema de Gestion Antisoborno para prevenir corrupcion',
-        'color' => '#8b4513',
-        'icon' => '&#9878;',
-        'module' => 'iso_37001'
-    ],
-    'ISO_45001' => [
-        'code' => 'ISO 45001',
-        'name_es' => 'Seguridad y Salud en el Trabajo',
-        'name_en' => 'Occupational Health and Safety',
-        'name_pt' => 'Seguranca e Saude no Trabalho',
-        'description_es' => 'Sistema de Gestion de Seguridad y Salud en el Trabajo',
-        'color' => '#ff9900',
-        'icon' => '&#9762;',
-        'module' => 'iso_45001'
-    ],
-    'ISO_31000' => [
-        'code' => 'ISO 31000',
-        'name_es' => 'Gestion de Riesgos',
-        'name_en' => 'Risk Management',
-        'name_pt' => 'Gestao de Riscos',
-        'description_es' => 'Directrices para la Gestion de Riesgos',
-        'color' => '#9900cc',
-        'icon' => '&#9888;',
-        'module' => 'iso_31000'
-    ],
-    'ISO_50001' => [
-        'code' => 'ISO 50001',
-        'name_es' => 'Gestion de Energia',
-        'name_en' => 'Energy Management',
-        'name_pt' => 'Gestao de Energia',
-        'description_es' => 'Sistema de Gestion de la Energia',
-        'color' => '#ffcc00',
-        'icon' => '&#9889;',
-        'module' => 'iso_50001'
-    ],
-    'ISO_20000' => [
-        'code' => 'ISO 20000',
-        'name_es' => 'Gestion de Servicios TI',
-        'name_en' => 'IT Service Management',
-        'name_pt' => 'Gestao de Servicos de TI',
-        'description_es' => 'Sistema de Gestion de Servicios de Tecnologia de la Informacion',
-        'color' => '#0099cc',
-        'icon' => '&#128187;',
-        'module' => 'iso_20000'
-    ],
-    'ISO_22000' => [
-        'code' => 'ISO 22000',
-        'name_es' => 'Seguridad Alimentaria',
-        'name_en' => 'Food Safety',
-        'name_pt' => 'Seguranca Alimentar',
-        'description_es' => 'Sistema de Gestion de Seguridad Alimentaria',
-        'color' => '#66cc00',
-        'icon' => '&#127828;',
-        'module' => 'iso_22000'
-    ],
-    'ISO_27017' => [
-        'code' => 'ISO 27017',
-        'name_es' => 'Seguridad en la Nube',
-        'name_en' => 'Cloud Security',
-        'name_pt' => 'Seguranca na Nuvem',
-        'description_es' => 'Controles de Seguridad para Servicios en la Nube',
-        'color' => '#3399ff',
-        'icon' => '&#9729;',
-        'module' => 'iso_27017'
-    ],
-    'ISO_27701' => [
-        'code' => 'ISO 27701',
-        'name_es' => 'Gestion de Privacidad',
-        'name_en' => 'Privacy Management',
-        'name_pt' => 'Gestao de Privacidade',
-        'description_es' => 'Sistema de Gestion de Privacidad de la Informacion',
-        'color' => '#cc00cc',
-        'icon' => '&#128065;',
-        'module' => 'iso_27701'
-    ],
-    'ISO_13485' => [
-        'code' => 'ISO 13485',
-        'name_es' => 'Dispositivos Medicos',
-        'name_en' => 'Medical Devices',
-        'name_pt' => 'Dispositivos Medicos',
-        'description_es' => 'Sistema de Gestion de Calidad para Dispositivos Medicos',
-        'color' => '#cc3333',
-        'icon' => '&#9877;',
-        'module' => 'iso_13485'
-    ],
-    'ISO_28000' => [
-        'code' => 'ISO 28000',
-        'name_es' => 'Seguridad en Cadena de Suministro',
-        'name_en' => 'Supply Chain Security',
-        'name_pt' => 'Seguranca na Cadeia de Suprimentos',
-        'description_es' => 'Sistema de Gestion de Seguridad en la Cadena de Suministro',
-        'color' => '#996633',
-        'icon' => '&#128666;',
-        'module' => 'iso_28000'
-    ]
-];
-
-// Textos multiidioma
-$texts = [
-    'es' => [
-        'title' => 'AUDITOR PRO',
-        'subtitle' => 'Sistema Integral de Gestion Multi-ISO',
-        'welcome' => 'Bienvenido',
-        'dashboard' => 'Panel de Control',
-        'statistics' => 'Estadisticas Generales',
-        'select_iso' => 'Seleccionar Sistema ISO',
-        'audits' => 'Auditorias Pendientes',
-        'non_conformities' => 'No Conformidades Abiertas',
-        'actions' => 'Acciones Correctivas',
-        'documents' => 'Documentos por Aprobar',
-        'modules' => 'Modulos Transversales',
-        'audit_system' => 'Sistema de Auditorias',
-        'nc_system' => 'No Conformidades',
-        'action_system' => 'Acciones Correctivas',
-        'kpi_system' => 'Indicadores KPI',
-        'doc_system' => 'Gestion Documental',
-        'reports' => 'Reportes y Exportacion',
-        'company' => 'Empresa',
-        'user' => 'Usuario',
-        'logout' => 'Cerrar Sesion',
-        'settings' => 'Configuracion',
-        'access' => 'Acceder'
-    ],
-    'en' => [
-        'title' => 'AUDITOR PRO',
-        'subtitle' => 'Comprehensive Multi-ISO Management System',
-        'welcome' => 'Welcome',
-        'dashboard' => 'Dashboard',
-        'statistics' => 'General Statistics',
-        'select_iso' => 'Select ISO System',
-        'audits' => 'Pending Audits',
-        'non_conformities' => 'Open Non-Conformities',
-        'actions' => 'Corrective Actions',
-        'documents' => 'Documents to Approve',
-        'modules' => 'Cross-cutting Modules',
-        'audit_system' => 'Audit System',
-        'nc_system' => 'Non-Conformities',
-        'action_system' => 'Corrective Actions',
-        'kpi_system' => 'KPI Indicators',
-        'doc_system' => 'Document Management',
-        'reports' => 'Reports and Export',
-        'company' => 'Company',
-        'user' => 'User',
-        'logout' => 'Logout',
-        'settings' => 'Settings',
-        'access' => 'Access'
-    ],
-    'pt' => [
-        'title' => 'AUDITOR PRO',
-        'subtitle' => 'Sistema Integral de Gestao Multi-ISO',
-        'welcome' => 'Bem-vindo',
-        'dashboard' => 'Painel de Controle',
-        'statistics' => 'Estatisticas Gerais',
-        'select_iso' => 'Selecionar Sistema ISO',
-        'audits' => 'Auditorias Pendentes',
-        'non_conformities' => 'Nao Conformidades Abertas',
-        'actions' => 'Acoes Corretivas',
-        'documents' => 'Documentos para Aprovar',
-        'modules' => 'Modulos Transversais',
-        'audit_system' => 'Sistema de Auditorias',
-        'nc_system' => 'Nao Conformidades',
-        'action_system' => 'Acoes Corretivas',
-        'kpi_system' => 'Indicadores KPI',
-        'doc_system' => 'Gestao Documental',
-        'reports' => 'Relatorios e Exportacao',
-        'company' => 'Empresa',
-        'user' => 'Usuario',
-        'logout' => 'Sair',
-        'settings' => 'Configuracao',
-        'access' => 'Acessar'
-    ]
-];
-
-$t = $texts[$language];
-
-?>
 <!DOCTYPE html>
-<html lang="<?php echo $language; ?>">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $t['title']; ?> - <?php echo $t['subtitle']; ?></title>
+    <title>AUDITOR PRO - Plataforma de Gestión Multi-ISO</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
+            overflow-x: hidden;
         }
 
-        .main-container {
-            max-width: 1400px;
+        /* Header/Navbar */
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.98);
+            padding: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+        .nav-container {
+            max-width: 1200px;
             margin: 0 auto;
-        }
-
-        .header {
-            background: white;
-            padding: 25px 40px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            margin-bottom: 30px;
+            padding: 0 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-
-        .header-left {
-            flex: 1;
-        }
-
-        .header-title {
-            font-size: 42px;
+        .logo {
+            font-size: 28px;
             font-weight: bold;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-bottom: 5px;
         }
-
-        .header-subtitle {
-            color: #666;
-            font-size: 16px;
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            align-items: center;
         }
-
-        .header-right {
-            text-align: right;
-        }
-
-        .user-info {
-            background: #f8f9fa;
-            padding: 15px 25px;
-            border-radius: 10px;
-            margin-bottom: 10px;
-        }
-
-        .user-info strong {
-            color: #333;
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        .user-info span {
-            color: #666;
-            font-size: 14px;
-        }
-
-        .language-selector {
-            margin-top: 10px;
-        }
-
-        .language-selector select {
-            padding: 8px 15px;
-            border: 2px solid #667eea;
-            border-radius: 5px;
-            font-size: 14px;
-            cursor: pointer;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            border-left: 5px solid;
-            transition: transform 0.3s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-        }
-
-        .stat-card.blue { border-color: #0066cc; }
-        .stat-card.red { border-color: #cc0000; }
-        .stat-card.orange { border-color: #ff6600; }
-        .stat-card.green { border-color: #00994d; }
-
-        .stat-value {
-            font-size: 48px;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .stat-label {
-            color: #666;
-            font-size: 14px;
-        }
-
-        .section-title {
-            background: white;
-            padding: 20px 30px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            font-size: 24px;
-            font-weight: bold;
-            color: #333;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-
-        .iso-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 25px;
-            margin-bottom: 30px;
-        }
-
-        .iso-card {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-            transition: all 0.3s ease;
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .iso-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 6px;
-            background: var(--iso-color);
-        }
-
-        .iso-card:hover {
-            transform: translateY(-8px) scale(1.02);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.25);
-        }
-
-        .iso-icon {
-            font-size: 48px;
-            margin-bottom: 15px;
-        }
-
-        .iso-code {
-            font-size: 24px;
-            font-weight: bold;
-            color: var(--iso-color);
-            margin-bottom: 8px;
-        }
-
-        .iso-name {
-            font-size: 18px;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 10px;
-        }
-
-        .iso-description {
-            color: #666;
-            font-size: 14px;
-            line-height: 1.6;
-            margin-bottom: 20px;
-        }
-
-        .iso-button {
-            display: inline-block;
-            padding: 12px 30px;
-            background: var(--iso-color);
-            color: white;
+        .nav-links a {
             text-decoration: none;
-            border-radius: 8px;
+            color: #333;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        .nav-links a:hover { color: #667eea; }
+        .btn {
+            padding: 12px 30px;
+            border-radius: 25px;
+            text-decoration: none;
             font-weight: bold;
-            transition: all 0.3s ease;
+            transition: all 0.3s;
             border: none;
             cursor: pointer;
-            width: 100%;
-            text-align: center;
+            display: inline-block;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        .btn-outline {
+            border: 2px solid #667eea;
+            color: #667eea;
+            background: white;
+        }
+        .btn-outline:hover {
+            background: #667eea;
+            color: white;
         }
 
-        .iso-button:hover {
-            opacity: 0.9;
+        /* Hero Section */
+        .hero {
+            margin-top: 80px;
+            padding: 100px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+        }
+        .hero h1 {
+            font-size: 56px;
+            margin-bottom: 20px;
+            animation: fadeInUp 1s;
+        }
+        .hero p {
+            font-size: 24px;
+            margin-bottom: 40px;
+            opacity: 0.95;
+            animation: fadeInUp 1s 0.2s both;
+        }
+        .hero-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            animation: fadeInUp 1s 0.4s both;
+        }
+        .hero-buttons .btn {
+            font-size: 18px;
+            padding: 15px 40px;
+        }
+
+        /* Features Section */
+        .features {
+            padding: 100px 20px;
+            background: #f8f9fa;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .section-title {
+            text-align: center;
+            font-size: 42px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .section-subtitle {
+            text-align: center;
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 60px;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+        }
+        .feature-card {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        .feature-card:hover {
+            transform: translateY(-10px);
+        }
+        .feature-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        .feature-title {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .feature-description {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        /* ISO Standards Section */
+        .iso-standards {
+            padding: 100px 20px;
+            background: white;
+        }
+        .iso-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-top: 60px;
+        }
+        .iso-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px;
+            border-radius: 15px;
+            color: white;
+            text-align: center;
+            transition: transform 0.3s;
+        }
+        .iso-card:hover {
             transform: scale(1.05);
         }
-
-        .modules-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .module-card {
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-
-        .module-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-        }
-
-        .module-icon {
+        .iso-icon {
             font-size: 40px;
             margin-bottom: 15px;
         }
-
-        .module-title {
-            font-size: 18px;
+        .iso-name {
+            font-size: 20px;
             font-weight: bold;
-            color: #333;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
-
-        .module-button {
-            display: inline-block;
-            padding: 10px 25px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: bold;
-            transition: all 0.3s ease;
-        }
-
-        .module-button:hover {
+        .iso-description {
+            font-size: 14px;
             opacity: 0.9;
+        }
+
+        /* Pricing Section */
+        .pricing {
+            padding: 100px 20px;
+            background: #f8f9fa;
+        }
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            margin-top: 60px;
+        }
+        .pricing-card {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            position: relative;
+        }
+        .pricing-card.featured {
+            border: 3px solid #667eea;
             transform: scale(1.05);
         }
-
-        .footer {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
+        .pricing-badge {
+            position: absolute;
+            top: -15px;
+            right: 20px;
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .pricing-name {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .pricing-price {
+            font-size: 48px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .pricing-period {
             color: #666;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .pricing-features {
+            text-align: left;
+            margin-bottom: 30px;
+        }
+        .pricing-feature {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            color: #666;
+        }
+        .pricing-feature:last-child {
+            border-bottom: none;
         }
 
-        @media print {
-            body {
-                background: white;
+        /* CTA Section */
+        .cta {
+            padding: 100px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+        }
+        .cta h2 {
+            font-size: 42px;
+            margin-bottom: 20px;
+        }
+        .cta p {
+            font-size: 20px;
+            margin-bottom: 40px;
+            opacity: 0.95;
+        }
+
+        /* Footer */
+        .footer {
+            padding: 60px 20px 30px;
+            background: #2c3e50;
+            color: white;
+        }
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+        .footer-section h3 {
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+        .footer-section a {
+            display: block;
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            margin-bottom: 10px;
+            transition: color 0.3s;
+        }
+        .footer-section a:hover {
+            color: white;
+        }
+        .footer-bottom {
+            text-align: center;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.7);
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
             }
-            .iso-button, .module-button {
-                display: none;
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
         }
 
+        /* Mobile Responsive */
         @media (max-width: 768px) {
-            .header {
+            .hero h1 { font-size: 36px; }
+            .hero p { font-size: 18px; }
+            .hero-buttons {
                 flex-direction: column;
-                text-align: center;
+                align-items: center;
             }
-
-            .header-right {
-                margin-top: 20px;
-                text-align: center;
-            }
-
-            .iso-grid {
-                grid-template-columns: 1fr;
-            }
+            .section-title { font-size: 32px; }
+            .nav-links { display: none; }
         }
     </style>
 </head>
 <body>
-    <div class="main-container">
-        <header class="header">
-            <div class="header-left">
-                <h1 class="header-title"><?php echo $t['title']; ?></h1>
-                <p class="header-subtitle"><?php echo $t['subtitle']; ?></p>
-            </div>
-            <div class="header-right">
-                <div class="user-info">
-                    <strong><?php echo htmlspecialchars($user_data['full_name'] ?? $user_data['username']); ?></strong>
-                    <span><?php echo htmlspecialchars($company_data['company_name']); ?></span>
-                </div>
-                <div class="language-selector">
-                    <select onchange="window.location.href='?lang='+this.value">
-                        <option value="es" <?php echo $language == 'es' ? 'selected' : ''; ?>>Espanol</option>
-                        <option value="en" <?php echo $language == 'en' ? 'selected' : ''; ?>>English</option>
-                        <option value="pt" <?php echo $language == 'pt' ? 'selected' : ''; ?>>Portugues</option>
-                    </select>
-                </div>
-            </div>
-        </header>
-
-        <div class="stats-grid">
-            <div class="stat-card blue">
-                <div class="stat-value"><?php echo $audits_pending; ?></div>
-                <div class="stat-label"><?php echo $t['audits']; ?></div>
-            </div>
-            <div class="stat-card red">
-                <div class="stat-value"><?php echo $nc_open; ?></div>
-                <div class="stat-label"><?php echo $t['non_conformities']; ?></div>
-            </div>
-            <div class="stat-card orange">
-                <div class="stat-value"><?php echo $actions_pending; ?></div>
-                <div class="stat-label"><?php echo $t['actions']; ?></div>
-            </div>
-            <div class="stat-card green">
-                <div class="stat-value"><?php echo $docs_pending; ?></div>
-                <div class="stat-label"><?php echo $t['documents']; ?></div>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">🔐 AUDITOR PRO</div>
+            <div class="nav-links">
+                <a href="#features">Características</a>
+                <a href="#isos">ISOs</a>
+                <a href="#pricing">Precios</a>
+                <a href="login.php" class="btn btn-outline">Iniciar Sesión</a>
+                <a href="register.php" class="btn btn-primary">Registrarse</a>
             </div>
         </div>
+    </nav>
 
-        <div class="section-title"><?php echo $t['select_iso']; ?></div>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1>Plataforma de Gestión Multi-ISO</h1>
+            <p>La solución profesional para gestionar todos sus sistemas de gestión ISO en un solo lugar</p>
+            <div class="hero-buttons">
+                <a href="register.php" class="btn btn-primary" style="background: white; color: #667eea;">Comenzar Gratis - 5 Días Trial</a>
+                <a href="#pricing" class="btn btn-outline" style="border-color: white; color: white;">Ver Planes</a>
+            </div>
+        </div>
+    </section>
 
-        <div class="iso-grid">
-            <?php foreach ($iso_catalog as $iso_key => $iso): ?>
-                <div class="iso-card" style="--iso-color: <?php echo $iso['color']; ?>">
-                    <div class="iso-icon"><?php echo $iso['icon']; ?></div>
-                    <div class="iso-code"><?php echo $iso['code']; ?></div>
-                    <div class="iso-name"><?php echo $iso['name_' . $language]; ?></div>
-                    <div class="iso-description"><?php echo $iso['description_' . $language]; ?></div>
-                    <a href="<?php echo $iso['module']; ?>/index.php" class="iso-button">
-                        <?php echo $t['access']; ?>
-                    </a>
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="container">
+            <h2 class="section-title">¿Por qué elegir AUDITOR PRO?</h2>
+            <p class="section-subtitle">La plataforma más completa para la gestión de normativas ISO</p>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🌍</div>
+                    <h3 class="feature-title">Multi-País</h3>
+                    <p class="feature-description">Soporte para 8 países con regulaciones locales específicas y normativas adaptadas.</p>
                 </div>
-            <?php endforeach; ?>
-        </div>
 
-        <div class="section-title"><?php echo $t['modules']; ?></div>
+                <div class="feature-card">
+                    <div class="feature-icon">🏢</div>
+                    <h3 class="feature-title">Multi-Empresa</h3>
+                    <p class="feature-description">Gestione múltiples empresas desde una sola cuenta con datos completamente aislados.</p>
+                </div>
 
-        <div class="modules-grid">
-            <div class="module-card">
-                <div class="module-icon">&#128197;</div>
-                <div class="module-title"><?php echo $t['audit_system']; ?></div>
-                <a href="common/audits.php" class="module-button"><?php echo $t['access']; ?></a>
-            </div>
+                <div class="feature-card">
+                    <div class="feature-icon">👥</div>
+                    <h3 class="feature-title">Multi-Usuario</h3>
+                    <p class="feature-description">Sistema de roles y permisos granulares para equipos de cualquier tamaño.</p>
+                </div>
 
-            <div class="module-card">
-                <div class="module-icon">&#9940;</div>
-                <div class="module-title"><?php echo $t['nc_system']; ?></div>
-                <a href="common/non_conformities.php" class="module-button"><?php echo $t['access']; ?></a>
-            </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🌐</div>
+                    <h3 class="feature-title">Multi-Idioma</h3>
+                    <p class="feature-description">Interfaz disponible en Español, Inglés y Portugués con traducción automática.</p>
+                </div>
 
-            <div class="module-card">
-                <div class="module-icon">&#9989;</div>
-                <div class="module-title"><?php echo $t['action_system']; ?></div>
-                <a href="common/corrective_actions.php" class="module-button"><?php echo $t['access']; ?></a>
-            </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💰</div>
+                    <h3 class="feature-title">Multi-Moneda</h3>
+                    <p class="feature-description">Soporte para USD, EUR, CLP, ARS, PEN, COP, MXN y BRL.</p>
+                </div>
 
-            <div class="module-card">
-                <div class="module-icon">&#128202;</div>
-                <div class="module-title"><?php echo $t['kpi_system']; ?></div>
-                <a href="common/kpi.php" class="module-button"><?php echo $t['access']; ?></a>
-            </div>
-
-            <div class="module-card">
-                <div class="module-icon">&#128196;</div>
-                <div class="module-title"><?php echo $t['doc_system']; ?></div>
-                <a href="common/documents.php" class="module-button"><?php echo $t['access']; ?></a>
-            </div>
-
-            <div class="module-card">
-                <div class="module-icon">&#128438;</div>
-                <div class="module-title"><?php echo $t['reports']; ?></div>
-                <a href="reports/index.php" class="module-button"><?php echo $t['access']; ?></a>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3 class="feature-title">14 Normas ISO</h3>
+                    <p class="feature-description">Gestione hasta 14 normas ISO diferentes desde una misma plataforma integrada.</p>
+                </div>
             </div>
         </div>
+    </section>
 
-        <footer class="footer">
-            <p>&copy; 2024 AUDITOR PRO - Sistema Integral de Gestion Multi-ISO</p>
-            <p>Powered by ConectaERP | Version 1.0.0</p>
-        </footer>
-    </div>
+    <!-- ISO Standards Section -->
+    <section class="iso-standards" id="isos">
+        <div class="container">
+            <h2 class="section-title">Normas ISO Soportadas</h2>
+            <p class="section-subtitle">Cobertura completa de las principales normas internacionales</p>
+
+            <div class="iso-grid">
+                <div class="iso-card">
+                    <div class="iso-icon">🔐</div>
+                    <div class="iso-name">ISO 27001</div>
+                    <div class="iso-description">Seguridad de la Información</div>
+                </div>
+
+                <div class="iso-card">
+                    <div class="iso-icon">🔄</div>
+                    <div class="iso-name">ISO 22301</div>
+                    <div class="iso-description">Continuidad del Negocio</div>
+                </div>
+
+                <div class="iso-card">
+                    <div class="iso-icon">⚖️</div>
+                    <div class="iso-name">ISO 37001</div>
+                    <div class="iso-description">Antisoborno</div>
+                </div>
+
+                <div class="iso-card">
+                    <div class="iso-icon">✓</div>
+                    <div class="iso-name">ISO 9001</div>
+                    <div class="iso-description">Gestión de Calidad</div>
+                </div>
+
+                <div class="iso-card">
+                    <div class="iso-icon">🌱</div>
+                    <div class="iso-name">ISO 14001</div>
+                    <div class="iso-description">Gestión Ambiental</div>
+                </div>
+
+                <div class="iso-card">
+                    <div class="iso-icon">👷</div>
+                    <div class="iso-name">ISO 45001</div>
+                    <div class="iso-description">Seguridad y Salud</div>
+                </div>
+
+                <div class="iso-card">
+                    <div class="iso-icon">📊</div>
+                    <div class="iso-name">ISO 31000</div>
+                    <div class="iso-description">Gestión de Riesgos</div>
+                </div>
+
+                <div class="iso-card">
+                    <div class="iso-icon">⚡</div>
+                    <div class="iso-name">ISO 50001</div>
+                    <div class="iso-description">Gestión Energética</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="pricing" id="pricing">
+        <div class="container">
+            <h2 class="section-title">Planes y Precios</h2>
+            <p class="section-subtitle">Elija el plan que mejor se adapte a sus necesidades. ¡5 Días de Prueba Gratis!</p>
+
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <div class="pricing-name">Básico</div>
+                    <div class="pricing-price">$99</div>
+                    <div class="pricing-period">USD / mes</div>
+                    <div class="pricing-features">
+                        <div class="pricing-feature">✓ 1 Empresa</div>
+                        <div class="pricing-feature">✓ 5 Usuarios</div>
+                        <div class="pricing-feature">✓ 3 Normas ISO</div>
+                        <div class="pricing-feature">✓ Soporte Email</div>
+                        <div class="pricing-feature">✓ Actualizaciones</div>
+                    </div>
+                    <a href="register.php?plan=basic" class="btn btn-primary">Comenzar</a>
+                </div>
+
+                <div class="pricing-card featured">
+                    <div class="pricing-badge">MÁS POPULAR</div>
+                    <div class="pricing-name">Profesional</div>
+                    <div class="pricing-price">$299</div>
+                    <div class="pricing-period">USD / mes</div>
+                    <div class="pricing-features">
+                        <div class="pricing-feature">✓ 5 Empresas</div>
+                        <div class="pricing-feature">✓ 25 Usuarios</div>
+                        <div class="pricing-feature">✓ 10 Normas ISO</div>
+                        <div class="pricing-feature">✓ Soporte Prioritario</div>
+                        <div class="pricing-feature">✓ Backup Automático</div>
+                        <div class="pricing-feature">✓ API Access</div>
+                    </div>
+                    <a href="register.php?plan=professional" class="btn btn-primary">Comenzar</a>
+                </div>
+
+                <div class="pricing-card">
+                    <div class="pricing-name">Enterprise</div>
+                    <div class="pricing-price">$799</div>
+                    <div class="pricing-period">USD / mes</div>
+                    <div class="pricing-features">
+                        <div class="pricing-feature">✓ Empresas Ilimitadas</div>
+                        <div class="pricing-feature">✓ Usuarios Ilimitados</div>
+                        <div class="pricing-feature">✓ 14 Normas ISO</div>
+                        <div class="pricing-feature">✓ Soporte 24/7</div>
+                        <div class="pricing-feature">✓ Onboarding Personalizado</div>
+                        <div class="pricing-feature">✓ Servidor Dedicado</div>
+                    </div>
+                    <a href="register.php?plan=enterprise" class="btn btn-primary">Contactar</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="container">
+            <h2>¿Listo para comenzar?</h2>
+            <p>Únase a cientos de empresas que ya confían en AUDITOR PRO</p>
+            <a href="register.php" class="btn btn-primary" style="background: white; color: #667eea;">Prueba Gratuita 5 Días</a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-section">
+                    <h3>AUDITOR PRO</h3>
+                    <p>La plataforma líder en gestión de sistemas ISO para empresas de todo el mundo.</p>
+                </div>
+
+                <div class="footer-section">
+                    <h3>Producto</h3>
+                    <a href="#features">Características</a>
+                    <a href="#isos">Normas ISO</a>
+                    <a href="#pricing">Precios</a>
+                    <a href="#">Documentación</a>
+                </div>
+
+                <div class="footer-section">
+                    <h3>Empresa</h3>
+                    <a href="#">Acerca de</a>
+                    <a href="#">Blog</a>
+                    <a href="#">Contacto</a>
+                    <a href="#">Soporte</a>
+                </div>
+
+                <div class="footer-section">
+                    <h3>Legal</h3>
+                    <a href="#">Términos de Servicio</a>
+                    <a href="#">Política de Privacidad</a>
+                    <a href="#">Condiciones de Uso</a>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2024 AUDITOR PRO by AuditorEx Chile. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
 </body>
 </html>
-<?php
-$conn->close();
-?>
