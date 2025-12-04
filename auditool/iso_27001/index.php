@@ -646,6 +646,20 @@ $t = $texts[$language];
                 <div class="module-description">Formularios web para ingreso directo a SQL</div>
                 <a href="formularios/" class="btn btn-primary"><?php echo $t['access']; ?></a>
             </div>
+
+            <div class="module-card">
+                <div class="module-icon">&#128269;</div>
+                <div class="module-title">Auditorias</div>
+                <div class="module-description">Gestion de programa de auditorias internas y externas</div>
+                <a href="auditorias.php" class="btn btn-primary"><?php echo $t['access']; ?></a>
+            </div>
+
+            <div class="module-card">
+                <div class="module-icon">&#9888;</div>
+                <div class="module-title">No Conformidades</div>
+                <div class="module-description">Registro y seguimiento de hallazgos de auditoria</div>
+                <a href="no_conformidades.php" class="btn btn-primary"><?php echo $t['access']; ?></a>
+            </div>
         </div>
 
         <div class="table-container">
