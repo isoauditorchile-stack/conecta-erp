@@ -3,9 +3,9 @@ session_start();
 
 // Configuracion de base de datos
 define('DB_HOST', 'localhost');
-define('DB_USER', 'conectae_isogestionbd');
+define('DB_USER', 'conectae_isogestionuser');
 define('DB_PASS', 'pt125824caraud');
-define('DB_NAME', 'conectae_isogestionuser');
+define('DB_NAME', 'conectae_isogestionbd');
 
 // Conexion a base de datos
 $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);

@@ -2,9 +2,9 @@
 session_start();
 
 define('DB_HOST', 'localhost');
-define('DB_USER', 'conectae_isogestionbd');
+define('DB_USER', 'conectae_isogestionuser');
 define('DB_PASS', 'pt125824caraud');
-define('DB_NAME', 'conectae_isogestionuser');
+define('DB_NAME', 'conectae_isogestionbd');
 
 $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
 if ($conn->connect_error) die("Error de conexion: " . $conn->connect_error);
