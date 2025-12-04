@@ -618,6 +618,34 @@ $t = $texts[$language];
                 <div class="module-description">Reportes personalizados y exportacion</div>
                 <a href="reportes.php" class="btn btn-primary"><?php echo $t['access']; ?></a>
             </div>
+
+            <div class="module-card">
+                <div class="module-icon">&#128200;</div>
+                <div class="module-title">Resumen Ejecutivo</div>
+                <div class="module-description">Dashboard con KPIs y nivel de madurez del SGSI</div>
+                <a href="resumen.php" class="btn btn-primary"><?php echo $t['access']; ?></a>
+            </div>
+
+            <div class="module-card">
+                <div class="module-icon">&#128209;</div>
+                <div class="module-title">Matrices SGSI</div>
+                <div class="module-description">Exportar matrices SOA, Riesgos, Activos en Excel</div>
+                <a href="matrices.php" class="btn btn-primary"><?php echo $t['access']; ?></a>
+            </div>
+
+            <div class="module-card">
+                <div class="module-icon">&#128228;</div>
+                <div class="module-title">Importador de Datos</div>
+                <div class="module-description">Importacion masiva desde archivos CSV/Excel</div>
+                <a href="importador.php" class="btn btn-primary"><?php echo $t['access']; ?></a>
+            </div>
+
+            <div class="module-card">
+                <div class="module-icon">&#128221;</div>
+                <div class="module-title">Formularios Online</div>
+                <div class="module-description">Formularios web para ingreso directo a SQL</div>
+                <a href="formularios/" class="btn btn-primary"><?php echo $t['access']; ?></a>
+            </div>
         </div>
 
         <div class="table-container">
