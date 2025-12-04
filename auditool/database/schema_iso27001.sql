@@ -370,16 +370,87 @@ CREATE TABLE IF NOT EXISTS `iso27001_templates` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================
+-- TABLA: subscriptions (Suscripciones)
+-- ============================================
+CREATE TABLE IF NOT EXISTS `subscriptions` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `company_id` int(11) NOT NULL,
+  `plan_name` enum('basic','professional','enterprise','custom') NOT NULL,
+  `plan_price` decimal(10,2) NOT NULL,
+  `plan_currency` varchar(5) DEFAULT 'USD',
+  `billing_cycle` enum('monthly','yearly') DEFAULT 'monthly',
+  `status` enum('trial','active','suspended','cancelled','expired','pending') DEFAULT 'pending',
+  `start_date` date DEFAULT NULL,
+  `end_date` date DEFAULT NULL,
+  `trial_start_date` date DEFAULT NULL,
+  `trial_end_date` date DEFAULT NULL,
+  `next_billing_date` date DEFAULT NULL,
+  `max_users` int(11) NOT NULL DEFAULT 5,
+  `max_companies` int(11) NOT NULL DEFAULT 1,
+  `max_isos` int(11) NOT NULL DEFAULT 3,
+  `payment_method` varchar(50) DEFAULT NULL,
+  `payment_status` enum('pending','paid','failed','refunded') DEFAULT 'pending',
+  `last_payment_date` date DEFAULT NULL,
+  `notes` text DEFAULT NULL,
+  `created_date` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_date` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `company_id` (`company_id`),
+  KEY `status` (`status`),
+  KEY `plan_name` (`plan_name`),
+  CONSTRAINT `fk_subscriptions_company` FOREIGN KEY (`company_id`) REFERENCES `companies` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
+-- TABLA: payments (Pagos)
+-- ============================================
+CREATE TABLE IF NOT EXISTS `payments` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `subscription_id` int(11) NOT NULL,
+  `company_id` int(11) NOT NULL,
+  `payment_amount` decimal(10,2) NOT NULL,
+  `payment_currency` varchar(5) DEFAULT 'USD',
+  `payment_method` varchar(50) DEFAULT NULL,
+  `payment_status` enum('pending','completed','failed','refunded') DEFAULT 'pending',
+  `transaction_id` varchar(255) DEFAULT NULL,
+  `payment_date` datetime DEFAULT NULL,
+  `payment_details` text DEFAULT NULL COMMENT 'JSON con detalles del pago',
+  `created_date` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `subscription_id` (`subscription_id`),
+  KEY `company_id` (`company_id`),
+  KEY `payment_status` (`payment_status`),
+  CONSTRAINT `fk_payments_subscription` FOREIGN KEY (`subscription_id`) REFERENCES `subscriptions` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_payments_company` FOREIGN KEY (`company_id`) REFERENCES `companies` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
 -- INSERTAR DATOS INICIALES
 -- ============================================
 
+-- Empresa AuditorEx Chile (Superadmin)
+INSERT INTO `companies` (`id`, `company_name`, `company_rut`, `company_country`, `company_email`, `active_isos`, `status`) VALUES
+(1, 'AuditorEx Chile', '76.123.456-7', 'CL', 'auditorexchile@gmail.com', '["iso_27001","iso_22301","iso_37001","iso_9001","iso_14001","iso_45001","iso_31000","iso_50001","iso_20000","iso_22000","iso_27017","iso_27701","iso_13485","iso_28000"]', 'active');
+
+-- Usuario Superadmin de AuditorEx Chile (email: auditorexchile@gmail.com, password: Sistemas40&)
+INSERT INTO `users` (`id`, `company_id`, `username`, `email`, `password`, `full_name`, `role`, `language`, `status`) VALUES
+(1, 1, 'auditorexchile', 'auditorexchile@gmail.com', '$2y$10$VQC8JCPZmVz.mEKqwZE3W.xJR7Y6HZK5vGBhQXqJ9FXzqN0JjKVZe', 'AuditorEx Chile Administrador', 'superadmin', 'es', 'active');
+
+-- Suscripción Enterprise para AuditorEx Chile (acceso total)
+INSERT INTO `subscriptions` (`id`, `company_id`, `plan_name`, `plan_price`, `status`, `start_date`, `max_users`, `max_companies`, `max_isos`) VALUES
+(1, 1, 'enterprise', 999.00, 'active', CURDATE(), 999, 999, 14);
+
 -- Empresa de ejemplo
 INSERT INTO `companies` (`id`, `company_name`, `company_rut`, `company_country`, `company_email`, `active_isos`, `status`) VALUES
-(1, 'Empresa Demo', '12345678-9', 'CL', 'info@empresademo.cl', '["iso_27001"]', 'active');
+(2, 'Empresa Demo', '12345678-9', 'CL', 'info@empresademo.cl', '["iso_27001"]', 'active');
 
 -- Usuario administrador de ejemplo (password: Admin123!)
 INSERT INTO `users` (`id`, `company_id`, `username`, `email`, `password`, `full_name`, `role`, `language`, `status`) VALUES
-(1, 1, 'admin', 'admin@empresademo.cl', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Administrador', 'admin', 'es', 'active');
+(2, 2, 'admin', 'admin@empresademo.cl', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Administrador', 'admin', 'es', 'active');
+
+-- Suscripción Trial de 5 días para Empresa Demo
+INSERT INTO `subscriptions` (`id`, `company_id`, `plan_name`, `plan_price`, `status`, `trial_start_date`, `trial_end_date`, `max_users`, `max_companies`, `max_isos`) VALUES
+(2, 2, 'basic', 99.00, 'trial', CURDATE(), DATE_ADD(CURDATE(), INTERVAL 5 DAY), 5, 1, 3);
 
 -- ============================================
 -- ÍNDICES ADICIONALES PARA OPTIMIZACIÓN
