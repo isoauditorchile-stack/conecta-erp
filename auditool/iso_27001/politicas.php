@@ -26,24 +26,24 @@ $message_type = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['action'])) {
         if ($_POST['action'] === 'create') {
-            $stmt = $conn->prepare("INSERT INTO iso27001_policies (company_id, policy_id, policy_name, policy_category, policy_type, version, effective_date, review_date, next_review_date, approval_date, approved_by, responsible, scope, objective, policy_description, related_controls, related_procedures, distribution_list, approval_status, revision_history, compliance_requirements, training_required, acknowledgment_required, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt = $conn->prepare("INSERT INTO iso27001_policies (company_id, policy_id, policy_name, policy_category, policy_type, policy_version, effective_date, last_review, next_review, approval_date, approved_by, responsible, policy_scope, policy_objective, policy_content, related_controls, related_procedures, distribution_list, approval_status, revision_history, compliance_requirements, training_required, acknowledgment_required, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
             $stmt->bind_param("isssssssssssssssssssssi",
                 $company_id,
-                $_POST['policy_id'],          // era policy_code
+                $_POST['policy_id'],
                 $_POST['policy_name'],
                 $_POST['policy_category'],
                 $_POST['policy_type'],
                 $_POST['version'],
                 $_POST['effective_date'],
                 $_POST['review_date'],
-                $_POST['next_review_date'],    // era next_review
+                $_POST['next_review_date'],
                 $_POST['approval_date'],
                 $_POST['approved_by'],
-                $_POST['responsible'],         // era policy_owner
-                $_POST['scope'],               // era policy_scope
-                $_POST['objective'],           // era policy_objectives
-                $_POST['policy_description'],  // era policy_content
+                $_POST['responsible'],
+                $_POST['scope'],
+                $_POST['objective'],
+                $_POST['policy_description'],
                 $_POST['related_controls'],
                 $_POST['related_procedures'],
                 $_POST['distribution_list'],
@@ -67,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Actualizar version automaticamente
             $new_version = floatval($_POST['current_version']) + 0.1;
 
-            $stmt = $conn->prepare("UPDATE iso27001_policies SET policy_name = ?, policy_category = ?, policy_type = ?, version = ?, effective_date = ?, review_date = ?, next_review_date = ?, approval_date = ?, approved_by = ?, responsible = ?, scope = ?, objective = ?, policy_description = ?, related_controls = ?, related_procedures = ?, distribution_list = ?, approval_status = ?, revision_history = ?, compliance_requirements = ?, training_required = ?, acknowledgment_required = ?, updated_by = ? WHERE id = ? AND company_id = ?");
+            $stmt = $conn->prepare("UPDATE iso27001_policies SET policy_name = ?, policy_category = ?, policy_type = ?, policy_version = ?, effective_date = ?, last_review = ?, next_review = ?, approval_date = ?, approved_by = ?, responsible = ?, policy_scope = ?, policy_objective = ?, policy_content = ?, related_controls = ?, related_procedures = ?, distribution_list = ?, approval_status = ?, revision_history = ?, compliance_requirements = ?, training_required = ?, acknowledgment_required = ?, updated_by = ? WHERE id = ? AND company_id = ?");
 
             $stmt->bind_param("ssssssssssssssssssssiii",
                 $_POST['policy_name'],
