@@ -3705,6 +3705,210 @@ function generarExcel($code, $pol) {
     exit;
 }
 
+// Función para generar PDF con mPDF
+function generarPDF($code, $pol) {
+    require_once __DIR__ . '/../vendor/autoload.php';
+
+    // Configuración de mPDF
+    $mpdf = new \Mpdf\Mpdf([
+        'mode' => 'utf-8',
+        'format' => 'A4',
+        'margin_left' => 20,
+        'margin_right' => 15,
+        'margin_top' => 48,
+        'margin_bottom' => 25,
+        'margin_header' => 10,
+        'margin_footer' => 10,
+        'default_font' => 'dejavusans'
+    ]);
+
+    // Configurar propiedades del documento
+    $mpdf->SetTitle($pol['titulo']);
+    $mpdf->SetAuthor('AUDITOR PRO');
+    $mpdf->SetCreator('AUDITOR PRO - Sistema de Gestión ISO 27001');
+    $mpdf->SetSubject('Política de Seguridad de la Información');
+
+    // Encabezado HTML
+    $header = '<table width="100%" style="border-bottom: 3px solid #0066CC; margin-bottom: 10px;">
+        <tr>
+            <td style="width: 70%; font-size: 12pt; font-weight: bold; color: #0066CC;">
+                AUDITOR PRO
+            </td>
+            <td style="width: 30%; text-align: right; font-size: 9pt; color: #666;">
+                ' . $code . '
+            </td>
+        </tr>
+    </table>';
+
+    // Pie de página HTML
+    $footer = '<table width="100%" style="border-top: 2px solid #0066CC; font-size: 8pt; color: #666; margin-top: 10px;">
+        <tr>
+            <td style="width: 50%;">Versión: ' . $pol['version'] . ' | Fecha: ' . $pol['fecha'] . '</td>
+            <td style="width: 50%; text-align: right;">Página {PAGENO} de {nbpg}</td>
+        </tr>
+        <tr>
+            <td colspan="2" style="text-align: center; font-size: 7pt; color: #999; padding-top: 5px;">
+                Documento controlado - AUDITOR PRO - ISO/IEC 27001:2022
+            </td>
+        </tr>
+    </table>';
+
+    $mpdf->SetHTMLHeader($header);
+    $mpdf->SetHTMLFooter($footer);
+
+    // Contenido HTML
+    $html = '<style>
+        body { font-family: DejaVu Sans, sans-serif; font-size: 10pt; line-height: 1.6; }
+        h1 { color: #0066CC; font-size: 18pt; text-align: center; margin: 20px 0; border-bottom: 3px solid #0066CC; padding-bottom: 10px; }
+        h2 { color: #0066CC; font-size: 14pt; margin-top: 20px; border-bottom: 2px solid #0066CC; padding-bottom: 5px; }
+        h3 { color: #333; font-size: 12pt; margin-top: 15px; font-weight: bold; }
+        .info-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .info-table td { border: 1px solid #0066CC; padding: 8px; }
+        .info-table .label { background-color: #E6F2FF; font-weight: bold; width: 30%; }
+        .section { margin: 15px 0; }
+        .subsection { margin-left: 20px; }
+        ul { margin: 5px 0; padding-left: 25px; }
+        li { margin: 3px 0; }
+        .highlight { background-color: #FFF9E6; padding: 10px; border-left: 4px solid #FFD700; margin: 10px 0; }
+        .control-box { background-color: #F0F8FF; border: 2px solid #0066CC; padding: 10px; margin: 15px 0; border-radius: 5px; }
+    </style>';
+
+    // Tabla de información del documento
+    $html .= '<table class="info-table">
+        <tr>
+            <td class="label">Código</td>
+            <td>' . $code . '</td>
+            <td class="label">Versión</td>
+            <td>' . $pol['version'] . '</td>
+        </tr>
+        <tr>
+            <td class="label">Fecha</td>
+            <td>' . $pol['fecha'] . '</td>
+            <td class="label">Próxima Revisión</td>
+            <td>' . date('d/m/Y', strtotime('+1 year')) . '</td>
+        </tr>
+    </table>';
+
+    // Título principal
+    $html .= '<h1>' . strtoupper($pol['titulo']) . '</h1>';
+
+    // 1. Objetivo
+    $html .= '<h2>1. OBJETIVO</h2>';
+    $html .= '<div class="section">' . nl2br(htmlspecialchars($pol['objetivo'])) . '</div>';
+
+    // 2. Alcance
+    $html .= '<h2>2. ALCANCE</h2>';
+    $html .= '<div class="section">' . nl2br(htmlspecialchars($pol['alcance'])) . '</div>';
+
+    // 3. Definiciones (si existen)
+    if (isset($pol['definiciones']) && is_array($pol['definiciones'])) {
+        $html .= '<h2>3. DEFINICIONES Y TÉRMINOS</h2>';
+        $html .= '<div class="section"><ul>';
+        foreach ($pol['definiciones'] as $termino => $definicion) {
+            $html .= '<li><strong>' . htmlspecialchars($termino) . ':</strong> ' . htmlspecialchars($definicion) . '</li>';
+        }
+        $html .= '</ul></div>';
+        $counter = 4;
+    } else {
+        $counter = 3;
+    }
+
+    // Política detallada
+    $html .= '<h2>' . $counter . '. POLÍTICA</h2>';
+    foreach ($pol['politica'] as $seccion => $contenido) {
+        $html .= '<h3>' . htmlspecialchars($seccion) . '</h3>';
+        $html .= '<div class="subsection">';
+
+        if (is_array($contenido)) {
+            $html .= '<ul>';
+            foreach ($contenido as $item) {
+                if ($item !== '') {
+                    $html .= '<li>' . nl2br(htmlspecialchars($item)) . '</li>';
+                }
+            }
+            $html .= '</ul>';
+        } else {
+            $html .= '<p>' . nl2br(htmlspecialchars($contenido)) . '</p>';
+        }
+
+        $html .= '</div>';
+    }
+    $counter++;
+
+    // Cumplimiento
+    $html .= '<h2>' . $counter . '. CUMPLIMIENTO</h2>';
+    $html .= '<div class="highlight">' . nl2br(htmlspecialchars($pol['cumplimiento'])) . '</div>';
+    $counter++;
+
+    // Revisión
+    $html .= '<h2>' . $counter . '. REVISIÓN</h2>';
+    $html .= '<div class="section">' . nl2br(htmlspecialchars($pol['revision'])) . '</div>';
+    $counter++;
+
+    // Control ISO
+    $html .= '<div class="control-box">';
+    $html .= '<strong>Control ISO 27001:2022:</strong> ' . htmlspecialchars($pol['control_iso']);
+    $html .= '</div>';
+
+    // Tabla de aprobaciones
+    $html .= '<pagebreak />';
+    $html .= '<h2>CONTROL DE APROBACIONES Y CAMBIOS</h2>';
+    $html .= '<table class="info-table">
+        <tr>
+            <td class="label">ROL</td>
+            <td class="label">NOMBRE</td>
+            <td class="label">FIRMA</td>
+            <td class="label">FECHA</td>
+        </tr>
+        <tr>
+            <td>Elaborado por</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+        </tr>
+        <tr>
+            <td>Revisado por</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+        </tr>
+        <tr>
+            <td>Aprobado por</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+        </tr>
+    </table>';
+
+    $html .= '<h2 style="margin-top: 30px;">HISTORIAL DE VERSIONES</h2>';
+    $html .= '<table class="info-table">
+        <tr>
+            <td class="label">VERSIÓN</td>
+            <td class="label">FECHA</td>
+            <td class="label">DESCRIPCIÓN</td>
+            <td class="label">AUTOR</td>
+        </tr>
+        <tr>
+            <td>' . $pol['version'] . '</td>
+            <td>' . $pol['fecha'] . '</td>
+            <td>Versión inicial</td>
+            <td>AUDITOR PRO</td>
+        </tr>
+    </table>';
+
+    // Escribir HTML al PDF
+    $mpdf->WriteHTML($html);
+
+    // Salida del PDF
+    $filename = $code . '_' . date('Ymd') . '.pdf';
+    header('Content-Type: application/pdf');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Cache-Control: max-age=0');
+
+    $mpdf->Output($filename, 'D');
+    exit;
+}
+
 // EJECUTAR
 if (!isset($politicas[$code])) {
     die('Política no encontrada: ' . $code);
@@ -3716,6 +3920,8 @@ if ($format === 'docx') {
     generarWord($code, $pol);
 } elseif ($format === 'xlsx') {
     generarExcel($code, $pol);
+} elseif ($format === 'pdf') {
+    generarPDF($code, $pol);
 } else {
     die('Formato no soportado: ' . $format);
 }
