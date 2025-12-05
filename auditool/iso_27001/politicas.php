@@ -26,24 +26,24 @@ $message_type = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['action'])) {
         if ($_POST['action'] === 'create') {
-            $stmt = $conn->prepare("INSERT INTO iso27001_policies (company_id, policy_code, policy_name, policy_category, policy_type, version, effective_date, review_date, next_review, approval_date, approved_by, policy_owner, policy_scope, policy_objectives, policy_content, related_controls, related_procedures, distribution_list, approval_status, revision_history, compliance_requirements, training_required, acknowledgment_required, created_by, created_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+            $stmt = $conn->prepare("INSERT INTO iso27001_policies (company_id, policy_id, policy_name, policy_category, policy_type, version, effective_date, review_date, next_review_date, approval_date, approved_by, responsible, scope, objective, policy_description, related_controls, related_procedures, distribution_list, approval_status, revision_history, compliance_requirements, training_required, acknowledgment_required, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
             $stmt->bind_param("isssssssssssssssssssssi",
                 $company_id,
-                $_POST['policy_code'],
+                $_POST['policy_id'],          // era policy_code
                 $_POST['policy_name'],
                 $_POST['policy_category'],
                 $_POST['policy_type'],
                 $_POST['version'],
                 $_POST['effective_date'],
                 $_POST['review_date'],
-                $_POST['next_review'],
+                $_POST['next_review_date'],    // era next_review
                 $_POST['approval_date'],
                 $_POST['approved_by'],
-                $_POST['policy_owner'],
-                $_POST['policy_scope'],
-                $_POST['policy_objectives'],
-                $_POST['policy_content'],
+                $_POST['responsible'],         // era policy_owner
+                $_POST['scope'],               // era policy_scope
+                $_POST['objective'],           // era policy_objectives
+                $_POST['policy_description'],  // era policy_content
                 $_POST['related_controls'],
                 $_POST['related_procedures'],
                 $_POST['distribution_list'],
@@ -67,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Actualizar version automaticamente
             $new_version = floatval($_POST['current_version']) + 0.1;
 
-            $stmt = $conn->prepare("UPDATE iso27001_policies SET policy_name = ?, policy_category = ?, policy_type = ?, version = ?, effective_date = ?, review_date = ?, next_review = ?, approval_date = ?, approved_by = ?, policy_owner = ?, policy_scope = ?, policy_objectives = ?, policy_content = ?, related_controls = ?, related_procedures = ?, distribution_list = ?, approval_status = ?, revision_history = ?, compliance_requirements = ?, training_required = ?, acknowledgment_required = ?, updated_by = ?, updated_date = NOW() WHERE id = ? AND company_id = ?");
+            $stmt = $conn->prepare("UPDATE iso27001_policies SET policy_name = ?, policy_category = ?, policy_type = ?, version = ?, effective_date = ?, review_date = ?, next_review_date = ?, approval_date = ?, approved_by = ?, responsible = ?, scope = ?, objective = ?, policy_description = ?, related_controls = ?, related_procedures = ?, distribution_list = ?, approval_status = ?, revision_history = ?, compliance_requirements = ?, training_required = ?, acknowledgment_required = ?, updated_by = ? WHERE id = ? AND company_id = ?");
 
             $stmt->bind_param("ssssssssssssssssssssiii",
                 $_POST['policy_name'],
@@ -143,7 +143,7 @@ if ($filter_status) {
 }
 
 if ($search) {
-    $query .= " AND (policy_code LIKE ? OR policy_name LIKE ?)";
+    $query .= " AND (policy_id LIKE ? OR policy_name LIKE ?)";
     $search_param = "%$search%";
     $params[] = $search_param;
     $params[] = $search_param;
@@ -156,6 +156,12 @@ $stmt = $conn->prepare($query);
 $stmt->bind_param($types, ...$params);
 $stmt->execute();
 $policies_result = $stmt->get_result();
+
+// Guardar resultados en array para usarlo en JavaScript
+$policies_array = [];
+while ($policy = $policies_result->fetch_assoc()) {
+    $policies_array[] = $policy;
+}
 $stmt->close();
 
 // Obtener estadisticas
@@ -324,6 +330,7 @@ $t = $texts[$language];
         .btn-success { background: #00994d; color: white; }
         .btn-danger { background: #cc0000; color: white; }
         .btn-warning { background: #ff6600; color: white; }
+        .btn-info { background: #17a2b8; color: white; }
         .btn-secondary { background: #666; color: white; }
         .btn-small { padding: 6px 12px; font-size: 12px; }
         .btn:hover { opacity: 0.9; transform: translateY(-2px); }
@@ -432,10 +439,101 @@ $t = $texts[$language];
             margin-right: 8px;
             font-size: 11px;
         }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: white;
+            margin: 2% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 900px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #0066cc;
+        }
+        .modal-header h2 { color: #0066cc; font-size: 24px; }
+        .close {
+            font-size: 35px;
+            font-weight: bold;
+            color: #999;
+            cursor: pointer;
+            line-height: 20px;
+        }
+        .close:hover { color: #333; }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .info-row {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 15px;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #666;
+        }
+        .info-value {
+            color: #333;
+        }
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .alert-success { background: #d4edda; color: #155724; }
+        .alert-error { background: #f8d7da; color: #721c24; }
+
         @media (max-width: 768px) {
             .header-top { flex-direction: column; text-align: center; }
             .action-buttons { justify-content: center; margin-top: 15px; }
             .templates-grid { grid-template-columns: 1fr; }
+            .form-row { grid-template-columns: 1fr; }
+            .info-row { grid-template-columns: 1fr; gap: 5px; }
         }
     </style>
 </head>
@@ -444,15 +542,15 @@ $t = $texts[$language];
         <div class="header">
             <div class="header-top">
                 <div class="header-title">
-                    <h1>&#128220; <?php echo $t['title']; ?></h1>
+                    <h1>📄 <?php echo $t['title']; ?></h1>
                     <p><?php echo $t['subtitle']; ?></p>
                 </div>
                 <div class="action-buttons">
-                    <button class="btn btn-success">+ <?php echo $t['add_policy']; ?></button>
-                    <button onclick="window.print()" class="btn btn-primary">&#128424; <?php echo $t['print']; ?></button>
-                    <a href="export.php?format=excel&type=policies" class="btn btn-success">&#128202; <?php echo $t['export_excel']; ?></a>
-                    <a href="export.php?format=pdf&type=policies" class="btn btn-danger">&#128196; <?php echo $t['export_pdf']; ?></a>
-                    <a href="index.php" class="btn btn-secondary">&#8592; <?php echo $t['back']; ?></a>
+                    <button class="btn btn-success" onclick="openCreateModal()">+ <?php echo $t['add_policy']; ?></button>
+                    <button onclick="window.print()" class="btn btn-primary">🖨️ <?php echo $t['print']; ?></button>
+                    <a href="export.php?format=excel&type=policies" class="btn btn-success">📊 <?php echo $t['export_excel']; ?></a>
+                    <a href="export.php?format=pdf&type=policies" class="btn btn-danger">📄 <?php echo $t['export_pdf']; ?></a>
+                    <a href="index.php" class="btn btn-secondary">← <?php echo $t['back']; ?></a>
                 </div>
             </div>
 
@@ -477,7 +575,7 @@ $t = $texts[$language];
         </div>
 
         <?php if ($message): ?>
-        <div style="background: <?php echo $message_type == 'success' ? '#d4edda' : '#f8d7da'; ?>; color: <?php echo $message_type == 'success' ? '#155724' : '#721c24'; ?>; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: bold;">
+        <div class="alert alert-<?php echo $message_type; ?>">
             <?php echo $message; ?>
         </div>
         <?php endif; ?>
@@ -501,7 +599,7 @@ $t = $texts[$language];
                     </ul>
                     <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid #dee2e6;">
                         <a href="export.php?format=docx&category=<?php echo $category_key; ?>" class="btn btn-primary btn-small" style="width: 100%; text-align: center;">
-                            &#128196; Descargar Todas (<?php echo count($category['policies']); ?>)
+                            📄 Descargar Todas (<?php echo count($category['policies']); ?>)
                         </a>
                     </div>
                 </div>
@@ -525,23 +623,23 @@ $t = $texts[$language];
                         </tr>
                     </thead>
                     <tbody>
-                        <?php while ($policy = $policies_result->fetch_assoc()): ?>
+                        <?php foreach ($policies_array as $policy): ?>
                         <tr>
-                            <td><strong><?php echo htmlspecialchars($policy['policy_code']); ?></strong></td>
+                            <td><strong><?php echo htmlspecialchars($policy['policy_id']); ?></strong></td>
                             <td><?php echo htmlspecialchars($policy['policy_name']); ?></td>
-                            <td>v<?php echo $policy['version']; ?></td>
+                            <td>v<?php echo $policy['policy_version']; ?></td>
                             <td><?php echo date('d/m/Y', strtotime($policy['effective_date'])); ?></td>
                             <td>
                                 <?php
                                 $status = $policy['approval_status'];
                                 $badge_class = 'badge-draft';
-                                if ($status == 'aprobado') $badge_class = 'badge-approved';
-                                elseif ($status == 'en_revision') $badge_class = 'badge-review';
-                                elseif ($status == 'obsoleto') $badge_class = 'badge-obsolete';
+                                if ($status == 'Aprobado') $badge_class = 'badge-approved';
+                                elseif ($status == 'En Revisión') $badge_class = 'badge-review';
+                                elseif ($status == 'Obsoleto') $badge_class = 'badge-obsolete';
                                 ?>
                                 <span class="badge <?php echo $badge_class; ?>"><?php echo htmlspecialchars($status); ?></span>
                             </td>
-                            <td><?php echo htmlspecialchars($policy['policy_owner']); ?></td>
+                            <td><?php echo htmlspecialchars($policy['approved_by']); ?></td>
                             <td>
                                 <?php
                                 $next_review = strtotime($policy['next_review']);
@@ -551,16 +649,504 @@ $t = $texts[$language];
                                 <span style="<?php echo $color; ?>"><?php echo date('d/m/Y', $next_review); ?></span>
                             </td>
                             <td>
-                                <button class="btn btn-primary btn-small"><?php echo $t['view']; ?></button>
-                                <button class="btn btn-success btn-small"><?php echo $t['download']; ?></button>
+                                <button class="btn btn-info btn-small" onclick="viewPolicy(<?php echo $policy['id']; ?>)"><?php echo $t['view']; ?></button>
+                                <button class="btn btn-primary btn-small" onclick="editPolicy(<?php echo $policy['id']; ?>)"><?php echo $t['edit']; ?></button>
                             </td>
                         </tr>
-                        <?php endwhile; ?>
+                        <?php endforeach; ?>
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
+
+    <!-- Modal de Vista -->
+    <div id="viewModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="viewModalTitle">Detalles de la Politica</h2>
+                <span class="close" onclick="closeViewModal()">&times;</span>
+            </div>
+            <div id="viewModalContent">
+                <div class="info-row">
+                    <div class="info-label">Codigo:</div>
+                    <div class="info-value" id="view_policy_code"></div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Nombre:</div>
+                    <div class="info-value" id="view_policy_name"></div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Categoria:</div>
+                    <div class="info-value" id="view_policy_category"></div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Tipo:</div>
+                    <div class="info-value" id="view_policy_type"></div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Version:</div>
+                    <div class="info-value" id="view_version"></div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Estado:</div>
+                    <div class="info-value" id="view_approval_status"></div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Responsable:</div>
+                    <div class="info-value" id="view_policy_owner"></div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Fecha Vigencia:</div>
+                    <div class="info-value" id="view_effective_date"></div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Proxima Revision:</div>
+                    <div class="info-value" id="view_next_review"></div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Alcance:</div>
+                    <div class="info-value" id="view_policy_scope"></div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Objetivos:</div>
+                    <div class="info-value" id="view_policy_objectives"></div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Contenido:</div>
+                    <div class="info-value" id="view_policy_content"></div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Controles Relacionados:</div>
+                    <div class="info-value" id="view_related_controls"></div>
+                </div>
+            </div>
+            <div style="margin-top: 30px; text-align: right;">
+                <button class="btn btn-secondary" onclick="closeViewModal()">Cerrar</button>
+                <button class="btn btn-primary" onclick="openEditFromView()">Editar Politica</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Edicion -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="editModalTitle">Editar Politica</h2>
+                <span class="close" onclick="closeEditModal()">&times;</span>
+            </div>
+            <form method="POST" action="">
+                <input type="hidden" name="action" value="edit">
+                <input type="hidden" name="id" id="edit_id">
+                <input type="hidden" name="current_version" id="edit_current_version">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Codigo *</label>
+                        <input type="text" id="edit_policy_code" readonly style="background: #f0f0f0;">
+                    </div>
+                    <div class="form-group">
+                        <label>Version (se incrementara automaticamente)</label>
+                        <input type="text" id="edit_version" readonly style="background: #f0f0f0;">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Nombre de la Politica *</label>
+                    <input type="text" name="policy_name" id="edit_policy_name" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Categoria *</label>
+                        <select name="policy_category" id="edit_policy_category" required>
+                            <option value="Politicas_Fundamentales">Politicas Fundamentales</option>
+                            <option value="Politicas_Operacionales">Politicas Operacionales</option>
+                            <option value="Politicas_Tecnicas">Politicas Tecnicas</option>
+                            <option value="Politicas_Continuidad">Politicas de Continuidad</option>
+                            <option value="Politicas_Cumplimiento">Politicas de Cumplimiento</option>
+                            <option value="Politicas_RRHH">Politicas de RRHH</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo *</label>
+                        <select name="policy_type" id="edit_policy_type" required>
+                            <option value="politica">Politica</option>
+                            <option value="procedimiento">Procedimiento</option>
+                            <option value="directriz">Directriz</option>
+                            <option value="estandar">Estandar</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Estado de Aprobacion *</label>
+                        <select name="approval_status" id="edit_approval_status" required>
+                            <option value="Borrador">Borrador</option>
+                            <option value="En Revisión">En Revision</option>
+                            <option value="Aprobado">Aprobado</option>
+                            <option value="Obsoleto">Obsoleto</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Responsable *</label>
+                        <input type="text" name="policy_owner" id="edit_policy_owner" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Fecha Vigencia *</label>
+                        <input type="date" name="effective_date" id="edit_effective_date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Proxima Revision *</label>
+                        <input type="date" name="next_review" id="edit_next_review" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Fecha de Revision</label>
+                        <input type="date" name="review_date" id="edit_review_date">
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha de Aprobacion</label>
+                        <input type="date" name="approval_date" id="edit_approval_date">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Aprobado Por</label>
+                    <input type="text" name="approved_by" id="edit_approved_by">
+                </div>
+
+                <div class="form-group">
+                    <label>Alcance de la Politica</label>
+                    <textarea name="policy_scope" id="edit_policy_scope"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Objetivos</label>
+                    <textarea name="policy_objectives" id="edit_policy_objectives"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Contenido de la Politica</label>
+                    <textarea name="policy_content" id="edit_policy_content" style="min-height: 200px;"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Controles Relacionados</label>
+                    <input type="text" name="related_controls" id="edit_related_controls" placeholder="Ej: A.5.1, A.5.2">
+                </div>
+
+                <div class="form-group">
+                    <label>Procedimientos Relacionados</label>
+                    <input type="text" name="related_procedures" id="edit_related_procedures">
+                </div>
+
+                <div class="form-group">
+                    <label>Lista de Distribucion</label>
+                    <input type="text" name="distribution_list" id="edit_distribution_list">
+                </div>
+
+                <div class="form-group">
+                    <label>Historial de Revisiones</label>
+                    <textarea name="revision_history" id="edit_revision_history"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Requisitos de Cumplimiento</label>
+                    <textarea name="compliance_requirements" id="edit_compliance_requirements"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Requiere Capacitacion</label>
+                        <select name="training_required" id="edit_training_required">
+                            <option value="no">No</option>
+                            <option value="si">Si</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Requiere Reconocimiento</label>
+                        <select name="acknowledgment_required" id="edit_acknowledgment_required">
+                            <option value="no">No</option>
+                            <option value="si">Si</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 30px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Creacion -->
+    <div id="createModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Nueva Politica</h2>
+                <span class="close" onclick="closeCreateModal()">&times;</span>
+            </div>
+            <form method="POST" action="">
+                <input type="hidden" name="action" value="create">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Codigo *</label>
+                        <input type="text" name="policy_id" required placeholder="POL-SI-001">
+                    </div>
+                    <div class="form-group">
+                        <label>Version *</label>
+                        <input type="text" name="version" value="1.0" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Nombre de la Politica *</label>
+                    <input type="text" name="policy_name" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Categoria *</label>
+                        <select name="policy_category" required>
+                            <option value="Politicas_Fundamentales">Politicas Fundamentales</option>
+                            <option value="Politicas_Operacionales">Politicas Operacionales</option>
+                            <option value="Politicas_Tecnicas">Politicas Tecnicas</option>
+                            <option value="Politicas_Continuidad">Politicas de Continuidad</option>
+                            <option value="Politicas_Cumplimiento">Politicas de Cumplimiento</option>
+                            <option value="Politicas_RRHH">Politicas de RRHH</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo *</label>
+                        <select name="policy_type" required>
+                            <option value="politica">Politica</option>
+                            <option value="procedimiento">Procedimiento</option>
+                            <option value="directriz">Directriz</option>
+                            <option value="estandar">Estandar</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Estado de Aprobacion *</label>
+                        <select name="approval_status" required>
+                            <option value="Borrador">Borrador</option>
+                            <option value="En Revisión">En Revision</option>
+                            <option value="Aprobado">Aprobado</option>
+                            <option value="Obsoleto">Obsoleto</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Responsable *</label>
+                        <input type="text" name="responsible" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Fecha Vigencia *</label>
+                        <input type="date" name="effective_date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Proxima Revision *</label>
+                        <input type="date" name="next_review_date" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Fecha de Revision</label>
+                        <input type="date" name="review_date">
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha de Aprobacion</label>
+                        <input type="date" name="approval_date">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Aprobado Por</label>
+                    <input type="text" name="approved_by">
+                </div>
+
+                <div class="form-group">
+                    <label>Alcance de la Politica</label>
+                    <textarea name="scope"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Objetivos</label>
+                    <textarea name="objective"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Contenido de la Politica</label>
+                    <textarea name="policy_description" style="min-height: 200px;"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Controles Relacionados</label>
+                    <input type="text" name="related_controls" placeholder="Ej: A.5.1, A.5.2">
+                </div>
+
+                <div class="form-group">
+                    <label>Procedimientos Relacionados</label>
+                    <input type="text" name="related_procedures">
+                </div>
+
+                <div class="form-group">
+                    <label>Lista de Distribucion</label>
+                    <input type="text" name="distribution_list">
+                </div>
+
+                <div class="form-group">
+                    <label>Historial de Revisiones</label>
+                    <textarea name="revision_history"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Requisitos de Cumplimiento</label>
+                    <textarea name="compliance_requirements"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Requiere Capacitacion</label>
+                        <select name="training_required">
+                            <option value="no">No</option>
+                            <option value="si">Si</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Requiere Reconocimiento</label>
+                        <select name="acknowledgment_required">
+                            <option value="no">No</option>
+                            <option value="si">Si</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 30px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeCreateModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Crear Politica</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const policiesData = <?php echo json_encode($policies_array); ?>;
+        let currentPolicyId = null;
+
+        // Modal de VISTA
+        function viewPolicy(id) {
+            const policy = policiesData.find(p => p.id == id);
+            if (!policy) return;
+
+            currentPolicyId = id;
+
+            document.getElementById('view_policy_code').textContent = policy.policy_id;
+            document.getElementById('view_policy_name').textContent = policy.policy_name;
+            document.getElementById('view_policy_category').textContent = policy.policy_category;
+            document.getElementById('view_policy_type').textContent = policy.policy_type || 'N/A';
+            document.getElementById('view_version').textContent = 'v' + policy.policy_version;
+            document.getElementById('view_approval_status').innerHTML = '<span class="badge badge-approved">' + policy.approval_status + '</span>';
+            document.getElementById('view_policy_owner').textContent = policy.approved_by || 'No asignado';
+            document.getElementById('view_effective_date').textContent = policy.effective_date || 'No especificada';
+            document.getElementById('view_next_review').textContent = policy.next_review || 'No programada';
+            document.getElementById('view_policy_scope').textContent = policy.policy_scope || 'No especificado';
+            document.getElementById('view_policy_objectives').textContent = policy.policy_objective || 'No especificados';
+            document.getElementById('view_policy_content').textContent = policy.policy_content || 'Sin contenido';
+            document.getElementById('view_related_controls').textContent = policy.related_controls || 'Ninguno';
+            document.getElementById('viewModalTitle').textContent = 'Detalles: ' + policy.policy_id;
+
+            document.getElementById('viewModal').style.display = 'block';
+        }
+
+        function closeViewModal() {
+            document.getElementById('viewModal').style.display = 'none';
+        }
+
+        function openEditFromView() {
+            closeViewModal();
+            editPolicy(currentPolicyId);
+        }
+
+        // Modal de EDICION
+        function editPolicy(id) {
+            const policy = policiesData.find(p => p.id == id);
+            if (!policy) return;
+
+            currentPolicyId = id;
+
+            document.getElementById('edit_id').value = policy.id;
+            document.getElementById('edit_policy_code').value = policy.policy_id;
+            document.getElementById('edit_current_version').value = policy.policy_version;
+            document.getElementById('edit_version').value = 'v' + policy.policy_version + ' → v' + (parseFloat(policy.policy_version) + 0.1).toFixed(1);
+            document.getElementById('edit_policy_name').value = policy.policy_name;
+            document.getElementById('edit_policy_category').value = policy.policy_category;
+            document.getElementById('edit_policy_type').value = policy.policy_type || 'politica';
+            document.getElementById('edit_approval_status').value = policy.approval_status;
+            document.getElementById('edit_policy_owner').value = policy.approved_by || '';
+            document.getElementById('edit_effective_date').value = policy.effective_date || '';
+            document.getElementById('edit_next_review').value = policy.next_review || '';
+            document.getElementById('edit_review_date').value = policy.last_review || '';
+            document.getElementById('edit_approval_date').value = policy.approval_date || '';
+            document.getElementById('edit_approved_by').value = policy.approved_by || '';
+            document.getElementById('edit_policy_scope').value = policy.policy_scope || '';
+            document.getElementById('edit_policy_objectives').value = policy.policy_objective || '';
+            document.getElementById('edit_policy_content').value = policy.policy_content || '';
+            document.getElementById('edit_related_controls').value = policy.related_controls || '';
+            document.getElementById('edit_related_procedures').value = policy.related_procedures || '';
+            document.getElementById('edit_distribution_list').value = policy.distribution_list || '';
+            document.getElementById('edit_revision_history').value = policy.revision_history || '';
+            document.getElementById('edit_compliance_requirements').value = policy.compliance_requirements || '';
+            document.getElementById('edit_training_required').value = policy.training_required || 'no';
+            document.getElementById('edit_acknowledgment_required').value = policy.acknowledgment_required || 'no';
+            document.getElementById('editModalTitle').textContent = 'Editar: ' + policy.policy_id;
+
+            document.getElementById('editModal').style.display = 'block';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        // Modal de CREACION
+        function openCreateModal() {
+            document.getElementById('createModal').style.display = 'block';
+        }
+
+        function closeCreateModal() {
+            document.getElementById('createModal').style.display = 'none';
+        }
+
+        // Cerrar modal al hacer clic fuera
+        window.onclick = function(event) {
+            const viewModal = document.getElementById('viewModal');
+            const editModal = document.getElementById('editModal');
+            const createModal = document.getElementById('createModal');
+            if (event.target == viewModal) {
+                closeViewModal();
+            }
+            if (event.target == editModal) {
+                closeEditModal();
+            }
+            if (event.target == createModal) {
+                closeCreateModal();
+            }
+        }
+    </script>
 </body>
 </html>
 <?php
