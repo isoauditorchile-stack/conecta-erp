@@ -150,7 +150,7 @@ if ($search) {
     $types .= "ss";
 }
 
-$query .= " ORDER BY policy_category, policy_code ASC";
+$query .= " ORDER BY policy_category, policy_id ASC";
 
 $stmt = $conn->prepare($query);
 $stmt->bind_param($types, ...$params);
@@ -165,13 +165,13 @@ $stmt->execute();
 $total_policies = $stmt->get_result()->fetch_assoc()['total'];
 $stmt->close();
 
-$stmt = $conn->prepare("SELECT COUNT(*) as total FROM iso27001_policies WHERE company_id = ? AND approval_status = 'aprobado'");
+$stmt = $conn->prepare("SELECT COUNT(*) as total FROM iso27001_policies WHERE company_id = ? AND approval_status = 'Aprobado'");
 $stmt->bind_param("i", $company_id);
 $stmt->execute();
 $approved_policies = $stmt->get_result()->fetch_assoc()['total'];
 $stmt->close();
 
-$stmt = $conn->prepare("SELECT COUNT(*) as total FROM iso27001_policies WHERE company_id = ? AND approval_status IN ('borrador', 'en_revision')");
+$stmt = $conn->prepare("SELECT COUNT(*) as total FROM iso27001_policies WHERE company_id = ? AND approval_status IN ('Borrador', 'En Revisión')");
 $stmt->bind_param("i", $company_id);
 $stmt->execute();
 $pending_policies = $stmt->get_result()->fetch_assoc()['total'];
