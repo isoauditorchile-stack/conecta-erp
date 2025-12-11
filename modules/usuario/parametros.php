@@ -12,21 +12,8 @@ $user = db_get_row("SELECT * FROM usuarios WHERE id = ?", [$user_id]);
 // ========================================
 // AUTO-CREAR TABLAS DE PARAMETRIZACIÓN
 // ========================================
+// NOTA: Tabla paises YA EXISTE - NO se crea ni se insertan datos
 try {
-    // Tabla: paises
-    db_query("CREATE TABLE IF NOT EXISTS paises (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        nombre VARCHAR(100) NOT NULL,
-        codigo VARCHAR(3) NOT NULL UNIQUE,
-        documento_principal VARCHAR(50),
-        moneda_id INT,
-        idioma_id INT,
-        activo TINYINT(1) DEFAULT 1,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        INDEX idx_codigo (codigo),
-        INDEX idx_activo (activo)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
     // Tabla: monedas
     db_query("CREATE TABLE IF NOT EXISTS monedas (
@@ -193,31 +180,6 @@ try {
 
 } catch (Exception $e) {
     error_log("Error creando tablas de parametrización: " . $e->getMessage());
-}
-
-// Insertar datos iniciales de países
-try {
-    $count_paises = db_get_var("SELECT COUNT(*) FROM paises");
-    if ($count_paises == 0) {
-        db_query("INSERT INTO paises (nombre, codigo, documento_principal) VALUES
-            ('Chile', 'CHL', 'RUT'),
-            ('Argentina', 'ARG', 'CUIT'),
-            ('México', 'MEX', 'RFC'),
-            ('Perú', 'PER', 'RUC'),
-            ('Colombia', 'COL', 'NIT'),
-            ('Brasil', 'BRA', 'CNPJ'),
-            ('Ecuador', 'ECU', 'RUC'),
-            ('Bolivia', 'BOL', 'NIT'),
-            ('Paraguay', 'PRY', 'RUC'),
-            ('Uruguay', 'URY', 'RUT'),
-            ('Venezuela', 'VEN', 'RIF'),
-            ('Estados Unidos', 'USA', 'SSN'),
-            ('Canadá', 'CAN', 'SIN'),
-            ('España', 'ESP', 'NIF'),
-            ('Portugal', 'PRT', 'NIF')");
-    }
-} catch (Exception $e) {
-    error_log("Error insertando datos iniciales: " . $e->getMessage());
 }
 
 // Obtener estadísticas
@@ -660,8 +622,10 @@ body.fullscreen-mode .fullscreen-btn {
                                         <tr>
                                             <th>País</th>
                                             <th>Código</th>
-                                            <th>Documento Principal</th>
+                                            <th>Tipo Documento</th>
+                                            <th>Formato</th>
                                             <th>Moneda</th>
+                                            <th>Idioma</th>
                                             <th>Estado</th>
                                             <th>Acciones</th>
                                         </tr>
@@ -672,8 +636,10 @@ body.fullscreen-mode .fullscreen-btn {
                                             <tr>
                                                 <td style="font-weight: 600;"><?php echo htmlspecialchars($pais['nombre']); ?></td>
                                                 <td><?php echo htmlspecialchars($pais['codigo']); ?></td>
-                                                <td><?php echo htmlspecialchars($pais['documento_principal'] ?? 'N/A'); ?></td>
-                                                <td><?php echo $pais['moneda_id'] ?? 'N/A'; ?></td>
+                                                <td><?php echo htmlspecialchars($pais['tipo_documento'] ?? 'N/A'); ?></td>
+                                                <td><?php echo htmlspecialchars($pais['formato_documento'] ?? 'N/A'); ?></td>
+                                                <td><?php echo htmlspecialchars($pais['moneda'] ?? 'N/A'); ?></td>
+                                                <td><?php echo htmlspecialchars($pais['idioma_default'] ?? 'N/A'); ?></td>
                                                 <td>
                                                     <span class="badge badge-<?php echo $pais['activo'] ? 'activo' : 'inactivo'; ?>">
                                                         <?php echo $pais['activo'] ? 'Activo' : 'Inactivo'; ?>
@@ -691,7 +657,7 @@ body.fullscreen-mode .fullscreen-btn {
                                             <?php endforeach; ?>
                                         <?php else: ?>
                                             <tr>
-                                                <td colspan="6" class="text-center py-5">
+                                                <td colspan="8" class="text-center py-5">
                                                     <i class="fas fa-globe fa-3x text-muted mb-3"></i>
                                                     <p class="text-muted mb-0">No hay países registrados</p>
                                                 </td>
@@ -1462,9 +1428,85 @@ body.fullscreen-mode .fullscreen-btn {
         </div>
     </div>
 
+    <!-- MODAL: VER PAÍS -->
+    <div class="modal fade" id="modalVerPais" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-globe me-2"></i>Detalles del País</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label>País</label>
+                                <div class="value" id="detallePaisNombre"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label>Código ISO</label>
+                                <div class="value" id="detallePaisCodigo"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label>Tipo de Documento</label>
+                                <div class="value" id="detallePaisTipoDoc"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label>Formato de Documento</label>
+                                <div class="value" id="detallePaisFormatoDoc"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label>Moneda</label>
+                                <div class="value" id="detallePaisMoneda"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label>Idioma por Defecto</label>
+                                <div class="value" id="detallePaisIdioma"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label>Código Telefónico</label>
+                                <div class="value" id="detallePaisTelefono"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label>Estado</label>
+                                <div class="value" id="detallePaisEstado"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="info-item">
+                                <label>Validación Regex</label>
+                                <div class="value" id="detallePaisRegex" style="font-family: monospace; font-size: 0.875rem;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/assets/js/main.js"></script>
     <script>
+        // Datos de países para modales
+        const paisesData = <?php echo json_encode($paises); ?>;
+
         document.addEventListener('DOMContentLoaded', function() {
             // Fullscreen toggle
             const fullscreenBtn = document.getElementById('fullscreenToggle');
@@ -1538,13 +1580,30 @@ body.fullscreen-mode .fullscreen-btn {
 
         // Funciones para países
         function verPais(id) {
-            console.log('Ver país:', id);
-            alert('Ver país ID: ' + id);
+            const pais = paisesData.find(p => p.id == id);
+            if (pais) {
+                document.getElementById('detallePaisNombre').textContent = pais.nombre || 'N/A';
+                document.getElementById('detallePaisCodigo').textContent = pais.codigo || 'N/A';
+                document.getElementById('detallePaisTipoDoc').textContent = pais.tipo_documento || 'N/A';
+                document.getElementById('detallePaisFormatoDoc').textContent = pais.formato_documento || 'N/A';
+                document.getElementById('detallePaisMoneda').textContent = pais.moneda || 'N/A';
+                document.getElementById('detallePaisIdioma').textContent = pais.idioma_default || 'N/A';
+                document.getElementById('detallePaisTelefono').textContent = pais.codigo_telefono || 'N/A';
+                document.getElementById('detallePaisEstado').innerHTML = pais.activo ?
+                    '<span class="badge badge-activo">Activo</span>' :
+                    '<span class="badge badge-inactivo">Inactivo</span>';
+                document.getElementById('detallePaisRegex').textContent = pais.validacion_regex || 'N/A';
+
+                const modal = new bootstrap.Modal(document.getElementById('modalVerPais'));
+                modal.show();
+            }
         }
 
         function editarPais(id) {
-            console.log('Editar país:', id);
-            alert('Editar país ID: ' + id);
+            const pais = paisesData.find(p => p.id == id);
+            if (pais) {
+                alert('Funcionalidad de edición en desarrollo para: ' + pais.nombre);
+            }
         }
 
         // Funciones para monedas
