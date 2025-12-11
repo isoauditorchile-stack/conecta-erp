@@ -6,13 +6,8 @@ if (!is_logged_in()) {
     redirect('/login.php');
 }
 
-// Validar que solo ADMIN_GLOBAL puede acceder
 $user_id = $_SESSION['user_id'];
 $user = db_get_row("SELECT * FROM usuarios WHERE id = ?", [$user_id]);
-
-if ($user['tipo_usuario'] !== 'admin_global') {
-    redirect('/admin/dashboard.php');
-}
 
 // ========================================
 // AUTO-CREAR TABLAS DE SEGURIDAD
