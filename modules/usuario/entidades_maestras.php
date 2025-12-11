@@ -1432,6 +1432,195 @@ body.fullscreen-mode .fullscreen-btn {
         </div>
     </div>
 
+    <!-- MODAL: VER PROVEEDOR -->
+    <div class="modal fade" id="modalVerProveedor" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-truck me-2"></i>Ficha del Proveedor</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label>Razón Social</label>
+                                <div class="value" id="detalleProveedorRazonSocial"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label>Documento</label>
+                                <div class="value" id="detalleProveedorDocumento"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label>Rubro</label>
+                                <div class="value" id="detalleProveedorRubro"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label>Calificación</label>
+                                <div class="value" id="detalleProveedorCalif"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label>Email</label>
+                                <div class="value" id="detalleProveedorEmail"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label>Teléfono</label>
+                                <div class="value" id="detalleProveedorTelefono"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="info-item">
+                                <label>Dirección</label>
+                                <div class="value" id="detalleProveedorDireccion"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: VER PRODUCTO -->
+    <div class="modal fade" id="modalVerProducto" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-box me-2"></i>Ficha del Producto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="info-item">
+                                <label>Código</label>
+                                <div class="value" id="detalleProductoCodigo"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="info-item">
+                                <label>SKU</label>
+                                <div class="value" id="detalleProductoSKU"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="info-item">
+                                <label>Código Barras</label>
+                                <div class="value" id="detalleProductoBarras"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="info-item">
+                                <label>Nombre</label>
+                                <div class="value" id="detalleProductoNombre"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label>Tipo</label>
+                                <div class="value" id="detalleProductoTipo"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label>Unidad Medida</label>
+                                <div class="value" id="detalleProductoUnidad"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="info-item">
+                                <label>Stock Actual</label>
+                                <div class="value" id="detalleProductoStock"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="info-item">
+                                <label>Costo Promedio</label>
+                                <div class="value" id="detalleProductoCosto"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="info-item">
+                                <label>Precio Venta</label>
+                                <div class="value" id="detalleProductoPrecio"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: VER EMPLEADO -->
+    <div class="modal fade" id="modalVerEmpleado" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-id-card me-2"></i>Ficha del Empleado</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label>Nombre Completo</label>
+                                <div class="value" id="detalleEmpleadoNombre"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label>Documento</label>
+                                <div class="value" id="detalleEmpleadoDocumento"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label>Cargo</label>
+                                <div class="value" id="detalleEmpleadoCargo"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label>Email</label>
+                                <div class="value" id="detalleEmpleadoEmail"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label>Fecha Ingreso</label>
+                                <div class="value" id="detalleEmpleadoIngreso"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label>Tipo Contrato</label>
+                                <div class="value" id="detalleEmpleadoContrato"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/assets/js/main.js"></script>
     <script>
@@ -1439,6 +1628,11 @@ body.fullscreen-mode .fullscreen-btn {
         const clientesData = <?php echo json_encode($clientes); ?>;
         const proveedoresData = <?php echo json_encode($proveedores); ?>;
         const productosData = <?php echo json_encode($productos); ?>;
+        const serviciosData = <?php echo json_encode($servicios); ?>;
+        const empleadosData = <?php echo json_encode($empleados); ?>;
+        const bancosData = <?php echo json_encode($bancos); ?>;
+        const centrosData = <?php echo json_encode($centros_costo); ?>;
+        const bodegasData = <?php echo json_encode($bodegas); ?>;
 
         document.addEventListener('DOMContentLoaded', function() {
             // Fullscreen toggle
@@ -1528,65 +1722,135 @@ body.fullscreen-mode .fullscreen-btn {
 
         // Funciones para proveedores
         function verProveedor(id) {
-            alert('Ver proveedor ID: ' + id + '\nFuncionalidad en desarrollo');
+            const proveedor = proveedoresData.find(p => p.id == id);
+            if (proveedor) {
+                document.getElementById('detalleProveedorRazonSocial').textContent = proveedor.razon_social || 'N/A';
+                document.getElementById('detalleProveedorDocumento').textContent = proveedor.documento || 'N/A';
+                document.getElementById('detalleProveedorRubro').textContent = proveedor.rubro || 'N/A';
+                document.getElementById('detalleProveedorCalif').textContent = parseFloat(proveedor.calificacion || 0).toFixed(1) + ' ⭐';
+                document.getElementById('detalleProveedorEmail').textContent = proveedor.email || 'N/A';
+                document.getElementById('detalleProveedorTelefono').textContent = proveedor.telefono || 'N/A';
+                document.getElementById('detalleProveedorDireccion').textContent = proveedor.direccion || 'N/A';
+
+                const modal = new bootstrap.Modal(document.getElementById('modalVerProveedor'));
+                modal.show();
+            }
         }
 
         function editarProveedor(id) {
-            alert('Editar proveedor ID: ' + id + '\nFuncionalidad en desarrollo');
+            const proveedor = proveedoresData.find(p => p.id == id);
+            if (proveedor) {
+                alert('Editar proveedor: ' + proveedor.razon_social + '\nFuncionalidad en desarrollo');
+            }
         }
 
         // Funciones para productos
         function verProducto(id) {
-            alert('Ver producto ID: ' + id + '\nFuncionalidad en desarrollo');
+            const producto = productosData.find(p => p.id == id);
+            if (producto) {
+                document.getElementById('detalleProductoCodigo').textContent = producto.codigo || 'N/A';
+                document.getElementById('detalleProductoSKU').textContent = producto.sku || 'N/A';
+                document.getElementById('detalleProductoBarras').textContent = producto.codigo_barras || 'N/A';
+                document.getElementById('detalleProductoNombre').textContent = producto.nombre || 'N/A';
+                document.getElementById('detalleProductoTipo').textContent = producto.tipo_item ? producto.tipo_item.replace('_', ' ').toUpperCase() : 'N/A';
+                document.getElementById('detalleProductoUnidad').textContent = producto.unidad_medida || 'N/A';
+                document.getElementById('detalleProductoStock').textContent = parseFloat(producto.stock_actual || 0).toFixed(2);
+                document.getElementById('detalleProductoCosto').textContent = '$' + parseFloat(producto.costo_promedio || 0).toLocaleString();
+                document.getElementById('detalleProductoPrecio').textContent = '$' + parseFloat(producto.precio_venta || 0).toLocaleString();
+
+                const modal = new bootstrap.Modal(document.getElementById('modalVerProducto'));
+                modal.show();
+            }
         }
 
         function editarProducto(id) {
-            alert('Editar producto ID: ' + id + '\nFuncionalidad en desarrollo');
+            const producto = productosData.find(p => p.id == id);
+            if (producto) {
+                alert('Editar producto: ' + producto.nombre + '\nFuncionalidad en desarrollo');
+            }
         }
 
         // Funciones para servicios
         function verServicio(id) {
-            alert('Ver servicio ID: ' + id + '\nFuncionalidad en desarrollo');
+            const servicio = serviciosData.find(s => s.id == id);
+            if (servicio) {
+                alert('Ver servicio: ' + servicio.nombre + '\n\nCódigo: ' + servicio.codigo + '\nTipo: ' + (servicio.tipo_servicio || 'N/A') + '\nTarifa/Hora: $' + parseFloat(servicio.tarifa_hora || 0).toLocaleString() + '\nTarifa Fija: $' + parseFloat(servicio.tarifa_fija || 0).toLocaleString());
+            }
         }
 
         function editarServicio(id) {
-            alert('Editar servicio ID: ' + id + '\nFuncionalidad en desarrollo');
+            const servicio = serviciosData.find(s => s.id == id);
+            if (servicio) {
+                alert('Editar servicio: ' + servicio.nombre + '\nFuncionalidad en desarrollo');
+            }
         }
 
         // Funciones para empleados
         function verEmpleado(id) {
-            alert('Ver empleado ID: ' + id + '\nFuncionalidad en desarrollo');
+            const empleado = empleadosData.find(e => e.id == id);
+            if (empleado) {
+                document.getElementById('detalleEmpleadoNombre').textContent = (empleado.apellidos + ', ' + empleado.nombres) || 'N/A';
+                document.getElementById('detalleEmpleadoDocumento').textContent = empleado.documento || 'N/A';
+                document.getElementById('detalleEmpleadoCargo').textContent = empleado.cargo || 'N/A';
+                document.getElementById('detalleEmpleadoEmail').textContent = empleado.email || 'N/A';
+                document.getElementById('detalleEmpleadoIngreso').textContent = empleado.fecha_ingreso ? new Date(empleado.fecha_ingreso).toLocaleDateString('es-CL') : 'N/A';
+                document.getElementById('detalleEmpleadoContrato').textContent = empleado.tipo_contrato || 'N/A';
+
+                const modal = new bootstrap.Modal(document.getElementById('modalVerEmpleado'));
+                modal.show();
+            }
         }
 
         function editarEmpleado(id) {
-            alert('Editar empleado ID: ' + id + '\nFuncionalidad en desarrollo');
+            const empleado = empleadosData.find(e => e.id == id);
+            if (empleado) {
+                alert('Editar empleado: ' + empleado.apellidos + ', ' + empleado.nombres + '\nFuncionalidad en desarrollo');
+            }
         }
 
         // Funciones para bancos
         function verBanco(id) {
-            alert('Ver banco ID: ' + id + '\nFuncionalidad en desarrollo');
+            const banco = bancosData.find(b => b.id == id);
+            if (banco) {
+                alert('Ver banco: ' + banco.nombre + '\n\nCódigo: ' + (banco.codigo || 'N/A') + '\nTipo Cuenta: ' + (banco.tipo_cuenta || 'N/A') + '\nN° Cuenta: ' + (banco.numero_cuenta || 'N/A') + '\nSaldo: $' + parseFloat(banco.saldo_actual || 0).toLocaleString());
+            }
         }
 
         function editarBanco(id) {
-            alert('Editar banco ID: ' + id + '\nFuncionalidad en desarrollo');
+            const banco = bancosData.find(b => b.id == id);
+            if (banco) {
+                alert('Editar banco: ' + banco.nombre + '\nFuncionalidad en desarrollo');
+            }
         }
 
         // Funciones para centros de costo
         function verCentro(id) {
-            alert('Ver centro de costo ID: ' + id + '\nFuncionalidad en desarrollo');
+            const centro = centrosData.find(c => c.id == id);
+            if (centro) {
+                alert('Ver centro de costo: ' + centro.nombre + '\n\nCódigo: ' + centro.codigo + '\nÁrea: ' + (centro.area || 'N/A') + '\nDescripción: ' + (centro.descripcion || 'N/A'));
+            }
         }
 
         function editarCentro(id) {
-            alert('Editar centro de costo ID: ' + id + '\nFuncionalidad en desarrollo');
+            const centro = centrosData.find(c => c.id == id);
+            if (centro) {
+                alert('Editar centro de costo: ' + centro.nombre + '\nFuncionalidad en desarrollo');
+            }
         }
 
         // Funciones para bodegas
         function verBodega(id) {
-            alert('Ver bodega ID: ' + id + '\nFuncionalidad en desarrollo');
+            const bodega = bodegasData.find(b => b.id == id);
+            if (bodega) {
+                alert('Ver bodega: ' + bodega.nombre + '\n\nCódigo: ' + bodega.codigo + '\nTipo: ' + bodega.tipo + '\nCiudad: ' + (bodega.ciudad || 'N/A') + '\nCapacidad: ' + parseFloat(bodega.capacidad || 0).toFixed(2));
+            }
         }
 
         function editarBodega(id) {
-            alert('Editar bodega ID: ' + id + '\nFuncionalidad en desarrollo');
+            const bodega = bodegasData.find(b => b.id == id);
+            if (bodega) {
+                alert('Editar bodega: ' + bodega.nombre + '\nFuncionalidad en desarrollo');
+            }
         }
     </script>
 </body>
