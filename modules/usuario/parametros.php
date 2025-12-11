@@ -195,6 +195,31 @@ try {
     error_log("Error creando tablas de parametrización: " . $e->getMessage());
 }
 
+// Insertar datos iniciales de países
+try {
+    $count_paises = db_get_var("SELECT COUNT(*) FROM paises");
+    if ($count_paises == 0) {
+        db_query("INSERT INTO paises (nombre, codigo, documento_principal) VALUES
+            ('Chile', 'CHL', 'RUT'),
+            ('Argentina', 'ARG', 'CUIT'),
+            ('México', 'MEX', 'RFC'),
+            ('Perú', 'PER', 'RUC'),
+            ('Colombia', 'COL', 'NIT'),
+            ('Brasil', 'BRA', 'CNPJ'),
+            ('Ecuador', 'ECU', 'RUC'),
+            ('Bolivia', 'BOL', 'NIT'),
+            ('Paraguay', 'PRY', 'RUC'),
+            ('Uruguay', 'URY', 'RUT'),
+            ('Venezuela', 'VEN', 'RIF'),
+            ('Estados Unidos', 'USA', 'SSN'),
+            ('Canadá', 'CAN', 'SIN'),
+            ('España', 'ESP', 'NIF'),
+            ('Portugal', 'PRT', 'NIF')");
+    }
+} catch (Exception $e) {
+    error_log("Error insertando datos iniciales: " . $e->getMessage());
+}
+
 // Obtener estadísticas
 try {
     $stats = [
@@ -655,10 +680,10 @@ body.fullscreen-mode .fullscreen-btn {
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    <button class="btn btn-sm btn-primary action-btn" title="Ver">
+                                                    <button class="btn btn-sm btn-primary action-btn" onclick="verPais(<?php echo $pais['id']; ?>)" title="Ver">
                                                         <i class="fas fa-eye"></i>
                                                     </button>
-                                                    <button class="btn btn-sm btn-warning action-btn" title="Editar">
+                                                    <button class="btn btn-sm btn-warning action-btn" onclick="editarPais(<?php echo $pais['id']; ?>)" title="Editar">
                                                         <i class="fas fa-edit"></i>
                                                     </button>
                                                 </td>
@@ -736,10 +761,10 @@ body.fullscreen-mode .fullscreen-btn {
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    <button class="btn btn-sm btn-primary action-btn" title="Ver">
+                                                    <button class="btn btn-sm btn-primary action-btn" onclick="verMoneda(<?php echo $moneda['id']; ?>)" title="Ver">
                                                         <i class="fas fa-eye"></i>
                                                     </button>
-                                                    <button class="btn btn-sm btn-warning action-btn" title="Editar">
+                                                    <button class="btn btn-sm btn-warning action-btn" onclick="editarMoneda(<?php echo $moneda['id']; ?>)" title="Editar">
                                                         <i class="fas fa-edit"></i>
                                                     </button>
                                                 </td>
@@ -805,10 +830,10 @@ body.fullscreen-mode .fullscreen-btn {
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    <button class="btn btn-sm btn-primary action-btn" title="Ver">
+                                                    <button class="btn btn-sm btn-primary action-btn" onclick="verIdioma(<?php echo $idioma['id']; ?>)" title="Ver">
                                                         <i class="fas fa-eye"></i>
                                                     </button>
-                                                    <button class="btn btn-sm btn-warning action-btn" title="Editar">
+                                                    <button class="btn btn-sm btn-warning action-btn" onclick="editarIdioma(<?php echo $idioma['id']; ?>)" title="Editar">
                                                         <i class="fas fa-edit"></i>
                                                     </button>
                                                 </td>
@@ -887,10 +912,10 @@ body.fullscreen-mode .fullscreen-btn {
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    <button class="btn btn-sm btn-primary action-btn" title="Ver">
+                                                    <button class="btn btn-sm btn-primary action-btn" onclick="verUnidad(<?php echo $unidad['id']; ?>)" title="Ver">
                                                         <i class="fas fa-eye"></i>
                                                     </button>
-                                                    <button class="btn btn-sm btn-warning action-btn" title="Editar">
+                                                    <button class="btn btn-sm btn-warning action-btn" onclick="editarUnidad(<?php echo $unidad['id']; ?>)" title="Editar">
                                                         <i class="fas fa-edit"></i>
                                                     </button>
                                                 </td>
@@ -971,10 +996,10 @@ body.fullscreen-mode .fullscreen-btn {
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    <button class="btn btn-sm btn-primary action-btn" title="Ver">
+                                                    <button class="btn btn-sm btn-primary action-btn" onclick="verImpuesto(<?php echo $impuesto['id']; ?>)" title="Ver">
                                                         <i class="fas fa-eye"></i>
                                                     </button>
-                                                    <button class="btn btn-sm btn-warning action-btn" title="Editar">
+                                                    <button class="btn btn-sm btn-warning action-btn" onclick="editarImpuesto(<?php echo $impuesto['id']; ?>)" title="Editar">
                                                         <i class="fas fa-edit"></i>
                                                     </button>
                                                 </td>
@@ -1101,10 +1126,10 @@ body.fullscreen-mode .fullscreen-btn {
                                                 </td>
                                                 <td><?php echo $integracion['ultima_sincronizacion'] ? date('d/m/Y H:i', strtotime($integracion['ultima_sincronizacion'])) : 'Nunca'; ?></td>
                                                 <td>
-                                                    <button class="btn btn-sm btn-success action-btn" title="Probar">
+                                                    <button class="btn btn-sm btn-success action-btn" onclick="probarIntegracion(<?php echo $integracion['id']; ?>)" title="Probar">
                                                         <i class="fas fa-plug"></i>
                                                     </button>
-                                                    <button class="btn btn-sm btn-warning action-btn" title="Editar">
+                                                    <button class="btn btn-sm btn-warning action-btn" onclick="editarIntegracion(<?php echo $integracion['id']; ?>)" title="Editar">
                                                         <i class="fas fa-edit"></i>
                                                     </button>
                                                 </td>
@@ -1510,6 +1535,79 @@ body.fullscreen-mode .fullscreen-btn {
                 }
             });
         });
+
+        // Funciones para países
+        function verPais(id) {
+            console.log('Ver país:', id);
+            alert('Ver país ID: ' + id);
+        }
+
+        function editarPais(id) {
+            console.log('Editar país:', id);
+            alert('Editar país ID: ' + id);
+        }
+
+        // Funciones para monedas
+        function verMoneda(id) {
+            console.log('Ver moneda:', id);
+            alert('Ver moneda ID: ' + id);
+        }
+
+        function editarMoneda(id) {
+            console.log('Editar moneda:', id);
+            alert('Editar moneda ID: ' + id);
+        }
+
+        // Funciones para idiomas
+        function verIdioma(id) {
+            console.log('Ver idioma:', id);
+            alert('Ver idioma ID: ' + id);
+        }
+
+        function editarIdioma(id) {
+            console.log('Editar idioma:', id);
+            alert('Editar idioma ID: ' + id);
+        }
+
+        // Funciones para unidades
+        function verUnidad(id) {
+            console.log('Ver unidad:', id);
+            alert('Ver unidad ID: ' + id);
+        }
+
+        function editarUnidad(id) {
+            console.log('Editar unidad:', id);
+            alert('Editar unidad ID: ' + id);
+        }
+
+        // Funciones para impuestos
+        function verImpuesto(id) {
+            console.log('Ver impuesto:', id);
+            alert('Ver impuesto ID: ' + id);
+        }
+
+        function editarImpuesto(id) {
+            console.log('Editar impuesto:', id);
+            alert('Editar impuesto ID: ' + id);
+        }
+
+        // Funciones para integraciones
+        function verIntegracion(id) {
+            console.log('Ver integración:', id);
+            alert('Ver integración ID: ' + id);
+        }
+
+        function editarIntegracion(id) {
+            console.log('Editar integración:', id);
+            alert('Editar integración ID: ' + id);
+        }
+
+        function probarIntegracion(id) {
+            if (confirm('¿Probar conexión de esta integración?')) {
+                console.log('Probar integración:', id);
+                alert('Probando integración...');
+            }
+        }
     </script>
 </body>
 </html>
