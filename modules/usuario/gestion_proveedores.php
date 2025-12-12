@@ -133,9 +133,145 @@ if (isset($_GET['success']) && $_GET['success'] === 'proveedor_creado') {
 }
 
 // ========================================
-// AUTO-CREAR TABLAS
+// AUTO-CREAR TABLAS MAESTRAS (DATOS NO EMBEBIDOS)
 // ========================================
 try {
+    // Tabla: Idiomas
+    db_query("CREATE TABLE IF NOT EXISTS idiomas (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        codigo VARCHAR(5) UNIQUE NOT NULL,
+        nombre VARCHAR(50) NOT NULL,
+        activo TINYINT(1) DEFAULT 1
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    // Insertar idiomas por defecto si no existen
+    $count_idiomas = db_get_var("SELECT COUNT(*) FROM idiomas");
+    if ($count_idiomas == 0) {
+        db_query("INSERT INTO idiomas (codigo, nombre) VALUES
+            ('es', 'Español'),
+            ('en', 'English'),
+            ('pt', 'Português')");
+    }
+
+    // Tabla: Plazos de Pago
+    db_query("CREATE TABLE IF NOT EXISTS plazos_pago (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        codigo VARCHAR(20) UNIQUE NOT NULL,
+        nombre VARCHAR(100) NOT NULL,
+        dias INT DEFAULT 0,
+        activo TINYINT(1) DEFAULT 1
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    $count_plazos = db_get_var("SELECT COUNT(*) FROM plazos_pago");
+    if ($count_plazos == 0) {
+        db_query("INSERT INTO plazos_pago (codigo, nombre, dias) VALUES
+            ('contado', 'Contado', 0),
+            ('30', '30 días', 30),
+            ('60', '60 días', 60),
+            ('90', '90 días', 90)");
+    }
+
+    // Tabla: Formas de Pago
+    db_query("CREATE TABLE IF NOT EXISTS formas_pago (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        codigo VARCHAR(20) UNIQUE NOT NULL,
+        nombre VARCHAR(100) NOT NULL,
+        activo TINYINT(1) DEFAULT 1
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    $count_formas = db_get_var("SELECT COUNT(*) FROM formas_pago");
+    if ($count_formas == 0) {
+        db_query("INSERT INTO formas_pago (codigo, nombre) VALUES
+            ('transferencia', 'Transferencia Bancaria'),
+            ('cheque', 'Cheque'),
+            ('efectivo', 'Efectivo'),
+            ('tarjeta', 'Tarjeta de Crédito/Débito')");
+    }
+
+    // Tabla: Monedas
+    db_query("CREATE TABLE IF NOT EXISTS monedas (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        codigo VARCHAR(10) UNIQUE NOT NULL,
+        nombre VARCHAR(100) NOT NULL,
+        simbolo VARCHAR(10),
+        activo TINYINT(1) DEFAULT 1
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    $count_monedas = db_get_var("SELECT COUNT(*) FROM monedas");
+    if ($count_monedas == 0) {
+        db_query("INSERT INTO monedas (codigo, nombre, simbolo) VALUES
+            ('CLP', 'Peso Chileno', '$'),
+            ('USD', 'Dólar Estadounidense', 'US$'),
+            ('EUR', 'Euro', '€')");
+    }
+
+    // Tabla: Tipos de Cuenta Bancaria
+    db_query("CREATE TABLE IF NOT EXISTS tipos_cuenta_bancaria (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        codigo VARCHAR(20) UNIQUE NOT NULL,
+        nombre VARCHAR(100) NOT NULL,
+        activo TINYINT(1) DEFAULT 1
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    $count_tipos_cuenta = db_get_var("SELECT COUNT(*) FROM tipos_cuenta_bancaria");
+    if ($count_tipos_cuenta == 0) {
+        db_query("INSERT INTO tipos_cuenta_bancaria (codigo, nombre) VALUES
+            ('corriente', 'Cuenta Corriente'),
+            ('vista', 'Cuenta Vista'),
+            ('ahorro', 'Cuenta de Ahorro')");
+    }
+
+    // Tabla: Canales de Comunicación
+    db_query("CREATE TABLE IF NOT EXISTS canales_comunicacion (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        codigo VARCHAR(20) UNIQUE NOT NULL,
+        nombre VARCHAR(100) NOT NULL,
+        icono VARCHAR(50),
+        activo TINYINT(1) DEFAULT 1
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    $count_canales = db_get_var("SELECT COUNT(*) FROM canales_comunicacion");
+    if ($count_canales == 0) {
+        db_query("INSERT INTO canales_comunicacion (codigo, nombre, icono) VALUES
+            ('email', 'Email', 'envelope'),
+            ('telefono', 'Teléfono', 'phone'),
+            ('whatsapp', 'WhatsApp', 'whatsapp')");
+    }
+
+    // Tabla: Tipos de Dirección
+    db_query("CREATE TABLE IF NOT EXISTS tipos_direccion (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        codigo VARCHAR(20) UNIQUE NOT NULL,
+        nombre VARCHAR(100) NOT NULL,
+        activo TINYINT(1) DEFAULT 1
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    $count_tipos_direccion = db_get_var("SELECT COUNT(*) FROM tipos_direccion");
+    if ($count_tipos_direccion == 0) {
+        db_query("INSERT INTO tipos_direccion (codigo, nombre) VALUES
+            ('fiscal', 'Dirección Fiscal'),
+            ('comercial', 'Dirección Comercial'),
+            ('despacho', 'Dirección de Despacho')");
+    }
+
+    // Tabla: Roles de Contacto
+    db_query("CREATE TABLE IF NOT EXISTS roles_contacto (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        codigo VARCHAR(20) UNIQUE NOT NULL,
+        nombre VARCHAR(100) NOT NULL,
+        activo TINYINT(1) DEFAULT 1
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    $count_roles = db_get_var("SELECT COUNT(*) FROM roles_contacto");
+    if ($count_roles == 0) {
+        db_query("INSERT INTO roles_contacto (codigo, nombre) VALUES
+            ('compras', 'Departamento de Compras'),
+            ('finanzas', 'Departamento de Finanzas'),
+            ('despacho', 'Departamento de Despacho'),
+            ('gerente', 'Gerente'),
+            ('otro', 'Otro')");
+    }
+
     // Tabla principal: proveedores
     db_query("CREATE TABLE IF NOT EXISTS proveedores (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -300,6 +436,16 @@ $proveedores = db_query("
 
 // Consultar países para select
 $paises = db_query("SELECT * FROM paises ORDER BY nombre ASC");
+
+// Consultar datos para selects (TODO desde SQL, NADA embebido)
+$idiomas = db_query("SELECT * FROM idiomas WHERE activo = 1 ORDER BY nombre ASC");
+$plazos_pago = db_query("SELECT * FROM plazos_pago WHERE activo = 1 ORDER BY dias ASC");
+$formas_pago = db_query("SELECT * FROM formas_pago WHERE activo = 1 ORDER BY nombre ASC");
+$monedas = db_query("SELECT * FROM monedas WHERE activo = 1 ORDER BY codigo ASC");
+$tipos_cuenta = db_query("SELECT * FROM tipos_cuenta_bancaria WHERE activo = 1 ORDER BY nombre ASC");
+$canales_comunicacion = db_query("SELECT * FROM canales_comunicacion WHERE activo = 1 ORDER BY nombre ASC");
+$tipos_direccion = db_query("SELECT * FROM tipos_direccion WHERE activo = 1 ORDER BY nombre ASC");
+$roles_contacto = db_query("SELECT * FROM roles_contacto WHERE activo = 1 ORDER BY nombre ASC");
 
 // Estadísticas
 $stats = [
@@ -722,9 +868,11 @@ body.fullscreen-mode .main-wrapper {
                                     <div class="col-md-3">
                                         <label class="form-label">Idioma</label>
                                         <select class="form-select" name="idioma">
-                                            <option value="es">Español</option>
-                                            <option value="en">English</option>
-                                            <option value="pt">Português</option>
+                                            <?php foreach ($idiomas as $idioma): ?>
+                                                <option value="<?php echo $idioma['codigo']; ?>">
+                                                    <?php echo htmlspecialchars($idioma['nombre']); ?>
+                                                </option>
+                                            <?php endforeach; ?>
                                         </select>
                                     </div>
                                     <div class="col-md-3">
@@ -812,9 +960,11 @@ body.fullscreen-mode .main-wrapper {
                                     <div class="col-md-12">
                                         <label class="form-label">Canal de Comunicación Preferente</label>
                                         <select class="form-select" name="canal_preferente">
-                                            <option value="email">Email</option>
-                                            <option value="telefono">Teléfono</option>
-                                            <option value="whatsapp">WhatsApp</option>
+                                            <?php foreach ($canales_comunicacion as $canal): ?>
+                                                <option value="<?php echo $canal['codigo']; ?>">
+                                                    <?php echo htmlspecialchars($canal['nombre']); ?>
+                                                </option>
+                                            <?php endforeach; ?>
                                         </select>
                                     </div>
                                 </div>
@@ -861,9 +1011,11 @@ body.fullscreen-mode .main-wrapper {
                                     <div class="col-md-4">
                                         <label class="form-label">Tipo de Dirección</label>
                                         <select class="form-select" name="tipo_direccion">
-                                            <option value="fiscal">Fiscal</option>
-                                            <option value="comercial">Comercial</option>
-                                            <option value="despacho">Despacho</option>
+                                            <?php foreach ($tipos_direccion as $tipo_dir): ?>
+                                                <option value="<?php echo $tipo_dir['codigo']; ?>">
+                                                    <?php echo htmlspecialchars($tipo_dir['nombre']); ?>
+                                                </option>
+                                            <?php endforeach; ?>
                                         </select>
                                     </div>
                                     <div class="col-md-4">
@@ -885,27 +1037,31 @@ body.fullscreen-mode .main-wrapper {
                                     <div class="col-md-4">
                                         <label class="form-label">Plazo de Pago</label>
                                         <select class="form-select" name="plazo_pago">
-                                            <option value="contado">Contado</option>
-                                            <option value="30" selected>30 días</option>
-                                            <option value="60">60 días</option>
-                                            <option value="90">90 días</option>
+                                            <?php foreach ($plazos_pago as $plazo): ?>
+                                                <option value="<?php echo $plazo['codigo']; ?>" <?php echo $plazo['codigo'] === '30' ? 'selected' : ''; ?>>
+                                                    <?php echo htmlspecialchars($plazo['nombre']); ?>
+                                                </option>
+                                            <?php endforeach; ?>
                                         </select>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">Forma de Pago</label>
                                         <select class="form-select" name="forma_pago">
-                                            <option value="transferencia">Transferencia</option>
-                                            <option value="cheque">Cheque</option>
-                                            <option value="efectivo">Efectivo</option>
-                                            <option value="tarjeta">Tarjeta</option>
+                                            <?php foreach ($formas_pago as $forma): ?>
+                                                <option value="<?php echo $forma['codigo']; ?>">
+                                                    <?php echo htmlspecialchars($forma['nombre']); ?>
+                                                </option>
+                                            <?php endforeach; ?>
                                         </select>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">Moneda Preferente</label>
                                         <select class="form-select" name="moneda_preferente">
-                                            <option value="CLP">CLP - Peso Chileno</option>
-                                            <option value="USD">USD - Dólar</option>
-                                            <option value="EUR">EUR - Euro</option>
+                                            <?php foreach ($monedas as $moneda): ?>
+                                                <option value="<?php echo $moneda['codigo']; ?>">
+                                                    <?php echo $moneda['codigo']; ?> - <?php echo htmlspecialchars($moneda['nombre']); ?>
+                                                </option>
+                                            <?php endforeach; ?>
                                         </select>
                                     </div>
                                     <div class="col-md-6">
