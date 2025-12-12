@@ -11,6 +11,66 @@ $user = db_get_row("SELECT * FROM usuarios WHERE id = ?", [$user_id]);
 $empresa_id = $user['empresa_id'] ?? null;
 
 // ========================================
+// PROCESAR FORMULARIOS
+// ========================================
+$success = '';
+$error = '';
+
+// Crear cliente
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['razon_social'])) {
+    try {
+        db_query("INSERT INTO ma_clientes (
+            empresa_id, razon_social, nombre_comercial, documento, tipo_documento,
+            pais_id, giro, actividad_economica, direccion_fiscal, direccion_comercial,
+            ciudad, region, telefono, email, sitio_web, limite_credito, dias_credito,
+            descuento_global, clasificacion_abc, segmento, observaciones, activo, created_by
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [
+            $empresa_id,
+            $_POST['razon_social'],
+            $_POST['nombre_comercial'] ?? null,
+            $_POST['documento'],
+            $_POST['tipo_documento'],
+            $_POST['pais_id'],
+            $_POST['giro'],
+            $_POST['actividad_economica'] ?? null,
+            $_POST['direccion_fiscal'],
+            $_POST['direccion_comercial'] ?? null,
+            $_POST['ciudad'] ?? null,
+            $_POST['region'] ?? null,
+            $_POST['telefono'],
+            $_POST['email'],
+            $_POST['sitio_web'] ?? null,
+            $_POST['limite_credito'] ?? 0,
+            $_POST['dias_credito'] ?? 0,
+            $_POST['descuento_global'] ?? 0,
+            $_POST['clasificacion_abc'] ?? 'N/A',
+            $_POST['segmento'] ?? null,
+            $_POST['observaciones'] ?? null,
+            $_POST['activo'] ?? 1,
+            $user_id
+        ]);
+
+        // Registrar en auditoría
+        $cliente_id = db_get_var("SELECT LAST_INSERT_ID()");
+        db_query("INSERT INTO ma_auditoria (empresa_id, usuario_id, entidad, entidad_id, accion, ip, user_agent)
+                  VALUES (?, ?, 'ma_clientes', ?, 'crear', ?, ?)", [
+            $empresa_id, $user_id, $cliente_id, $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? ''
+        ]);
+
+        // Redirect para evitar reenvío
+        header("Location: " . $_SERVER['PHP_SELF'] . "?success=cliente_creado");
+        exit;
+    } catch (Exception $e) {
+        $error = "Error al crear cliente: " . $e->getMessage();
+    }
+}
+
+// Mensaje de éxito
+if (isset($_GET['success']) && $_GET['success'] === 'cliente_creado') {
+    $success = "Cliente creado exitosamente";
+}
+
+// ========================================
 // AUTO-CREAR TABLAS COMPLEMENTARIAS
 // ========================================
 try {
@@ -300,6 +360,20 @@ body.fullscreen-mode .main-wrapper {
             <button class="fullscreen-btn" id="fullscreenToggle" title="Pantalla completa">
                 <i class="fas fa-expand"></i>
             </button>
+
+            <!-- Mensajes -->
+            <?php if ($success): ?>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle me-2"></i><?php echo $success; ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <?php endif; ?>
+            <?php if ($error): ?>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle me-2"></i><?php echo $error; ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <?php endif; ?>
 
             <!-- Estadísticas -->
             <div class="row g-3 mb-4">
@@ -992,17 +1066,6 @@ body.fullscreen-mode .main-wrapper {
                     const selectedOption = this.options[this.selectedIndex];
                     const tipoDoc = selectedOption.getAttribute('data-doc');
                     tipoDocInput.value = tipoDoc || 'RUT';
-                });
-            }
-
-            // Form submit
-            const form = document.getElementById('formCrearCliente');
-            if (form) {
-                form.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    const formData = new FormData(this);
-                    console.log('Crear cliente:', Object.fromEntries(formData));
-                    alert('Funcionalidad de guardado en desarrollo');
                 });
             }
         });
