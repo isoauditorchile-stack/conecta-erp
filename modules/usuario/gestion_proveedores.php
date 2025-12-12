@@ -133,10 +133,10 @@ if (isset($_GET['success']) && $_GET['success'] === 'proveedor_creado') {
 }
 
 // ========================================
-// AUTO-CREAR TABLAS MAESTRAS (DATOS NO EMBEBIDOS)
+// AUTO-CREAR SOLO TABLAS (SIN DATOS EMBEBIDOS)
 // ========================================
 try {
-    // Tabla: Idiomas
+    // Tabla: Idiomas (SOLO ESTRUCTURA, sin INSERT)
     db_query("CREATE TABLE IF NOT EXISTS idiomas (
         id INT AUTO_INCREMENT PRIMARY KEY,
         codigo VARCHAR(5) UNIQUE NOT NULL,
@@ -144,16 +144,7 @@ try {
         activo TINYINT(1) DEFAULT 1
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
-    // Insertar idiomas por defecto si no existen
-    $count_idiomas = db_get_var("SELECT COUNT(*) FROM idiomas");
-    if ($count_idiomas == 0) {
-        db_query("INSERT INTO idiomas (codigo, nombre) VALUES
-            ('es', 'Español'),
-            ('en', 'English'),
-            ('pt', 'Português')");
-    }
-
-    // Tabla: Plazos de Pago
+    // Tabla: Plazos de Pago (SOLO ESTRUCTURA, sin INSERT)
     db_query("CREATE TABLE IF NOT EXISTS plazos_pago (
         id INT AUTO_INCREMENT PRIMARY KEY,
         codigo VARCHAR(20) UNIQUE NOT NULL,
@@ -162,16 +153,7 @@ try {
         activo TINYINT(1) DEFAULT 1
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
-    $count_plazos = db_get_var("SELECT COUNT(*) FROM plazos_pago");
-    if ($count_plazos == 0) {
-        db_query("INSERT INTO plazos_pago (codigo, nombre, dias) VALUES
-            ('contado', 'Contado', 0),
-            ('30', '30 días', 30),
-            ('60', '60 días', 60),
-            ('90', '90 días', 90)");
-    }
-
-    // Tabla: Formas de Pago
+    // Tabla: Formas de Pago (SOLO ESTRUCTURA, sin INSERT)
     db_query("CREATE TABLE IF NOT EXISTS formas_pago (
         id INT AUTO_INCREMENT PRIMARY KEY,
         codigo VARCHAR(20) UNIQUE NOT NULL,
@@ -179,33 +161,9 @@ try {
         activo TINYINT(1) DEFAULT 1
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
-    $count_formas = db_get_var("SELECT COUNT(*) FROM formas_pago");
-    if ($count_formas == 0) {
-        db_query("INSERT INTO formas_pago (codigo, nombre) VALUES
-            ('transferencia', 'Transferencia Bancaria'),
-            ('cheque', 'Cheque'),
-            ('efectivo', 'Efectivo'),
-            ('tarjeta', 'Tarjeta de Crédito/Débito')");
-    }
+    // NOTA: Tabla monedas YA EXISTE - NO se crea ni se insertan datos
 
-    // Tabla: Monedas
-    db_query("CREATE TABLE IF NOT EXISTS monedas (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        codigo VARCHAR(10) UNIQUE NOT NULL,
-        nombre VARCHAR(100) NOT NULL,
-        simbolo VARCHAR(10),
-        activo TINYINT(1) DEFAULT 1
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-
-    $count_monedas = db_get_var("SELECT COUNT(*) FROM monedas");
-    if ($count_monedas == 0) {
-        db_query("INSERT INTO monedas (codigo, nombre, simbolo) VALUES
-            ('CLP', 'Peso Chileno', '$'),
-            ('USD', 'Dólar Estadounidense', 'US$'),
-            ('EUR', 'Euro', '€')");
-    }
-
-    // Tabla: Tipos de Cuenta Bancaria
+    // Tabla: Tipos de Cuenta Bancaria (SOLO ESTRUCTURA, sin INSERT)
     db_query("CREATE TABLE IF NOT EXISTS tipos_cuenta_bancaria (
         id INT AUTO_INCREMENT PRIMARY KEY,
         codigo VARCHAR(20) UNIQUE NOT NULL,
@@ -213,15 +171,7 @@ try {
         activo TINYINT(1) DEFAULT 1
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
-    $count_tipos_cuenta = db_get_var("SELECT COUNT(*) FROM tipos_cuenta_bancaria");
-    if ($count_tipos_cuenta == 0) {
-        db_query("INSERT INTO tipos_cuenta_bancaria (codigo, nombre) VALUES
-            ('corriente', 'Cuenta Corriente'),
-            ('vista', 'Cuenta Vista'),
-            ('ahorro', 'Cuenta de Ahorro')");
-    }
-
-    // Tabla: Canales de Comunicación
+    // Tabla: Canales de Comunicación (SOLO ESTRUCTURA, sin INSERT)
     db_query("CREATE TABLE IF NOT EXISTS canales_comunicacion (
         id INT AUTO_INCREMENT PRIMARY KEY,
         codigo VARCHAR(20) UNIQUE NOT NULL,
@@ -230,15 +180,7 @@ try {
         activo TINYINT(1) DEFAULT 1
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
-    $count_canales = db_get_var("SELECT COUNT(*) FROM canales_comunicacion");
-    if ($count_canales == 0) {
-        db_query("INSERT INTO canales_comunicacion (codigo, nombre, icono) VALUES
-            ('email', 'Email', 'envelope'),
-            ('telefono', 'Teléfono', 'phone'),
-            ('whatsapp', 'WhatsApp', 'whatsapp')");
-    }
-
-    // Tabla: Tipos de Dirección
+    // Tabla: Tipos de Dirección (SOLO ESTRUCTURA, sin INSERT)
     db_query("CREATE TABLE IF NOT EXISTS tipos_direccion (
         id INT AUTO_INCREMENT PRIMARY KEY,
         codigo VARCHAR(20) UNIQUE NOT NULL,
@@ -246,31 +188,13 @@ try {
         activo TINYINT(1) DEFAULT 1
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
-    $count_tipos_direccion = db_get_var("SELECT COUNT(*) FROM tipos_direccion");
-    if ($count_tipos_direccion == 0) {
-        db_query("INSERT INTO tipos_direccion (codigo, nombre) VALUES
-            ('fiscal', 'Dirección Fiscal'),
-            ('comercial', 'Dirección Comercial'),
-            ('despacho', 'Dirección de Despacho')");
-    }
-
-    // Tabla: Roles de Contacto
+    // Tabla: Roles de Contacto (SOLO ESTRUCTURA, sin INSERT)
     db_query("CREATE TABLE IF NOT EXISTS roles_contacto (
         id INT AUTO_INCREMENT PRIMARY KEY,
         codigo VARCHAR(20) UNIQUE NOT NULL,
         nombre VARCHAR(100) NOT NULL,
         activo TINYINT(1) DEFAULT 1
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-
-    $count_roles = db_get_var("SELECT COUNT(*) FROM roles_contacto");
-    if ($count_roles == 0) {
-        db_query("INSERT INTO roles_contacto (codigo, nombre) VALUES
-            ('compras', 'Departamento de Compras'),
-            ('finanzas', 'Departamento de Finanzas'),
-            ('despacho', 'Departamento de Despacho'),
-            ('gerente', 'Gerente'),
-            ('otro', 'Otro')");
-    }
 
     // Tabla principal: proveedores
     db_query("CREATE TABLE IF NOT EXISTS proveedores (
