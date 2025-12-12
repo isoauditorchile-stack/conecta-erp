@@ -133,10 +133,10 @@ if (isset($_GET['success']) && $_GET['success'] === 'proveedor_creado') {
 }
 
 // ========================================
-// AUTO-CREAR SOLO TABLAS (SIN DATOS EMBEBIDOS)
+// AUTO-CREAR TABLAS (sin datos embebidos)
 // ========================================
 try {
-    // Tabla: Idiomas (SOLO ESTRUCTURA, sin INSERT)
+    // Tabla: Idiomas (SOLO estructura)
     db_query("CREATE TABLE IF NOT EXISTS idiomas (
         id INT AUTO_INCREMENT PRIMARY KEY,
         codigo VARCHAR(5) UNIQUE NOT NULL,
@@ -144,7 +144,7 @@ try {
         activo TINYINT(1) DEFAULT 1
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
-    // Tabla: Plazos de Pago (SOLO ESTRUCTURA, sin INSERT)
+    // Tabla: Plazos de Pago (SOLO estructura)
     db_query("CREATE TABLE IF NOT EXISTS plazos_pago (
         id INT AUTO_INCREMENT PRIMARY KEY,
         codigo VARCHAR(20) UNIQUE NOT NULL,
@@ -153,7 +153,7 @@ try {
         activo TINYINT(1) DEFAULT 1
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
-    // Tabla: Formas de Pago (SOLO ESTRUCTURA, sin INSERT)
+    // Tabla: Formas de Pago (SOLO estructura)
     db_query("CREATE TABLE IF NOT EXISTS formas_pago (
         id INT AUTO_INCREMENT PRIMARY KEY,
         codigo VARCHAR(20) UNIQUE NOT NULL,
@@ -161,9 +161,7 @@ try {
         activo TINYINT(1) DEFAULT 1
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
-    // NOTA: Tabla monedas YA EXISTE - NO se crea ni se insertan datos
-
-    // Tabla: Tipos de Cuenta Bancaria (SOLO ESTRUCTURA, sin INSERT)
+    // Tabla: Tipos de Cuenta Bancaria (SOLO estructura)
     db_query("CREATE TABLE IF NOT EXISTS tipos_cuenta_bancaria (
         id INT AUTO_INCREMENT PRIMARY KEY,
         codigo VARCHAR(20) UNIQUE NOT NULL,
@@ -171,7 +169,7 @@ try {
         activo TINYINT(1) DEFAULT 1
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
-    // Tabla: Canales de Comunicación (SOLO ESTRUCTURA, sin INSERT)
+    // Tabla: Canales de Comunicación (SOLO estructura)
     db_query("CREATE TABLE IF NOT EXISTS canales_comunicacion (
         id INT AUTO_INCREMENT PRIMARY KEY,
         codigo VARCHAR(20) UNIQUE NOT NULL,
@@ -180,7 +178,7 @@ try {
         activo TINYINT(1) DEFAULT 1
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
-    // Tabla: Tipos de Dirección (SOLO ESTRUCTURA, sin INSERT)
+    // Tabla: Tipos de Dirección (SOLO estructura)
     db_query("CREATE TABLE IF NOT EXISTS tipos_direccion (
         id INT AUTO_INCREMENT PRIMARY KEY,
         codigo VARCHAR(20) UNIQUE NOT NULL,
@@ -188,7 +186,7 @@ try {
         activo TINYINT(1) DEFAULT 1
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
-    // Tabla: Roles de Contacto (SOLO ESTRUCTURA, sin INSERT)
+    // Tabla: Roles de Contacto (SOLO estructura)
     db_query("CREATE TABLE IF NOT EXISTS roles_contacto (
         id INT AUTO_INCREMENT PRIMARY KEY,
         codigo VARCHAR(20) UNIQUE NOT NULL,
@@ -342,7 +340,7 @@ try {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
 } catch (Exception $e) {
-    // Silenciar errores de creación de tablas si ya existen
+    // Silenciar errores si ya existen
 }
 
 // ========================================
@@ -362,14 +360,15 @@ $proveedores = db_query("
 $paises = db_query("SELECT * FROM paises ORDER BY nombre ASC");
 
 // Consultar datos para selects (TODO desde SQL, NADA embebido)
-$idiomas = db_query("SELECT * FROM idiomas WHERE activo = 1 ORDER BY nombre ASC");
-$plazos_pago = db_query("SELECT * FROM plazos_pago WHERE activo = 1 ORDER BY dias ASC");
-$formas_pago = db_query("SELECT * FROM formas_pago WHERE activo = 1 ORDER BY nombre ASC");
-$monedas = db_query("SELECT * FROM monedas WHERE activo = 1 ORDER BY codigo ASC");
-$tipos_cuenta = db_query("SELECT * FROM tipos_cuenta_bancaria WHERE activo = 1 ORDER BY nombre ASC");
-$canales_comunicacion = db_query("SELECT * FROM canales_comunicacion WHERE activo = 1 ORDER BY nombre ASC");
-$tipos_direccion = db_query("SELECT * FROM tipos_direccion WHERE activo = 1 ORDER BY nombre ASC");
-$roles_contacto = db_query("SELECT * FROM roles_contacto WHERE activo = 1 ORDER BY nombre ASC");
+// Si una tabla no existe, devuelve array vacío (el admin debe crearla)
+try { $idiomas = db_query("SELECT * FROM idiomas WHERE activo = 1 ORDER BY nombre ASC"); } catch (Exception $e) { $idiomas = []; }
+try { $plazos_pago = db_query("SELECT * FROM plazos_pago WHERE activo = 1 ORDER BY dias ASC"); } catch (Exception $e) { $plazos_pago = []; }
+try { $formas_pago = db_query("SELECT * FROM formas_pago WHERE activo = 1 ORDER BY nombre ASC"); } catch (Exception $e) { $formas_pago = []; }
+try { $monedas = db_query("SELECT * FROM monedas WHERE activo = 1 ORDER BY codigo ASC"); } catch (Exception $e) { $monedas = []; }
+try { $tipos_cuenta = db_query("SELECT * FROM tipos_cuenta_bancaria WHERE activo = 1 ORDER BY nombre ASC"); } catch (Exception $e) { $tipos_cuenta = []; }
+try { $canales_comunicacion = db_query("SELECT * FROM canales_comunicacion WHERE activo = 1 ORDER BY nombre ASC"); } catch (Exception $e) { $canales_comunicacion = []; }
+try { $tipos_direccion = db_query("SELECT * FROM tipos_direccion WHERE activo = 1 ORDER BY nombre ASC"); } catch (Exception $e) { $tipos_direccion = []; }
+try { $roles_contacto = db_query("SELECT * FROM roles_contacto WHERE activo = 1 ORDER BY nombre ASC"); } catch (Exception $e) { $roles_contacto = []; }
 
 // Estadísticas
 $stats = [
