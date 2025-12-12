@@ -408,6 +408,100 @@ try {
         UNIQUE KEY unique_proy (empresa_id, codigo)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
+    // Reglas de asiento automático (mapeo desde módulos)
+    db_query("CREATE TABLE IF NOT EXISTS fi_reglas_asiento (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        empresa_id INT NOT NULL,
+        evento_origen VARCHAR(100) NOT NULL,
+        modulo VARCHAR(50) NOT NULL,
+        descripcion VARCHAR(255),
+        mapeo_lineas JSON,
+        condiciones JSON,
+        cuentas_default JSON,
+        activo TINYINT(1) DEFAULT 1,
+        INDEX idx_modulo_evento (modulo, evento_origen)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    // Bancos
+    db_query("CREATE TABLE IF NOT EXISTS ma_bancos (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        empresa_id INT NOT NULL,
+        codigo VARCHAR(50) NOT NULL,
+        nombre VARCHAR(255) NOT NULL,
+        cuenta_contable_id INT,
+        numero_cuenta VARCHAR(100),
+        moneda VARCHAR(10) DEFAULT 'CLP',
+        saldo_actual DECIMAL(15,2) DEFAULT 0,
+        estado ENUM('activo', 'inactivo') DEFAULT 'activo',
+        FOREIGN KEY (cuenta_contable_id) REFERENCES fi_plan_cuentas(id) ON DELETE SET NULL,
+        UNIQUE KEY unique_banco (empresa_id, codigo)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    // Conciliaciones bancarias
+    db_query("CREATE TABLE IF NOT EXISTS fi_conciliaciones (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        empresa_id INT NOT NULL,
+        banco_id INT NOT NULL,
+        periodo VARCHAR(7) NOT NULL,
+        fecha_conciliacion DATE NOT NULL,
+        saldo_libro DECIMAL(15,2) DEFAULT 0,
+        saldo_banco DECIMAL(15,2) DEFAULT 0,
+        diferencia DECIMAL(15,2) DEFAULT 0,
+        estado ENUM('pendiente', 'conciliado', 'con_diferencias') DEFAULT 'pendiente',
+        detalles JSON,
+        archivo_extracto VARCHAR(500),
+        usuario_concilia INT,
+        fecha_proceso DATETIME,
+        FOREIGN KEY (banco_id) REFERENCES ma_bancos(id) ON DELETE CASCADE,
+        INDEX idx_banco_periodo (banco_id, periodo)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    // Movimientos bancarios (extracto)
+    db_query("CREATE TABLE IF NOT EXISTS fi_movimientos_bancarios (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        conciliacion_id INT NOT NULL,
+        banco_id INT NOT NULL,
+        fecha DATE NOT NULL,
+        descripcion VARCHAR(500),
+        referencia VARCHAR(100),
+        cargo DECIMAL(15,2) DEFAULT 0,
+        abono DECIMAL(15,2) DEFAULT 0,
+        saldo DECIMAL(15,2) DEFAULT 0,
+        conciliado TINYINT(1) DEFAULT 0,
+        comprobante_id INT,
+        FOREIGN KEY (conciliacion_id) REFERENCES fi_conciliaciones(id) ON DELETE CASCADE,
+        FOREIGN KEY (banco_id) REFERENCES ma_bancos(id) ON DELETE CASCADE,
+        FOREIGN KEY (comprobante_id) REFERENCES fi_comprobantes(id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    // Periodos contables
+    db_query("CREATE TABLE IF NOT EXISTS fi_periodos (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        empresa_id INT NOT NULL,
+        periodo VARCHAR(7) NOT NULL,
+        estado ENUM('abierto', 'cerrado', 'bloqueado') DEFAULT 'abierto',
+        fecha_apertura DATE,
+        fecha_cierre DATE,
+        usuario_cierre INT,
+        motivo_cierre TEXT,
+        UNIQUE KEY unique_periodo (empresa_id, periodo)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    // Historial de cierres
+    db_query("CREATE TABLE IF NOT EXISTS fi_cierre_periodo (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        empresa_id INT NOT NULL,
+        periodo VARCHAR(7) NOT NULL,
+        fecha_cierre DATETIME NOT NULL,
+        usuario_cierre INT NOT NULL,
+        comprobantes_cerrados INT DEFAULT 0,
+        saldo_debe DECIMAL(15,2) DEFAULT 0,
+        saldo_haber DECIMAL(15,2) DEFAULT 0,
+        checklist_cumplido JSON,
+        observaciones TEXT,
+        INDEX idx_periodo (periodo)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
 } catch (Exception $e) {
     // Silenciar errores si ya existen
 }
@@ -480,16 +574,87 @@ try {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/assets/css/styles.css">
+
+    <style>
+/* Layout principal */
+.main-wrapper {
+    margin-left: 260px !important;
+    width: calc(100% - 260px) !important;
+    padding: 0 !important;
+}
+
+.main-header {
+    width: 100% !important;
+    padding: 1rem 2rem !important;
+}
+
+.main-content {
+    width: 100% !important;
+    padding: 2rem !important;
+    margin: 0 !important;
+}
+
+/* Botón fullscreen */
+.fullscreen-btn {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 999;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+body.fullscreen-mode .sidebar { display: none !important; }
+body.fullscreen-mode .main-wrapper {
+    margin-left: 0 !important;
+    width: 100% !important;
+}
+    </style>
 </head>
 <body>
-    <div class="container-fluid mt-4">
-        <div class="row mb-4">
-            <div class="col-12">
-                <h1 class="mb-0"><i class="fas fa-calculator me-2"></i>Contabilidad General (FI)</h1>
-                <p class="text-muted">Gestión de comprobantes, plan de cuentas y reportes contables</p>
-            </div>
-        </div>
+    <!-- Sidebar -->
+    <?php include __DIR__ . '/../../includes/sidebar_user.php'; ?>
 
+    <!-- Main Content -->
+    <div class="main-wrapper" id="mainWrapper">
+        <header class="main-header">
+            <div class="header-left">
+                <h4 class="mb-0" style="color: var(--text-primary);">
+                    <i class="fas fa-calculator me-2"></i>
+                    Contabilidad General (FI)
+                </h4>
+                <small class="text-muted">Gestión de comprobantes, plan de cuentas y reportes contables</small>
+            </div>
+
+            <div class="header-right">
+                <button class="theme-toggle" id="themeToggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+
+                <div class="user-menu">
+                    <div class="user-avatar">
+                        <?php echo strtoupper(substr($user['nombre_completo'] ?? 'U', 0, 2)); ?>
+                    </div>
+                    <div class="user-info">
+                        <div class="user-name"><?php echo $user['nombre_completo'] ?? 'Usuario'; ?></div>
+                        <div class="user-role">Usuario</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Botón Fullscreen -->
+        <button class="fullscreen-btn" onclick="toggleFullscreen()" title="Modo pantalla completa">
+            <i class="fas fa-expand"></i>
+        </button>
+
+        <div class="main-content">
         <?php if ($success): ?>
             <div class="alert alert-success alert-dismissible fade show" role="alert">
                 <i class="fas fa-check-circle me-2"></i><?= htmlspecialchars($success) ?>
@@ -1167,6 +1332,21 @@ try {
         document.addEventListener('DOMContentLoaded', function() {
             // Eventos adicionales aquí
         });
+
+        // Función fullscreen
+        function toggleFullscreen() {
+            document.body.classList.toggle('fullscreen-mode');
+            const icon = document.querySelector('.fullscreen-btn i');
+            if (document.body.classList.contains('fullscreen-mode')) {
+                icon.classList.remove('fa-expand');
+                icon.classList.add('fa-compress');
+            } else {
+                icon.classList.remove('fa-compress');
+                icon.classList.add('fa-expand');
+            }
+        }
     </script>
+        </div> <!-- /main-content -->
+    </div> <!-- /main-wrapper -->
 </body>
 </html>
