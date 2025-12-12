@@ -1624,7 +1624,7 @@ body.fullscreen-mode .fullscreen-btn {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/assets/js/main.js"></script>
     <script>
-        // Datos para modales
+        // Datos para modales (scope global)
         const clientesData = <?php echo json_encode($clientes); ?>;
         const proveedoresData = <?php echo json_encode($proveedores); ?>;
         const productosData = <?php echo json_encode($productos); ?>;
@@ -1634,62 +1634,9 @@ body.fullscreen-mode .fullscreen-btn {
         const centrosData = <?php echo json_encode($centros_costo); ?>;
         const bodegasData = <?php echo json_encode($bodegas); ?>;
 
-        document.addEventListener('DOMContentLoaded', function() {
-            // Fullscreen toggle
-            const fullscreenBtn = document.getElementById('fullscreenToggle');
-            const icon = fullscreenBtn.querySelector('i');
-
-            fullscreenBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                document.body.classList.toggle('fullscreen-mode');
-
-                if (document.body.classList.contains('fullscreen-mode')) {
-                    icon.classList.remove('fa-expand');
-                    icon.classList.add('fa-compress');
-                } else {
-                    icon.classList.remove('fa-compress');
-                    icon.classList.add('fa-expand');
-                }
-            });
-
-            // ESC key
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape' && document.body.classList.contains('fullscreen-mode')) {
-                    document.body.classList.remove('fullscreen-mode');
-                    icon.classList.remove('fa-compress');
-                    icon.classList.add('fa-expand');
-                }
-            });
-
-            // Búsqueda en tablas
-            const searches = ['searchClientes', 'searchProveedores', 'searchProductos', 'searchServicios',
-                             'searchEmpleados', 'searchBancos', 'searchCentros', 'searchBodegas'];
-            searches.forEach(searchId => {
-                const input = document.getElementById(searchId);
-                if (input) {
-                    input.addEventListener('input', function() {
-                        const searchTerm = this.value.toLowerCase();
-                        const table = this.closest('.card').querySelector('table tbody');
-                        const rows = table.querySelectorAll('tr');
-                        rows.forEach(row => {
-                            const text = row.textContent.toLowerCase();
-                            row.style.display = text.includes(searchTerm) ? '' : 'none';
-                        });
-                    });
-                }
-            });
-
-            // Forms
-            const form = document.getElementById('formCrearCliente');
-            if (form) {
-                form.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    const formData = new FormData(this);
-                    console.log('Crear cliente:', Object.fromEntries(formData));
-                    alert('Funcionalidad de guardado en desarrollo');
-                });
-            }
-        });
+        // ============================================
+        // FUNCIONES GLOBALES PARA ONCLICK
+        // ============================================
 
         // Funciones para clientes
         function verCliente(id) {
@@ -1852,6 +1799,66 @@ body.fullscreen-mode .fullscreen-btn {
                 alert('Editar bodega: ' + bodega.nombre + '\nFuncionalidad en desarrollo');
             }
         }
+
+        // ============================================
+        // DOM READY
+        // ============================================
+        document.addEventListener('DOMContentLoaded', function() {
+            // Fullscreen toggle
+            const fullscreenBtn = document.getElementById('fullscreenToggle');
+            const icon = fullscreenBtn.querySelector('i');
+
+            fullscreenBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.body.classList.toggle('fullscreen-mode');
+
+                if (document.body.classList.contains('fullscreen-mode')) {
+                    icon.classList.remove('fa-expand');
+                    icon.classList.add('fa-compress');
+                } else {
+                    icon.classList.remove('fa-compress');
+                    icon.classList.add('fa-expand');
+                }
+            });
+
+            // ESC key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && document.body.classList.contains('fullscreen-mode')) {
+                    document.body.classList.remove('fullscreen-mode');
+                    icon.classList.remove('fa-compress');
+                    icon.classList.add('fa-expand');
+                }
+            });
+
+            // Búsqueda en tablas
+            const searches = ['searchClientes', 'searchProveedores', 'searchProductos', 'searchServicios',
+                             'searchEmpleados', 'searchBancos', 'searchCentros', 'searchBodegas'];
+            searches.forEach(searchId => {
+                const input = document.getElementById(searchId);
+                if (input) {
+                    input.addEventListener('input', function() {
+                        const searchTerm = this.value.toLowerCase();
+                        const table = this.closest('.card').querySelector('table tbody');
+                        const rows = table.querySelectorAll('tr');
+                        rows.forEach(row => {
+                            const text = row.textContent.toLowerCase();
+                            row.style.display = text.includes(searchTerm) ? '' : 'none';
+                        });
+                    });
+                }
+            });
+
+            // Forms
+            const form = document.getElementById('formCrearCliente');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const formData = new FormData(this);
+                    console.log('Crear cliente:', Object.fromEntries(formData));
+                    alert('Funcionalidad de guardado en desarrollo');
+                });
+            }
+        });
     </script>
 </body>
 </html>
