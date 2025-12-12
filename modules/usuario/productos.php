@@ -392,18 +392,22 @@ try {
 // ========================================
 
 // Consultar productos
-$productos = db_query("
-    SELECT p.*,
-           i.stock_actual,
-           c.precio_venta_neto,
-           co.costo_compra
-    FROM ma_productos p
-    LEFT JOIN prod_inventario i ON p.id = i.producto_id
-    LEFT JOIN prod_precios c ON p.id = c.producto_id
-    LEFT JOIN prod_costos co ON p.id = co.producto_id
-    WHERE p.empresa_id = ?
-    ORDER BY p.nombre ASC
-", [$empresa_id]);
+try {
+    $productos = db_query("
+        SELECT p.*,
+               i.stock_actual,
+               c.precio_venta_neto,
+               co.costo_compra
+        FROM ma_productos p
+        LEFT JOIN prod_inventario i ON p.id = i.producto_id
+        LEFT JOIN prod_precios c ON p.id = c.producto_id
+        LEFT JOIN prod_costos co ON p.id = co.producto_id
+        WHERE p.empresa_id = ?
+        ORDER BY p.nombre ASC
+    ", [$empresa_id]);
+} catch (Exception $e) {
+    $productos = [];
+}
 
 // Consultar datos para selects (TODO desde SQL, NADA embebido)
 try { $unidades_medida = db_query("SELECT * FROM unidades_medida WHERE activo = 1 ORDER BY nombre ASC"); } catch (Exception $e) { $unidades_medida = []; }
@@ -414,12 +418,21 @@ try { $tipos_costeo = db_query("SELECT * FROM tipos_costeo WHERE activo = 1 ORDE
 try { $bodegas = db_query("SELECT * FROM ma_bodegas WHERE empresa_id = ? ORDER BY nombre ASC", [$empresa_id]); } catch (Exception $e) { $bodegas = []; }
 
 // Estadísticas
-$stats = [
-    'total_productos' => db_get_var("SELECT COUNT(*) FROM ma_productos WHERE empresa_id = ?", [$empresa_id]) ?? 0,
-    'inventariables' => db_get_var("SELECT COUNT(*) FROM ma_productos WHERE empresa_id = ? AND tipo_producto IN ('inventariable', 'materia_prima', 'producto_terminado')", [$empresa_id]) ?? 0,
-    'servicios' => db_get_var("SELECT COUNT(*) FROM ma_productos WHERE empresa_id = ? AND tipo_producto = 'no_inventariable'", [$empresa_id]) ?? 0,
-    'activos' => db_get_var("SELECT COUNT(*) FROM ma_productos WHERE empresa_id = ? AND estado = 'activo'", [$empresa_id]) ?? 0
-];
+try {
+    $stats = [
+        'total_productos' => db_get_var("SELECT COUNT(*) FROM ma_productos WHERE empresa_id = ?", [$empresa_id]) ?? 0,
+        'inventariables' => db_get_var("SELECT COUNT(*) FROM ma_productos WHERE empresa_id = ? AND tipo_producto IN ('inventariable', 'materia_prima', 'producto_terminado')", [$empresa_id]) ?? 0,
+        'servicios' => db_get_var("SELECT COUNT(*) FROM ma_productos WHERE empresa_id = ? AND tipo_producto = 'no_inventariable'", [$empresa_id]) ?? 0,
+        'activos' => db_get_var("SELECT COUNT(*) FROM ma_productos WHERE empresa_id = ? AND estado = 'activo'", [$empresa_id]) ?? 0
+    ];
+} catch (Exception $e) {
+    $stats = [
+        'total_productos' => 0,
+        'inventariables' => 0,
+        'servicios' => 0,
+        'activos' => 0
+    ];
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">

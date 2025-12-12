@@ -348,16 +348,20 @@ try {
 // ========================================
 
 // Consultar proveedores con JOIN a países
-$proveedores = db_query("
-    SELECT p.*, pa.nombre as pais_nombre
-    FROM proveedores p
-    LEFT JOIN paises pa ON p.pais_id = pa.id
-    WHERE p.empresa_id = ?
-    ORDER BY p.razon_social ASC
-", [$empresa_id]);
+try {
+    $proveedores = db_query("
+        SELECT p.*, pa.nombre as pais_nombre
+        FROM proveedores p
+        LEFT JOIN paises pa ON p.pais_id = pa.id
+        WHERE p.empresa_id = ?
+        ORDER BY p.razon_social ASC
+    ", [$empresa_id]);
+} catch (Exception $e) {
+    $proveedores = [];
+}
 
 // Consultar países para select
-$paises = db_query("SELECT * FROM paises ORDER BY nombre ASC");
+try { $paises = db_query("SELECT * FROM paises ORDER BY nombre ASC"); } catch (Exception $e) { $paises = []; }
 
 // Consultar datos para selects (TODO desde SQL, NADA embebido)
 // Si una tabla no existe, devuelve array vacío (el admin debe crearla)
@@ -371,12 +375,21 @@ try { $tipos_direccion = db_query("SELECT * FROM tipos_direccion WHERE activo = 
 try { $roles_contacto = db_query("SELECT * FROM roles_contacto WHERE activo = 1 ORDER BY nombre ASC"); } catch (Exception $e) { $roles_contacto = []; }
 
 // Estadísticas
-$stats = [
-    'total_proveedores' => db_get_var("SELECT COUNT(*) FROM proveedores WHERE empresa_id = ?", [$empresa_id]) ?? 0,
-    'activos' => db_get_var("SELECT COUNT(*) FROM proveedores WHERE empresa_id = ? AND estado = 'activo'", [$empresa_id]) ?? 0,
-    'empresas' => db_get_var("SELECT COUNT(*) FROM proveedores WHERE empresa_id = ? AND tipo_proveedor = 'empresa'", [$empresa_id]) ?? 0,
-    'personas' => db_get_var("SELECT COUNT(*) FROM proveedores WHERE empresa_id = ? AND tipo_proveedor = 'persona'", [$empresa_id]) ?? 0
-];
+try {
+    $stats = [
+        'total_proveedores' => db_get_var("SELECT COUNT(*) FROM proveedores WHERE empresa_id = ?", [$empresa_id]) ?? 0,
+        'activos' => db_get_var("SELECT COUNT(*) FROM proveedores WHERE empresa_id = ? AND estado = 'activo'", [$empresa_id]) ?? 0,
+        'empresas' => db_get_var("SELECT COUNT(*) FROM proveedores WHERE empresa_id = ? AND tipo_proveedor = 'empresa'", [$empresa_id]) ?? 0,
+        'personas' => db_get_var("SELECT COUNT(*) FROM proveedores WHERE empresa_id = ? AND tipo_proveedor = 'persona'", [$empresa_id]) ?? 0
+    ];
+} catch (Exception $e) {
+    $stats = [
+        'total_proveedores' => 0,
+        'activos' => 0,
+        'empresas' => 0,
+        'personas' => 0
+    ];
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">

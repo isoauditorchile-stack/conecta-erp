@@ -321,14 +321,18 @@ try {
 // ========================================
 
 // Consultar empleados
-$empleados = db_query("
-    SELECT e.*,
-           TIMESTAMPDIFF(YEAR, e.fecha_ingreso, CURDATE()) as anos_empresa,
-           TIMESTAMPDIFF(YEAR, e.fecha_nacimiento, CURDATE()) as edad
-    FROM ma_empleados e
-    WHERE e.empresa_id = ?
-    ORDER BY e.apellidos ASC, e.nombres ASC
-", [$empresa_id]);
+try {
+    $empleados = db_query("
+        SELECT e.*,
+               TIMESTAMPDIFF(YEAR, e.fecha_ingreso, CURDATE()) as anos_empresa,
+               TIMESTAMPDIFF(YEAR, e.fecha_nacimiento, CURDATE()) as edad
+        FROM ma_empleados e
+        WHERE e.empresa_id = ?
+        ORDER BY e.apellidos ASC, e.nombres ASC
+    ", [$empresa_id]);
+} catch (Exception $e) {
+    $empleados = [];
+}
 
 // Consultar datos para selects (TODO desde SQL, NADA embebido)
 try { $nacionalidades = db_query("SELECT * FROM nacionalidades WHERE activo = 1 ORDER BY nombre ASC"); } catch (Exception $e) { $nacionalidades = []; }
@@ -340,12 +344,21 @@ try { $isapres = db_query("SELECT * FROM isapres WHERE activo = 1 ORDER BY nombr
 try { $centros_costo = db_query("SELECT * FROM ma_centros_costo WHERE empresa_id = ? ORDER BY nombre ASC", [$empresa_id]); } catch (Exception $e) { $centros_costo = []; }
 
 // Estadísticas
-$stats = [
-    'total_empleados' => db_get_var("SELECT COUNT(*) FROM ma_empleados WHERE empresa_id = ?", [$empresa_id]) ?? 0,
-    'activos' => db_get_var("SELECT COUNT(*) FROM ma_empleados WHERE empresa_id = ? AND estado = 'activo'", [$empresa_id]) ?? 0,
-    'hombres' => db_get_var("SELECT COUNT(*) FROM ma_empleados WHERE empresa_id = ? AND genero = 'masculino'", [$empresa_id]) ?? 0,
-    'mujeres' => db_get_var("SELECT COUNT(*) FROM ma_empleados WHERE empresa_id = ? AND genero = 'femenino'", [$empresa_id]) ?? 0
-];
+try {
+    $stats = [
+        'total_empleados' => db_get_var("SELECT COUNT(*) FROM ma_empleados WHERE empresa_id = ?", [$empresa_id]) ?? 0,
+        'activos' => db_get_var("SELECT COUNT(*) FROM ma_empleados WHERE empresa_id = ? AND estado = 'activo'", [$empresa_id]) ?? 0,
+        'hombres' => db_get_var("SELECT COUNT(*) FROM ma_empleados WHERE empresa_id = ? AND genero = 'masculino'", [$empresa_id]) ?? 0,
+        'mujeres' => db_get_var("SELECT COUNT(*) FROM ma_empleados WHERE empresa_id = ? AND genero = 'femenino'", [$empresa_id]) ?? 0
+    ];
+} catch (Exception $e) {
+    $stats = [
+        'total_empleados' => 0,
+        'activos' => 0,
+        'hombres' => 0,
+        'mujeres' => 0
+    ];
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
