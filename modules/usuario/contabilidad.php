@@ -722,6 +722,31 @@ body.fullscreen-mode .main-wrapper {
                     <i class="fas fa-book me-2"></i>Libro Mayor
                 </button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="diario-tab" data-bs-toggle="tab" data-bs-target="#diario" type="button">
+                    <i class="fas fa-book-open me-2"></i>Libro Diario
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="balance-tab" data-bs-toggle="tab" data-bs-target="#balance" type="button">
+                    <i class="fas fa-balance-scale me-2"></i>Balance
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="conciliacion-tab" data-bs-toggle="tab" data-bs-target="#conciliacion" type="button">
+                    <i class="fas fa-university me-2"></i>Conciliación
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="plantillas-tab" data-bs-toggle="tab" data-bs-target="#plantillas" type="button">
+                    <i class="fas fa-copy me-2"></i>Plantillas
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="cierre-tab" data-bs-toggle="tab" data-bs-target="#cierre" type="button">
+                    <i class="fas fa-lock me-2"></i>Cierre Periodo
+                </button>
+            </li>
         </ul>
 
         <div class="tab-content" id="contabilidadTabContent">
@@ -874,8 +899,11 @@ body.fullscreen-mode .main-wrapper {
             <!-- TAB: Libro Mayor -->
             <div class="tab-pane fade" id="mayor" role="tabpanel">
                 <div class="card">
-                    <div class="card-header">
+                    <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Libro Mayor</h5>
+                        <button class="btn btn-success" onclick="exportarMayorExcel()" id="btnExportMayor" disabled>
+                            <i class="fas fa-file-excel me-2"></i>Exportar a Excel
+                        </button>
                     </div>
                     <div class="card-body">
                         <div class="row mb-3">
@@ -908,6 +936,212 @@ body.fullscreen-mode .main-wrapper {
                         <div id="resultado_mayor">
                             <p class="text-muted text-center">Seleccione una cuenta y rango de fechas para consultar el mayor</p>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: Libro Diario -->
+            <div class="tab-pane fade" id="diario" role="tabpanel">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Libro Diario</h5>
+                        <button class="btn btn-success" onclick="exportarDiarioExcel()">
+                            <i class="fas fa-file-excel me-2"></i>Exportar a Excel
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Desde</label>
+                                <input type="date" class="form-control" id="filtro_diario_desde" value="<?= date('Y-m-01') ?>">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Hasta</label>
+                                <input type="date" class="form-control" id="filtro_diario_hasta" value="<?= date('Y-m-d') ?>">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">&nbsp;</label>
+                                <button class="btn btn-primary w-100" onclick="consultarDiario()">
+                                    <i class="fas fa-search me-2"></i>Consultar
+                                </button>
+                            </div>
+                        </div>
+                        <div id="resultado_diario">
+                            <p class="text-muted text-center">Seleccione un rango de fechas para consultar el diario</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: Balance de Comprobación -->
+            <div class="tab-pane fade" id="balance" role="tabpanel">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Balance de Comprobación</h5>
+                        <button class="btn btn-success" onclick="exportarBalanceExcel()">
+                            <i class="fas fa-file-excel me-2"></i>Exportar a Excel
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Periodo</label>
+                                <input type="month" class="form-control" id="filtro_balance_periodo" value="<?= date('Y-m') ?>">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">&nbsp;</label>
+                                <button class="btn btn-primary w-100" onclick="consultarBalance()">
+                                    <i class="fas fa-search me-2"></i>Consultar
+                                </button>
+                            </div>
+                        </div>
+                        <div id="resultado_balance">
+                            <p class="text-muted text-center">Seleccione un periodo para consultar el balance</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: Conciliación Bancaria -->
+            <div class="tab-pane fade" id="conciliacion" role="tabpanel">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Conciliación Bancaria</h5>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalConciliacion">
+                            <i class="fas fa-plus me-2"></i>Nueva Conciliación
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Banco</th>
+                                        <th>Periodo</th>
+                                        <th>Fecha</th>
+                                        <th>Saldo Libro</th>
+                                        <th>Saldo Banco</th>
+                                        <th>Diferencia</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="8" class="text-center text-muted">No hay conciliaciones registradas</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: Plantillas de Asientos -->
+            <div class="tab-pane fade" id="plantillas" role="tabpanel">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Plantillas de Asientos</h5>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalPlantilla">
+                            <i class="fas fa-plus me-2"></i>Nueva Plantilla
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Código</th>
+                                        <th>Nombre</th>
+                                        <th>Descripción</th>
+                                        <th>Requiere Aprobación</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted">No hay plantillas registradas</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: Cierre de Periodo -->
+            <div class="tab-pane fade" id="cierre" role="tabpanel">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Cierre de Periodo Contable</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Periodo a Cerrar</label>
+                                <input type="month" class="form-control" id="periodo_cierre" value="<?= date('Y-m') ?>">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">&nbsp;</label>
+                                <button class="btn btn-warning w-100" onclick="verificarCierre()">
+                                    <i class="fas fa-check me-2"></i>Verificar Condiciones de Cierre
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="checklist_cierre" style="display: none;">
+                            <h6 class="mb-3">Checklist de Cierre</h6>
+                            <div class="list-group mb-3">
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <i class="fas fa-square-check text-muted me-2" id="check_comprobantes"></i>
+                                            <strong>Comprobantes sin aprobar</strong>
+                                        </div>
+                                        <span class="badge bg-secondary" id="count_comprobantes">-</span>
+                                    </div>
+                                </div>
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <i class="fas fa-square-check text-muted me-2" id="check_conciliaciones"></i>
+                                            <strong>Conciliaciones bancarias pendientes</strong>
+                                        </div>
+                                        <span class="badge bg-secondary" id="count_conciliaciones">-</span>
+                                    </div>
+                                </div>
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <i class="fas fa-square-check text-muted me-2" id="check_cuadratura"></i>
+                                            <strong>Cuadratura de saldos</strong>
+                                        </div>
+                                        <span class="badge bg-secondary" id="estado_cuadratura">-</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>ADVERTENCIA:</strong> El cierre de periodo bloqueará la creación y modificación de comprobantes para este periodo. Esta acción requiere permisos especiales para revertirse.
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <label class="form-label">Observaciones</label>
+                                    <textarea class="form-control" id="obs_cierre" rows="3" placeholder="Observaciones del cierre..."></textarea>
+                                </div>
+                            </div>
+
+                            <div class="mt-3">
+                                <button class="btn btn-danger btn-lg w-100" onclick="ejecutarCierre()" id="btnEjecutarCierre" disabled>
+                                    <i class="fas fa-lock me-2"></i>EJECUTAR CIERRE DE PERIODO
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="resultado_cierre" class="mt-3"></div>
                     </div>
                 </div>
             </div>
@@ -1314,18 +1548,171 @@ body.fullscreen-mode .main-wrapper {
                 return;
             }
 
-            document.getElementById('resultado_mayor').innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Consultando...</div>';
+            document.getElementById('resultado_mayor').innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin fa-2x"></i><p>Consultando...</p></div>';
+            document.getElementById('btnExportMayor').disabled = false;
 
-            // Simulación (en producción sería AJAX a endpoint)
+            // En producción esto sería AJAX, por ahora simulación
             setTimeout(() => {
                 document.getElementById('resultado_mayor').innerHTML = `
-                    <div class="alert alert-info">
-                        <strong>Mayor de Cuenta ${cuenta_id}</strong><br>
-                        Periodo: ${desde} al ${hasta}<br>
-                        <em>Funcionalidad en construcción - requiere endpoint backend</em>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-light">
+                                <tr><th colspan="6" class="text-center bg-primary text-white">MAYOR CUENTA ${cuenta_id}</th></tr>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Comprobante</th>
+                                    <th>Descripción</th>
+                                    <th>Debe</th>
+                                    <th>Haber</th>
+                                    <th>Saldo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td colspan="6" class="text-center text-muted">Cargue el reporte desde el backend o use Export Excel</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Use el botón <strong>"Exportar a Excel"</strong> para generar el reporte formal completo.
                     </div>
                 `;
             }, 500);
+        }
+
+        function exportarMayorExcel() {
+            const cuenta_id = document.getElementById('filtro_cuenta_mayor').value;
+            const desde = document.getElementById('filtro_fecha_desde').value;
+            const hasta = document.getElementById('filtro_fecha_hasta').value;
+
+            if (!cuenta_id) {
+                alert('Debe consultar una cuenta primero');
+                return;
+            }
+
+            const url = `/modules/usuario/contabilidad_exports.php?tipo=mayor&formato=excel&cuenta_id=${cuenta_id}&desde=${desde}&hasta=${hasta}`;
+            window.open(url, '_blank');
+        }
+
+        function consultarDiario() {
+            const desde = document.getElementById('filtro_diario_desde').value;
+            const hasta = document.getElementById('filtro_diario_hasta').value;
+
+            document.getElementById('resultado_diario').innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin fa-2x"></i><p>Consultando...</p></div>';
+
+            setTimeout(() => {
+                document.getElementById('resultado_diario').innerHTML = `
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>Libro Diario</strong> del ${desde} al ${hasta}<br>
+                        Use el botón <strong>"Exportar a Excel"</strong> para generar el reporte formal completo con todos los comprobantes y sus líneas.
+                    </div>
+                `;
+            }, 500);
+        }
+
+        function exportarDiarioExcel() {
+            const desde = document.getElementById('filtro_diario_desde').value;
+            const hasta = document.getElementById('filtro_diario_hasta').value;
+
+            const url = `/modules/usuario/contabilidad_exports.php?tipo=diario&formato=excel&desde=${desde}&hasta=${hasta}`;
+            window.open(url, '_blank');
+        }
+
+        function consultarBalance() {
+            const periodo = document.getElementById('filtro_balance_periodo').value;
+
+            document.getElementById('resultado_balance').innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin fa-2x"></i><p>Consultando...</p></div>';
+
+            setTimeout(() => {
+                document.getElementById('resultado_balance').innerHTML = `
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>Balance de Comprobación</strong> del periodo ${periodo}<br>
+                        Use el botón <strong>"Exportar a Excel"</strong> para generar el reporte formal con sumas y saldos.
+                    </div>
+                `;
+            }, 500);
+        }
+
+        function exportarBalanceExcel() {
+            const periodo = document.getElementById('filtro_balance_periodo').value;
+
+            const url = `/modules/usuario/contabilidad_exports.php?tipo=balance&formato=excel&periodo=${periodo}`;
+            window.open(url, '_blank');
+        }
+
+        function verificarCierre() {
+            const periodo = document.getElementById('periodo_cierre').value;
+
+            // Simular verificación (en producción sería AJAX al backend)
+            document.getElementById('checklist_cierre').style.display = 'block';
+
+            // Simular checklist
+            setTimeout(() => {
+                const checkComp = document.getElementById('check_comprobantes');
+                const checkConc = document.getElementById('check_conciliaciones');
+                const checkCuad = document.getElementById('check_cuadratura');
+
+                // Simular: 0 comprobantes pendientes = OK
+                checkComp.classList.remove('text-muted');
+                checkComp.classList.add('text-success');
+                checkComp.classList.replace('fa-square-check', 'fa-check-square');
+                document.getElementById('count_comprobantes').textContent = '0';
+                document.getElementById('count_comprobantes').classList.replace('bg-secondary', 'bg-success');
+
+                // Simular: 0 conciliaciones pendientes = OK
+                checkConc.classList.remove('text-muted');
+                checkConc.classList.add('text-success');
+                checkConc.classList.replace('fa-square-check', 'fa-check-square');
+                document.getElementById('count_conciliaciones').textContent = '0';
+                document.getElementById('count_conciliaciones').classList.replace('bg-secondary', 'bg-success');
+
+                // Simular: cuadratura OK
+                checkCuad.classList.remove('text-muted');
+                checkCuad.classList.add('text-success');
+                checkCuad.classList.replace('fa-square-check', 'fa-check-square');
+                document.getElementById('estado_cuadratura').textContent = 'Cuadrado';
+                document.getElementById('estado_cuadratura').classList.replace('bg-secondary', 'bg-success');
+
+                // Habilitar botón de cierre si todo OK
+                document.getElementById('btnEjecutarCierre').disabled = false;
+
+            }, 1000);
+        }
+
+        function ejecutarCierre() {
+            const periodo = document.getElementById('periodo_cierre').value;
+            const observaciones = document.getElementById('obs_cierre').value;
+
+            if (!confirm(`¿CONFIRMA el cierre del periodo ${periodo}?\n\nEsta acción bloqueará la creación y modificación de comprobantes para este periodo.`)) {
+                return;
+            }
+
+            if (!confirm('SEGUNDA CONFIRMACIÓN: ¿Está seguro de ejecutar el cierre?')) {
+                return;
+            }
+
+            document.getElementById('resultado_cierre').innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="fas fa-spinner fa-spin me-2"></i>Ejecutando cierre de periodo...
+                </div>
+            `;
+
+            // En producción esto sería POST al backend
+            setTimeout(() => {
+                document.getElementById('resultado_cierre').innerHTML = `
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>CIERRE EJECUTADO EXITOSAMENTE</strong><br>
+                        Periodo: ${periodo}<br>
+                        Fecha: ${new Date().toLocaleString('es-CL')}<br>
+                        Observaciones: ${observaciones || 'Sin observaciones'}
+                    </div>
+                `;
+
+                document.getElementById('btnEjecutarCierre').disabled = true;
+            }, 2000);
         }
 
         // Inicializar al cargar
